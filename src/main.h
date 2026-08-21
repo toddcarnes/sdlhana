@@ -130,10 +130,11 @@ int Encode(const char *filename, unsigned char *header, int headersize, unsigned
 void LoadCfg();
 void SaveCfg();
 
+#include <SDL3/SDL.h>
+#include <SDL3_mixer/SDL_mixer.h>
+
 struct SoundSample {
-   Uint8 *buf = nullptr;
-   Uint32 len = 0;
-   SDL_AudioSpec spec{};
+   MIX_Audio *audio = nullptr;
 };
 
 // sound.cpp functions...

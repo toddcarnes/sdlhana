@@ -20,12 +20,9 @@
 //
 
 #include "main.h"
-#include <cstring>
+#include <SDL3_mixer/SDL_mixer.h>
 
-static unsigned int audio_len = 0;
-static unsigned char *audio_pos = NULL;
-static SDL_AudioSpec audio_spec;
-static SDL_AudioStream *g_audioStream = nullptr;
+static MIX_Mixer *g_pMixer = nullptr;
 bool g_fAudioOpened = false;
 
 void SOUND_FillAudio(void *udata, unsigned char *stream, int len)
@@ -37,44 +34,44 @@ void SOUND_FillAudio(void *udata, unsigned char *stream, int len)
 
 int SOUND_OpenAudio(int freq, int format, int channels, int samples)
 {
+   (void)freq;
+   (void)format;
+   (void)channels;
    (void)samples;
+
    if (g_fAudioOpened) {
       return 0;
    }
 
-   audio_spec.freq = freq;
-   audio_spec.format = (SDL_AudioFormat)format;
-   audio_spec.channels = channels;
-
-   g_audioStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &audio_spec, NULL, NULL);
-   if (!g_audioStream) {
-      std::println(stderr, "WARNING: Couldn't open audio stream: {}", SDL_GetError());
+   if (!MIX_Init()) {
+      std::println(stderr, "WARNING: Couldn't init SDL3_mixer: {}", SDL_GetError());
       return -1;
    }
 
-   SDL_ResumeAudioStreamDevice(g_audioStream);
+   g_pMixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, NULL);
+   if (!g_pMixer) {
+      std::println(stderr, "WARNING: Couldn't create SDL3_mixer device: {}", SDL_GetError());
+      return -1;
+   }
+
    g_fAudioOpened = true;
    return 0;
 }
 
 SoundSample *SOUND_LoadWAV(const char *filename)
 {
-   if (!g_fAudioOpened) {
+   if (!g_fAudioOpened || !g_pMixer) {
       return NULL;
    }
 
-   SDL_AudioSpec spec;
-   Uint8 *buf = NULL;
-   Uint32 len = 0;
-
-   if (!SDL_LoadWAV(filename, &spec, &buf, &len)) {
+   MIX_Audio *audio = MIX_LoadAudio(g_pMixer, filename, true);
+   if (audio == NULL) {
+      std::println(stderr, "WARNING: Cannot load WAV file {}: {}", filename, SDL_GetError());
       return NULL;
    }
 
    SoundSample *sample = new SoundSample();
-   sample->buf = buf;
-   sample->len = len;
-   sample->spec = spec;
+   sample->audio = audio;
    return sample;
 }
 
@@ -83,17 +80,16 @@ void SOUND_FreeWAV(SoundSample *audio)
    if (audio == NULL) {
       return;
    }
-   if (audio->buf != NULL) {
-      SDL_free(audio->buf);
+   if (audio->audio != NULL) {
+      MIX_DestroyAudio(audio->audio);
    }
    delete audio;
 }
 
 void SOUND_PlayWAV(SoundSample *audio)
 {
-   if (audio == nullptr || g_audioStream == nullptr) {
+   if (audio == nullptr || audio->audio == nullptr || !g_fAudioOpened || !g_pMixer) {
       return;
    }
-   SDL_SetAudioStreamFormat(g_audioStream, &audio->spec, &audio_spec);
-   SDL_PutAudioStreamData(g_audioStream, audio->buf, audio->len);
+   MIX_PlayAudio(g_pMixer, audio->audio);
 }

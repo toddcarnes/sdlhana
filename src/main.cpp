@@ -20,6 +20,7 @@
 //
 
 #include <SDL3/SDL_main.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include "main.h"
 
 SDL_Window   *gpWindow = nullptr;

@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "" FORCE)
 project(sdlhana VERSION 0.34 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -21,7 +22,34 @@ FetchContent_Declare(
     GIT_TAG        main
     GIT_SHALLOW    TRUE
 )
-FetchContent_MakeAvailable(SDL3)
+
+# 2. Fetch SDL3_mixer (WAV PCM playback)
+set(SDLMIXER_FLAC OFF CACHE BOOL "" FORCE)
+set(SDLMIXER_GME OFF CACHE BOOL "" FORCE)
+set(SDLMIXER_MOD OFF CACHE BOOL "" FORCE)
+set(SDLMIXER_MP3 OFF CACHE BOOL "" FORCE)
+set(SDLMIXER_MIDI OFF CACHE BOOL "" FORCE)
+set(SDLMIXER_OPUS OFF CACHE BOOL "" FORCE)
+set(SDLMIXER_WAVPACK OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+    SDL3_mixer
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL_mixer.git
+    GIT_TAG        release-3.2.0
+    GIT_SHALLOW    TRUE
+)
+
+FetchContent_Declare(
+    SDL3_ttf
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL_ttf.git
+    GIT_TAG        release-3.2.0
+    GIT_SHALLOW    TRUE
+)
+
+FetchContent_MakeAvailable(SDL3 SDL3_mixer SDL3_ttf)
+
+message(STATUS "SDL3_mixer SOURCE_DIR: ${sdl3_mixer_SOURCE_DIR}")
+message(STATUS "SDL3_ttf SOURCE_DIR: ${sdl3_ttf_SOURCE_DIR}")
 
 # Source files
 set(SDLHANA_SOURCES
@@ -50,6 +78,10 @@ endif()
 # Target Include Directories
 target_include_directories(sdlhana PRIVATE
     src
+    ${SDL3_mixer_SOURCE_DIR}/include
+    ${SDL3_ttf_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_BINARY_DIR}/_deps/sdl3_mixer-src/include
+    ${CMAKE_CURRENT_BINARY_DIR}/_deps/sdl3_ttf-src/include
 )
 
 # Compiler definitions for legacy path resolutions and compatibility
@@ -66,13 +98,13 @@ else()
     target_compile_options(sdlhana PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-# Link against native SDL3
+# Link against native SDL3, SDL3_mixer, and SDL3_ttf
 if(TARGET SDL3::SDL3_main)
-    target_link_libraries(sdlhana PRIVATE SDL3::SDL3 SDL3::SDL3_main)
+    target_link_libraries(sdlhana PRIVATE SDL3::SDL3 SDL3::SDL3_main SDL3_mixer::SDL3_mixer-shared SDL3_ttf::SDL3_ttf-shared)
 elseif(TARGET SDL3_main)
-    target_link_libraries(sdlhana PRIVATE SDL3::SDL3 SDL3_main)
+    target_link_libraries(sdlhana PRIVATE SDL3::SDL3 SDL3_main SDL3_mixer::SDL3_mixer-shared SDL3_ttf::SDL3_ttf-shared)
 else()
-    target_link_libraries(sdlhana PRIVATE SDL3::SDL3)
+    target_link_libraries(sdlhana PRIVATE SDL3::SDL3 SDL3_mixer::SDL3_mixer-shared SDL3_ttf::SDL3_ttf-shared)
 endif()
 
 # Copy asset directories and SDL3.dll into executable build directory post-build
@@ -92,5 +124,11 @@ add_custom_command(TARGET sdlhana POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:SDL3::SDL3>
             $<TARGET_FILE_DIR:sdlhana>/$<TARGET_FILE_NAME:SDL3::SDL3>
-    COMMENT "Copying game assets and SDL3.dll to target build output directory..."
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:SDL3_mixer::SDL3_mixer-shared>
+            $<TARGET_FILE_DIR:sdlhana>/$<TARGET_FILE_NAME:SDL3_mixer::SDL3_mixer-shared>
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:SDL3_ttf::SDL3_ttf-shared>
+            $<TARGET_FILE_DIR:sdlhana>/$<TARGET_FILE_NAME:SDL3_ttf::SDL3_ttf-shared>
+    COMMENT "Copying game assets and SDL3 DLLs to target build output directory..."
 )
