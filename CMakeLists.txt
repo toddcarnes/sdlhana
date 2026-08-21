@@ -73,9 +73,11 @@ target_compile_definitions(sdlhana PRIVATE
     _CRT_NONSTDC_NO_WARNINGS
 )
 
-# Temporary legacy compiler flags for MSVC
+# Strict C++ compiler flags for MSVC, GCC, and Clang (Windows/Linux/macOS parity)
 if(MSVC)
-    target_compile_options(sdlhana PRIVATE /permissive /W3)
+    target_compile_options(sdlhana PRIVATE /permissive- /W4)
+else()
+    target_compile_options(sdlhana PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 # Link against sdl12-compat and SDLmain (handles WinMain -> SDL_main redirection)

@@ -1,5 +1,5 @@
 8/20/2026 Todd Carnes:
- * CMakeLists.txt: Created C++23 CMake build system (v0.34) using FetchContent for SDL2 and sdl12-compat bridge.
+ * CMakeLists.txt: Created C++23 CMake build system (v0.34) using FetchContent for SDL2 and sdl12-compat bridge. Enforced strict MSVC (/permissive- /W4) and GCC/Clang (-Wall -Wextra -Wpedantic) compilation for Windows, Linux, and macOS parity.
  * Autotools: Removed legacy configure, Makefile.am/in, and helper scripts.
  * IDE: Removed legacy sdlhana.dsp and sdlhana.kdevelop files.
  * Memory Management: Refactored raw new/delete in main.cpp, game.cpp, player.cpp, and general.h to std::unique_ptr and stack RAII allocations.
