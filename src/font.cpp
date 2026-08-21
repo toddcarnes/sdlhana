@@ -23,13 +23,15 @@
 
 CFont::CFont():
 m_iNumChar(0),
-m_pChars(NULL)
+m_pChars(NULL),
+m_pTTFFont(NULL)
 {
 }
 
 CFont::CFont(const char *filename):
 m_iNumChar(0),
-m_pChars(NULL)
+m_pChars(NULL),
+m_pTTFFont(NULL)
 {
    Load(filename);
 }
@@ -43,6 +45,17 @@ int CFont::Load(const char *filename)
 {
    if (IsLoaded()) {
       FreeAllTheStuff();
+   }
+
+   int useTTF = atoi(cfg.Get("OPTIONS", "UseTTF", "0"));
+   const char *ttfPath = cfg.Get("OPTIONS", "TTFFontPath", "");
+
+   if (useTTF && ttfPath != nullptr && strlen(ttfPath) > 0) {
+      m_pTTFFont = TTF_OpenFont(ttfPath, 32.0f);
+      if (m_pTTFFont != nullptr) {
+         return 0;
+      }
+      std::println(stderr, "WARNING: Could not open TTF font {}, falling back to bitmap font", ttfPath);
    }
 
    FILE *fp = fopen(filename, "rb");
@@ -77,6 +90,15 @@ int CFont::Load(const char *filename)
 
 SDL_Surface *CFont::Render(const char *sz, int r, int g, int b, int size, bool shadow)
 {
+   if (m_pTTFFont != nullptr) {
+      TTF_SetFontSize(m_pTTFFont, (float)size);
+      SDL_Color color = { (Uint8)r, (Uint8)g, (Uint8)b, 255 };
+      SDL_Surface *surface = TTF_RenderText_Blended(m_pTTFFont, sz, 0, color);
+      if (surface == nullptr) {
+         std::println(stderr, "WARNING: TTF_RenderText_Blended failed: {}", SDL_GetError());
+      }
+      return surface;
+   }
    int length = 0, i, j, cur = 0;
    const char *p = sz;
    SDL_Surface *s = NULL;
@@ -227,6 +249,10 @@ fntchar_t *CFont::FindChar(unsigned int code)
 
 void CFont::FreeAllTheStuff()
 {
+   if (m_pTTFFont != nullptr) {
+      TTF_CloseFont(m_pTTFFont);
+      m_pTTFFont = nullptr;
+   }
    if (m_pChars != NULL)
       free(m_pChars);
    m_pChars = NULL;

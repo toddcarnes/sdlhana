@@ -40,7 +40,7 @@ typedef struct fntfile_header_s
    unsigned short   num_chars; /* number of characters */
 } fntfile_header_t;
 
-#ifdef __cplusplus
+#include <SDL3_ttf/SDL_ttf.h>
 
 class CFont
 {
@@ -49,7 +49,7 @@ public:
    CFont(const char *filename);
    ~CFont();
 
-   inline bool  IsLoaded() { return m_iNumChar > 0; }
+   inline bool  IsLoaded() { return m_iNumChar > 0 || m_pTTFFont != nullptr; }
 
    int          Load(const char *filename);
    SDL_Surface *Render(const char *sz, int r = 255, int g = 255, int b = 255, int size = 32, bool shadow = true);
@@ -61,9 +61,8 @@ private:
 
    int          m_iNumChar;
    fntchar_t   *m_pChars;
+   TTF_Font    *m_pTTFFont;
 };
-
-#endif
 
 #endif
 
