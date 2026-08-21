@@ -367,11 +367,10 @@ void CBasePlayer::DrawCurResult()
 
 #define DRAW_BOX_TEXT(text)                               \
    {                                                      \
-      CBox *box = new CBox(20, 270, 595, 33, 155, 40, 185); \
+      CBox box(20, 270, 595, 33, 155, 40, 185);           \
       gpGeneral->PlaySound(SOUND_HINT);                   \
       gpGeneral->DrawText(text, 30, 270, 255, 255, 24);   \
       UTIL_Delay(2000);                                   \
-      delete box;                                         \
    }
 
 #define CLEAR_EFFECT                                      \
@@ -683,10 +682,10 @@ int CPlayer::SelectCard()
    gpGeneral->DrawText(msg("discardcardselect"), 30, 270, 255, 255, 24);
 
    int i, sel = -1;
-   CButton *b[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+   std::unique_ptr<CButton> b[8];
 
    for (i = 0; i < m_iNumHandCard; i++) {
-      b[i] = new CButton(i + 1, 10 + i * 48, 400, 48, 78, 0, 0, 0);
+      b[i] = std::make_unique<CButton>(i + 1, 10 + i * 48, 400, 48, 78, 0, 0, 0);
    }
 
    while (1) {
@@ -699,20 +698,14 @@ int CPlayer::SelectCard()
       }
    }
 
-   for (i = 0; i < 8; i++) {
-      if (b[i] != NULL) {
-         delete b[i];
-      }
-   }
-
    return sel;
 }
 
 bool CPlayer::WantToContinue()
 {
-   CBox *mainbox = new CBox(20, 270, 595, 70, 80, 55, 85);
-   CButton *yesbtn = new CButton(1, 30, 305, 100, 30, 128, 128, 128);
-   CButton *nobtn = new CButton(2, 145, 305, 100, 30, 128, 128, 128);
+   auto mainbox = std::make_unique<CBox>(20, 270, 595, 70, 80, 55, 85);
+   auto yesbtn = std::make_unique<CButton>(1, 30, 305, 100, 30, 128, 128, 128);
+   auto nobtn = std::make_unique<CButton>(2, 145, 305, 100, 30, 128, 128, 128);
    bool ret = true;
 
    gpGeneral->DrawText(msg("koikoiyesorno"), 30, 270, 255, 255, 0, 32);
@@ -729,10 +722,6 @@ bool CPlayer::WantToContinue()
          break;
       }
    }
-
-   delete yesbtn;
-   delete nobtn;
-   delete mainbox;
 
    return ret;
 }

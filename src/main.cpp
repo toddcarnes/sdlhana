@@ -121,11 +121,8 @@ int main(int argc, char *argv[])
 
    InitTextMessage();
 
-   gpGeneral = new CGeneral;
-   gpGame = new CGame;
-   if (gpGeneral == NULL || gpGame == NULL) {
-      TerminateOnError("Memory Allocation Error!");
-   }
+   gpGeneral = std::make_unique<CGeneral>();
+   gpGame = std::make_unique<CGame>();
 
    SDL_SetEventFilter(EventFilter);
    gpGame->MainMenu();
@@ -137,6 +134,9 @@ int main(int argc, char *argv[])
 
 void UserQuit()
 {
+   gpGame.reset();
+   gpGeneral.reset();
+
    if (gpScreen != NULL)
       SDL_FreeSurface(gpScreen);
 

@@ -20,7 +20,7 @@
 
 #include "main.h"
 
-CGame *gpGame = NULL;
+std::unique_ptr<CGame> gpGame = nullptr;
 
 CGame::CGame()
 {
@@ -31,7 +31,8 @@ CGame::CGame()
 
    m_iScore = atoi(cfg.Get("GAME", "Score", "0"));
    m_flAnimDuration = atof(cfg.Get("OPTIONS", "AnimSpeed", "180"));
-   m_pPlayers[0] = m_pPlayers[1] = NULL;
+   m_pPlayers[0] = nullptr;
+   m_pPlayers[1] = nullptr;
 
    // don't allow more than 99999 points or less than -99999 points
    if (abs(m_iScore) > 99999) {
@@ -41,29 +42,21 @@ CGame::CGame()
 
 CGame::~CGame()
 {
-   if (m_pPlayers[0] != NULL) {
-      delete m_pPlayers[0];
-   }
-   m_pPlayers[0] = NULL;
-   if (m_pPlayers[1] != NULL) {
-      delete m_pPlayers[1];
-   }
-   m_pPlayers[1] = NULL;
+   m_pPlayers[0].reset();
+   m_pPlayers[1].reset();
 }
 
 void CGame::MainMenu()
 {
    int choice = -1;
-   CBox *mainbox;
-   CButton *bNewGame, *bOption, *bQuit;
 
 start:
    gpGeneral->ClearScreen(true, false, true);
 
-   mainbox = new CBox(140, 250, 350, 190, 58, 110, 165);
-   bNewGame = new CButton(1, 150, 260, 330, 50, 58, 110, 165);
-   bOption = new CButton(2, 150, 320, 330, 50, 58, 110, 165);
-   bQuit = new CButton(3, 150, 380, 330, 50, 58, 110, 165);
+   auto mainbox = std::make_unique<CBox>(140, 250, 350, 190, 58, 110, 165);
+   auto bNewGame = std::make_unique<CButton>(1, 150, 260, 330, 50, 58, 110, 165);
+   auto bOption = std::make_unique<CButton>(2, 150, 320, 330, 50, 58, 110, 165);
+   auto bQuit = std::make_unique<CButton>(3, 150, 380, 330, 50, 58, 110, 165);
 
    gpGeneral->DrawText(msg("play"), 155, 268, 255, 255, 0, 32);
    gpGeneral->DrawText(msg("settings"), 155, 328, 255, 255, 0, 32);
@@ -77,10 +70,10 @@ start:
       }
    }
 
-   delete bNewGame;
-   delete bOption;
-   delete bQuit;
-   delete mainbox;
+   bNewGame.reset();
+   bOption.reset();
+   bQuit.reset();
+   mainbox.reset();
 
    switch (choice) {
       // single player game
@@ -239,14 +232,11 @@ void CGame::Settings()
 
 void CGame::RunGame()
 {
-   m_pPlayers[0] = new CPlayer;
-   m_pPlayers[1] = new CBot;
-   if (m_pPlayers[0] == NULL || m_pPlayers[1] == NULL) {
-      TerminateOnError("Memory allocation error!");
-   }
+   m_pPlayers[0] = std::make_unique<CPlayer>();
+   m_pPlayers[1] = std::make_unique<CBot>();
 
-   m_pPlayers[0]->SetOpponent(m_pPlayers[1]);
-   m_pPlayers[1]->SetOpponent(m_pPlayers[0]);
+   m_pPlayers[0]->SetOpponent(m_pPlayers[1].get());
+   m_pPlayers[1]->SetOpponent(m_pPlayers[0].get());
 
    InitGame();
 
@@ -925,11 +915,11 @@ void CGame::GetOneCardFromOpponent(CBasePlayer *current)
 
 int CGame::SelectCardOnDesk(int month)
 {
-   CButton *b[2];
+   std::unique_ptr<CButton> b[2];
    int count = 0, index[2], i;
 
    for (i = 0; i < 2; i++) {
-      b[i] = NULL;
+      b[i] = nullptr;
       index[i] = -1;
    }
 
@@ -952,7 +942,7 @@ int CGame::SelectCardOnDesk(int month)
             TerminateOnError("CGame::SelectCardOnDesk(): count >= 2");
          }
          index[count] = i;
-         b[count] = new CButton(count, 140 + (i / 2) * 48,
+         b[count] = std::make_unique<CButton>(count, 140 + (i / 2) * 48,
             100 + (i & 1) * 78, 48, 78, 0, 0, 0);
          count++;
          m_DeskCards[i].m_iRenderEffect |= EF_BOX;
@@ -971,11 +961,8 @@ int CGame::SelectCardOnDesk(int month)
       }
    }
 
-   for (i = 0; i < 2; i++) {
-      if (b[i] != NULL) {
-         delete b[i];
-      }
-   }
+   b[0].reset();
+   b[1].reset();
 
    SDL_BlitSurface(save, NULL, gpScreen, &dstrect);
    gpGeneral->UpdateScreen(dstrect.x, dstrect.y, dstrect.w, dstrect.h);
@@ -1018,7 +1005,7 @@ void CGame::AnimDeal()
 
    for (i = 0; i < 2; i++) {
       for (j = 0; j < 3; j++) {
-         k = ((CBasePlayer::GetDealer() == m_pPlayers[1]) ? j : 1 - j);
+         k = ((CBasePlayer::GetDealer() == m_pPlayers[1].get()) ? j : 1 - j);
          for (l = 0; l < ((m_iGameMode == GAMEMODE_BET && j < 2) ? 3 : 4); l++) {
             CCard c;
             if (j < 2) {
@@ -1091,7 +1078,7 @@ void CGame::AnimDeal()
 
    CBox box(20, 300, 595, 33, 40, 55, 85);
    gpGeneral->PlaySound(SOUND_HINT);
-   gpGeneral->DrawText((CBasePlayer::GetDealer() == m_pPlayers[1]) ?
+   gpGeneral->DrawText((CBasePlayer::GetDealer() == m_pPlayers[1].get()) ?
       msg("comdealer") : msg("youdealer"), 30, 300, 255, 255, 24);
    UTIL_Delay(2000);
 }
@@ -1206,9 +1193,9 @@ void CGame::DrawDeskCard()
 
 bool CGame::DoubleUp(CBasePlayer *player)
 {
-   CBox *mainbox = new CBox(20, 290, 595, 70, 80, 55, 85);
-   CButton *yesbtn = new CButton(1, 30, 325, 100, 30, 128, 128, 128);
-   CButton *nobtn = new CButton(2, 145, 325, 100, 30, 128, 128, 128);
+   auto mainbox = std::make_unique<CBox>(20, 290, 595, 70, 80, 55, 85);
+   auto yesbtn = std::make_unique<CButton>(1, 30, 325, 100, 30, 128, 128, 128);
+   auto nobtn = std::make_unique<CButton>(2, 145, 325, 100, 30, 128, 128, 128);
    bool ret = true;
 
    gpGeneral->DrawText(msg("doubleupyesorno"), 30, 290, 255, 255, 0, 32);
@@ -1226,9 +1213,9 @@ bool CGame::DoubleUp(CBasePlayer *player)
       }
    }
 
-   delete yesbtn;
-   delete nobtn;
-   delete mainbox;
+   yesbtn.reset();
+   nobtn.reset();
+   mainbox.reset();
 
    if (!ret) {
       return false;
@@ -1245,9 +1232,9 @@ bool CGame::DoubleUp(CBasePlayer *player)
 
    c = RandomLong(0, 47);
 
-   mainbox = new CBox(20, 290, 595, 70, 80, 55, 85);
-   yesbtn = new CButton(1, 30, 325, 100, 30, 128, 128, 128);
-   nobtn = new CButton(2, 145, 325, 100, 30, 128, 128, 128);
+   mainbox = std::make_unique<CBox>(20, 290, 595, 70, 80, 55, 85);
+   yesbtn = std::make_unique<CButton>(1, 30, 325, 100, 30, 128, 128, 128);
+   nobtn = std::make_unique<CButton>(2, 145, 325, 100, 30, 128, 128, 128);
 
    gpGeneral->DrawText(msg("bigorsmall"), 30, 290, 255, 255, 0, 32);
    gpGeneral->DrawText(msg("big"), 35, 325, 255, 0, 255, 30);
@@ -1270,9 +1257,9 @@ bool CGame::DoubleUp(CBasePlayer *player)
       }
    }
 
-   delete yesbtn;
-   delete nobtn;
-   delete mainbox;
+   yesbtn.reset();
+   nobtn.reset();
+   mainbox.reset();
 
    SDL_Surface *save = SDL_CreateRGBSurface(gpScreen->flags & (~SDL_HWSURFACE),
       48, 78, gpScreen->format->BitsPerPixel, gpScreen->format->Rmask,

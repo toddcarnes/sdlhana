@@ -1,7 +1,8 @@
-8/20/2026 Antigravity / Todd Carnes:
+8/20/2026 Todd Carnes:
  * CMakeLists.txt: Created C++23 CMake build system (v0.34) using FetchContent for SDL2 and sdl12-compat bridge.
  * Autotools: Removed legacy configure, Makefile.am/in, and helper scripts.
  * IDE: Removed legacy sdlhana.dsp and sdlhana.kdevelop files.
+ * Memory Management: Refactored raw new/delete in main.cpp, game.cpp, player.cpp, and general.h to std::unique_ptr and stack RAII allocations.
 
 7/31/2009 Wei Mingzhi <whistler at openoffice.org>:
  * src/util.cpp (RandomLong, RandomFloat): Fixed x86_64 compatibility bug.

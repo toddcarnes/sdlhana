@@ -57,7 +57,7 @@ private:
 
    float           m_flAnimDuration;
 
-   CBasePlayer    *m_pPlayers[2];
+   std::unique_ptr<CBasePlayer> m_pPlayers[2];
 
    CCard           m_DeskCards[24];
    int             m_iNumDeskCard;
@@ -75,7 +75,9 @@ private:
    void            RemoveDeskCard(int index);
 };
 
-extern CGame *gpGame;
+#include <memory>
+
+extern std::unique_ptr<CGame> gpGame;
 
 #endif
 
