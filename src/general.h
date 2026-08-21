@@ -112,7 +112,5 @@ private:
 
 #include <memory>
 
-extern std::unique_ptr<CGeneral> gpGeneral;
-
 #endif
 

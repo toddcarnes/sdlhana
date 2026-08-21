@@ -78,7 +78,5 @@ private:
 
 #include <memory>
 
-extern std::unique_ptr<CGame> gpGame;
-
 #endif
 

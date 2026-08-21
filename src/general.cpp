@@ -21,8 +21,6 @@
 
 #include "main.h"
 
-std::unique_ptr<CGeneral> gpGeneral = nullptr;
-
 const char *soundfile[NUM_SOUND + 1] = {
    "card1",
    "card2",

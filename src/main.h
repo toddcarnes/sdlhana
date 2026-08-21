@@ -77,14 +77,42 @@
 #define FONTS_DIR DATA_ROOT "fonts/"
 #endif
 
-extern SDL_Window   *gpWindow;
-extern SDL_Renderer *gpRenderer;
-extern SDL_Surface  *gpScreen;
-extern SDL_Texture  *gpScreenTexture;
-extern bool          g_fNoSound;
+#include <filesystem>
+#include "ini.h"
+
+class CGeneral;
+class CGame;
+
+class Application {
+public:
+   static Application &GetInstance() {
+      static Application instance;
+      return instance;
+   }
+
+   SDL_Window               *window = nullptr;
+   SDL_Renderer             *renderer = nullptr;
+   SDL_Surface              *screen = nullptr;
+   SDL_Texture              *screenTexture = nullptr;
+   bool                      noSound = false;
+   CIniFile                  config;
+   std::unique_ptr<CGeneral> general;
+   std::unique_ptr<CGame>    game;
+};
+
+#define g_App (Application::GetInstance())
+#define gpWindow (Application::GetInstance().window)
+#define gpRenderer (Application::GetInstance().renderer)
+#define gpScreen (Application::GetInstance().screen)
+#define gpScreenTexture (Application::GetInstance().screenTexture)
+#define g_fNoSound (Application::GetInstance().noSound)
+#define cfg (Application::GetInstance().config)
+#define gpGeneral (Application::GetInstance().general)
+#define gpGame (Application::GetInstance().game)
 
 // main.cpp functions...
 void UserQuit();
+std::filesystem::path GetUserConfigPath();
 
 // util.cpp functions...
 void trim(char *str);
@@ -144,7 +172,6 @@ void SOUND_PlayWAV(SoundSample *audio);
 void SOUND_FreeWAV(SoundSample *audio);
 SoundSample *SOUND_LoadWAV(const char *filename);
 
-#include "ini.h"
 #include "font.h"
 #include "general.h"
 #include "card.h"
@@ -152,7 +179,4 @@ SoundSample *SOUND_LoadWAV(const char *filename);
 #include "game.h"
 #include "bot.h"
 
-extern CIniFile cfg;
-
 #endif
-

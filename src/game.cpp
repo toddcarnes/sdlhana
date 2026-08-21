@@ -21,8 +21,6 @@
 
 #include "main.h"
 
-std::unique_ptr<CGame> gpGame = nullptr;
-
 CGame::CGame()
 {
    m_iGameMode = atoi(cfg.Get("GAME", "GameMode", "0"));

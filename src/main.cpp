@@ -23,47 +23,34 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include "main.h"
 
-SDL_Window   *gpWindow = nullptr;
-SDL_Renderer *gpRenderer = nullptr;
-SDL_Surface  *gpScreen = nullptr;
-SDL_Texture  *gpScreenTexture = nullptr;
-bool          g_fNoSound = false;
-
-CIniFile cfg;
-
-static char *MakeFileName(const char *fn)
+std::filesystem::path GetUserConfigPath()
 {
-   static thread_local char str[1024];
-   char *p = str;
-   while (fn != NULL && *fn != '\0') {
-      if (*fn == '~') {
-#ifndef _WIN32
-         const char *p1 = getenv("HOME");
-         while (p1 != NULL && *p1 != '\0') {
-            *p++ = *p1++;
-         }
-#else
-         *p++ = '.';
-#endif
-      } else {
-         *p++ = *fn;
-      }
-      fn++;
+   char *pref_path = SDL_GetPrefPath("ToddCarnes", "SDLHana");
+   std::filesystem::path path;
+   if (pref_path != nullptr) {
+      path = std::filesystem::path(pref_path) / "sdlhana.ini";
+      SDL_free(pref_path);
+   } else {
+      path = std::filesystem::path("sdlhana.ini");
    }
-   *p = '\0';
-   return str;
+   return path;
 }
 
 void LoadCfg()
 {
-   if (cfg.Load(MakeFileName(CONFIG_FILE)) != 0) {
-      cfg.Load(DATA_DIR "sdlhana.ini"); // load the default config file
+   std::filesystem::path user_cfg = GetUserConfigPath();
+   if (cfg.Load(user_cfg.string().c_str()) != 0) {
+      cfg.Load(DATA_DIR "sdlhana.ini"); // load default config file if user config does not exist
    }
 }
 
 void SaveCfg()
 {
-   cfg.Save(MakeFileName(CONFIG_FILE));
+   std::filesystem::path user_cfg = GetUserConfigPath();
+   if (user_cfg.has_parent_path()) {
+      std::filesystem::create_directories(user_cfg.parent_path());
+   }
+   cfg.Save(user_cfg.string().c_str());
 }
 
 static bool SDLCALL EventFilter(void *userdata, SDL_Event *event)
