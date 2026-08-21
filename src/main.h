@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2005, 2006 Wei Mingzhi <whistler@openoffice.org>
+// Copyright (c) 2026 Todd Carnes <toddcarnes@gmail.com>
 // All Rights Reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -21,22 +22,28 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <time.h>
-#include <math.h>
-#include <limits.h>
-#include <assert.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstdarg>
+#include <ctime>
+#include <cmath>
+#include <climits>
+#include <cassert>
+#include <print>
+#include <format>
+#include <string>
+#include <string_view>
+#include <random>
+#include <memory>
+
 #ifdef _WIN32
 #include <io.h>
 #include <windows.h>
-#define vsnprintf _vsnprintf
 #else
 #include <unistd.h>
 #endif
 
-#include "SDL.h"
+#include <SDL3/SDL.h>
 
 #ifdef WITH_CONFIG_H
 #include "config.h"
@@ -70,11 +77,42 @@
 #define FONTS_DIR DATA_ROOT "fonts/"
 #endif
 
-extern SDL_Surface *gpScreen;
-extern bool g_fNoSound;
+#include <filesystem>
+#include "ini.h"
+
+class CGeneral;
+class CGame;
+
+class Application {
+public:
+   static Application &GetInstance() {
+      static Application instance;
+      return instance;
+   }
+
+   SDL_Window               *window = nullptr;
+   SDL_Renderer             *renderer = nullptr;
+   SDL_Surface              *screen = nullptr;
+   SDL_Texture              *screenTexture = nullptr;
+   bool                      noSound = false;
+   CIniFile                  config;
+   std::unique_ptr<CGeneral> general;
+   std::unique_ptr<CGame>    game;
+};
+
+#define g_App (Application::GetInstance())
+#define gpWindow (Application::GetInstance().window)
+#define gpRenderer (Application::GetInstance().renderer)
+#define gpScreen (Application::GetInstance().screen)
+#define gpScreenTexture (Application::GetInstance().screenTexture)
+#define g_fNoSound (Application::GetInstance().noSound)
+#define cfg (Application::GetInstance().config)
+#define gpGeneral (Application::GetInstance().general)
+#define gpGame (Application::GetInstance().game)
 
 // main.cpp functions...
 void UserQuit();
+std::filesystem::path GetUserConfigPath();
 
 // util.cpp functions...
 void trim(char *str);
@@ -120,14 +158,20 @@ int Encode(const char *filename, unsigned char *header, int headersize, unsigned
 void LoadCfg();
 void SaveCfg();
 
+#include <SDL3/SDL.h>
+#include <SDL3_mixer/SDL_mixer.h>
+
+struct SoundSample {
+   MIX_Audio *audio = nullptr;
+};
+
 // sound.cpp functions...
 int SOUND_OpenAudio(int freq, int format, int channels, int samples);
 void SOUND_FillAudio(void *udata, unsigned char *stream, int len);
-void SOUND_PlayWAV(SDL_AudioCVT *audio);
-void SOUND_FreeWAV(SDL_AudioCVT *audio);
-SDL_AudioCVT *SOUND_LoadWAV(const char *filename);
+void SOUND_PlayWAV(SoundSample *audio);
+void SOUND_FreeWAV(SoundSample *audio);
+SoundSample *SOUND_LoadWAV(const char *filename);
 
-#include "ini.h"
 #include "font.h"
 #include "general.h"
 #include "card.h"
@@ -135,7 +179,4 @@ SDL_AudioCVT *SOUND_LoadWAV(const char *filename);
 #include "game.h"
 #include "bot.h"
 
-extern CIniFile cfg;
-
 #endif
-

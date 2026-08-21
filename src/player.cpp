@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2005, 2006 Wei Mingzhi <whistler@openoffice.org>
+// Copyright (c) 2026 Todd Carnes <toddcarnes@gmail.com>
 // All Rights Reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -367,11 +368,10 @@ void CBasePlayer::DrawCurResult()
 
 #define DRAW_BOX_TEXT(text)                               \
    {                                                      \
-      CBox *box = new CBox(20, 270, 595, 33, 155, 40, 185); \
+      CBox box(20, 270, 595, 33, 155, 40, 185);           \
       gpGeneral->PlaySound(SOUND_HINT);                   \
       gpGeneral->DrawText(text, 30, 270, 255, 255, 24);   \
       UTIL_Delay(2000);                                   \
-      delete box;                                         \
    }
 
 #define CLEAR_EFFECT                                      \
@@ -553,8 +553,9 @@ void CBasePlayer::DrawHand()
 
    int i;
 
-   UTIL_FillRect(gpScreen, dstrect.x, dstrect.y, dstrect.w * 8,
-      dstrect.h, 30, 130, 100);
+   if (gpScreen != nullptr) {
+      UTIL_FillRect(gpScreen, dstrect.x, dstrect.y, dstrect.w * 8, dstrect.h, 30, 130, 100);
+   }
 
    for (i = 0; i < m_iNumHandCard; i++) {
       gpGeneral->DrawCard(IsBot() ? CCard(255) : m_HandCards[i],
@@ -595,8 +596,10 @@ void CBasePlayer::DrawCaptured()
    }
 
    if (IsBot()) {
-      UTIL_FillRect(gpScreen, 10 + 48 * m_iNumHandCard, 10,
-         640 - (10 + 48 * m_iNumHandCard), 78, 30, 130, 100);
+      if (gpScreen != nullptr) {
+         UTIL_FillRect(gpScreen, 10 + 48 * m_iNumHandCard, 10,
+            640 - (10 + 48 * m_iNumHandCard), 78, 30, 130, 100);
+      }
 
       // Draw normal cards
       int x = 588;
@@ -631,8 +634,10 @@ void CBasePlayer::DrawCaptured()
       }
       gpGeneral->UpdateScreen(x, 10, 640 - x, 78);
    } else {
-      UTIL_FillRect(gpScreen, 10 + 48 * m_iNumHandCard, 400,
-         640 - (10 + 48 * m_iNumHandCard), 78, 30, 130, 100);
+      if (gpScreen != nullptr) {
+         UTIL_FillRect(gpScreen, 10 + 48 * m_iNumHandCard, 400,
+            640 - (10 + 48 * m_iNumHandCard), 78, 30, 130, 100);
+      }
 
       // Draw normal cards
       for (i = 0; i < 9; i++) {
@@ -683,25 +688,19 @@ int CPlayer::SelectCard()
    gpGeneral->DrawText(msg("discardcardselect"), 30, 270, 255, 255, 24);
 
    int i, sel = -1;
-   CButton *b[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+   std::unique_ptr<CButton> b[8];
 
    for (i = 0; i < m_iNumHandCard; i++) {
-      b[i] = new CButton(i + 1, 10 + i * 48, 400, 48, 78, 0, 0, 0);
+      b[i] = std::make_unique<CButton>(i + 1, 10 + i * 48, 400, 48, 78, 0, 0, 0);
    }
 
    while (1) {
       int k = gpGeneral->ReadKey();
-      if (k > SDLK_LAST) {
-         sel = k - SDLK_LAST - 1;
+      if (k > 1000) {
+         sel = k - 1000 - 1;
          break;
       } else {
          // maybe implement some other features here
-      }
-   }
-
-   for (i = 0; i < 8; i++) {
-      if (b[i] != NULL) {
-         delete b[i];
       }
    }
 
@@ -710,9 +709,9 @@ int CPlayer::SelectCard()
 
 bool CPlayer::WantToContinue()
 {
-   CBox *mainbox = new CBox(20, 270, 595, 70, 80, 55, 85);
-   CButton *yesbtn = new CButton(1, 30, 305, 100, 30, 128, 128, 128);
-   CButton *nobtn = new CButton(2, 145, 305, 100, 30, 128, 128, 128);
+   auto mainbox = std::make_unique<CBox>(20, 270, 595, 70, 80, 55, 85);
+   auto yesbtn = std::make_unique<CButton>(1, 30, 305, 100, 30, 128, 128, 128);
+   auto nobtn = std::make_unique<CButton>(2, 145, 305, 100, 30, 128, 128, 128);
    bool ret = true;
 
    gpGeneral->DrawText(msg("koikoiyesorno"), 30, 270, 255, 255, 0, 32);
@@ -721,18 +720,14 @@ bool CPlayer::WantToContinue()
 
    while (1) {
       int k = gpGeneral->ReadKey();
-      if (k > SDLK_LAST) {
-         if (k == SDLK_LAST + 2) {
+      if (k > 1000) {
+         if (k == 1000 + 2) {
             // the "stop" button is clicked
             ret = false;
          }
          break;
       }
    }
-
-   delete yesbtn;
-   delete nobtn;
-   delete mainbox;
 
    return ret;
 }

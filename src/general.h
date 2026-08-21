@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2005, 2006 Wei Mingzhi <whistler@openoffice.org>
+// Copyright (c) 2026 Todd Carnes <toddcarnes@gmail.com>
 // All Rights Reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -67,13 +68,13 @@ private:
    void          FreeSound();
 
    SDL_Surface  *LoadBitmapFile(const char *filename);
-   SDL_AudioCVT *LoadSoundFile(const char *filename);
+   SoundSample  *LoadSoundFile(const char *filename);
 
    void          InitCursor();
    void          FreeCursor();
 
    SDL_Surface  *m_imgCards, *m_imgBack;
-   SDL_AudioCVT *m_snd[NUM_SOUND];
+   SoundSample  *m_snd[NUM_SOUND];
    bool          m_fSndLoaded;
 
    CFont         m_fntBrush, m_fnt;
@@ -109,7 +110,7 @@ private:
    int m_iId;
 };
 
-extern CGeneral *gpGeneral;
+#include <memory>
 
 #endif
 

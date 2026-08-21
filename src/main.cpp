@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2005, 2006 Wei Mingzhi <whistler@openoffice.org>
+// Copyright (c) 2026 Todd Carnes <toddcarnes@gmail.com>
 // All Rights Reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -18,129 +19,143 @@
 // 02110-1301, USA
 //
 
+#include <SDL3/SDL_main.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include "main.h"
 
-SDL_Surface *gpScreen = NULL;
-bool g_fNoSound = false;
-
-CIniFile cfg;
-
-static char *MakeFileName(const char *fn)
+std::filesystem::path GetUserConfigPath()
 {
-   static char str[256];
-   char *p = str, *p1;
-   while (fn != NULL && *fn != '\0') {
-      if (*fn == '~') {
-#ifndef _WIN32
-         p1 = getenv("HOME");
-         while (p1 != NULL && *p1 != '\0') {
-            *p++ = *p1++;
-         }
-#else
-         *p++ = '.';
-#endif
-      } else {
-         *p++ = *fn;
-      }
-      fn++;
+   char *pref_path = SDL_GetPrefPath("ToddCarnes", "SDLHana");
+   std::filesystem::path path;
+   if (pref_path != nullptr) {
+      path = std::filesystem::path(pref_path) / "sdlhana.ini";
+      SDL_free(pref_path);
+   } else {
+      path = std::filesystem::path("sdlhana.ini");
    }
-   return str;
+   return path;
 }
 
 void LoadCfg()
 {
-   if (cfg.Load(MakeFileName(CONFIG_FILE)) != 0) {
-      cfg.Load(DATA_DIR "sdlhana.ini"); // load the default config file
+   std::filesystem::path user_cfg = GetUserConfigPath();
+   if (cfg.Load(user_cfg.string().c_str()) != 0) {
+      cfg.Load(DATA_DIR "sdlhana.ini"); // load default config file if user config does not exist
    }
 }
 
 void SaveCfg()
 {
-   cfg.Save(MakeFileName(CONFIG_FILE));
+   std::filesystem::path user_cfg = GetUserConfigPath();
+   if (user_cfg.has_parent_path()) {
+      std::filesystem::create_directories(user_cfg.parent_path());
+   }
+   cfg.Save(user_cfg.string().c_str());
 }
 
-static int EventFilter(const SDL_Event *event)
+static bool SDLCALL EventFilter(void *userdata, SDL_Event *event)
 {
-   if (event->type == SDL_KEYDOWN) {
-      if (event->key.keysym.sym == SDLK_RETURN &&
-         event->key.keysym.mod & KMOD_ALT)
-      {
+   (void)userdata;
+   if (event->type == SDL_EVENT_KEY_DOWN) {
+      if (event->key.key == SDLK_RETURN && (event->key.mod & SDL_KMOD_ALT)) {
          UTIL_ToggleFullScreen();
-         return 0;
-      } else if (event->key.keysym.sym == SDLK_ESCAPE) {
-         // Quit the program immediately if user pressed ESC
+         return false;
+      } else if (event->key.key == SDLK_ESCAPE) {
          UserQuit();
-         return 0;
+         return false;
       }
-   } else if (event->type == SDL_QUIT) {
+   } else if (event->type == SDL_EVENT_QUIT) {
       UserQuit();
-      return 0;
+      return false;
    }
 
-   return 1;
+   return true;
 }
 
 int main(int argc, char *argv[])
 {
+   (void)argc;
+   (void)argv;
    LoadCfg(); // load the configuration file
 
-   // Initialize defaults, video and audio
-   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER | SDL_INIT_NOPARACHUTE) == -1) { 
-      fprintf(stderr, "FATAL ERROR: Could not initialize SDL: %s.\n", SDL_GetError());
+   // Initialize SDL3 defaults, video and audio
+   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) { 
+      std::println(stderr, "FATAL ERROR: Could not initialize SDL3: {}.", SDL_GetError());
       exit(1);
    }
 
-   // Initialize the display in a 640x480 24-bit mode
-   int f = (atoi(cfg.Get("OPTIONS", "FullScreen", "0")) > 0);
-   if (f) {
-      f = SDL_FULLSCREEN;
-   }
+   bool fullscreen = (atoi(cfg.Get("OPTIONS", "FullScreen", "0")) > 0);
+   SDL_WindowFlags window_flags = fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
 
-   gpScreen = SDL_SetVideoMode(640, 480, 24, SDL_HWSURFACE | f);
-
-   if (gpScreen == NULL) {
-      gpScreen = SDL_SetVideoMode(640, 480, 24, SDL_SWSURFACE | f);
-   }
-
-   if (gpScreen == NULL) {
-      fprintf(stderr, "FATAL ERROR: Could not set video mode: %s\n", SDL_GetError());
+   gpWindow = SDL_CreateWindow("SDLHana", 640, 480, window_flags);
+   if (gpWindow == nullptr) {
+      std::println(stderr, "FATAL ERROR: Could not create SDL3 window: {}", SDL_GetError());
       exit(1);
    }
 
-   SDL_WM_SetCaption(va("SDLHana (%s)", __DATE__), NULL);
+   gpRenderer = SDL_CreateRenderer(gpWindow, NULL);
+   if (gpRenderer == nullptr) {
+      std::println(stderr, "FATAL ERROR: Could not create SDL3 renderer: {}", SDL_GetError());
+      exit(1);
+   }
+
+   SDL_SetRenderLogicalPresentation(gpRenderer, 640, 480, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+
+   gpScreen = SDL_CreateSurface(640, 480, SDL_PIXELFORMAT_XRGB8888);
+   if (gpScreen == nullptr) {
+      std::println(stderr, "FATAL ERROR: Could not create main screen surface: {}", SDL_GetError());
+      exit(1);
+   }
+   gpScreenTexture = nullptr;
 
    g_fNoSound = (atoi(cfg.Get("OPTIONS", "NoSound", "0")) > 0);
 
    // Open the audio device
    if (!g_fNoSound) {
-      if (SOUND_OpenAudio(22050, AUDIO_S16, 1, 1024)) {
-         fprintf(stderr, "WARNING: Couldn't open audio: %s\n", SDL_GetError());
+      if (SOUND_OpenAudio(22050, SDL_AUDIO_S16, 1, 1024)) {
+         std::println(stderr, "WARNING: Couldn't open audio: {}", SDL_GetError());
          g_fNoSound = true;
       }
    }
 
    InitTextMessage();
 
-   gpGeneral = new CGeneral;
-   gpGame = new CGame;
-   if (gpGeneral == NULL || gpGame == NULL) {
-      TerminateOnError("Memory Allocation Error!");
-   }
+   gpGeneral = std::make_unique<CGeneral>();
+   gpGame = std::make_unique<CGame>();
 
-   SDL_SetEventFilter(EventFilter);
+   SDL_SetEventFilter(EventFilter, NULL);
    gpGame->MainMenu();
 
    UserQuit();
 
-   return 255;
+   return 0;
 }
 
 void UserQuit()
 {
-   if (gpScreen != NULL)
-      SDL_FreeSurface(gpScreen);
+   gpGame.reset();
+   gpGeneral.reset();
 
-   SDL_CloseAudio();
+   if (gpScreenTexture != nullptr) {
+      SDL_DestroyTexture(gpScreenTexture);
+      gpScreenTexture = nullptr;
+   }
+
+   if (gpScreen != nullptr) {
+      SDL_DestroySurface(gpScreen);
+      gpScreen = nullptr;
+   }
+
+   if (gpRenderer != nullptr) {
+      SDL_DestroyRenderer(gpRenderer);
+      gpRenderer = nullptr;
+   }
+
+   if (gpWindow != nullptr) {
+      SDL_DestroyWindow(gpWindow);
+      gpWindow = nullptr;
+   }
+
    SDL_Quit();
 
    FreeTextMessage();

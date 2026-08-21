@@ -1,3 +1,12 @@
+8/20/2026 Todd Carnes <toddcarnes@gmail.com>:
+ * Build System: Replaced legacy autotools/VC++6 .dsp scripts with modern CMake 3.25+ (CMakeLists.txt) supporting Windows 11 (Visual Studio 2026 MSVC), macOS (Clang), and Linux (GCC).
+ * Graphics Engine: Migrated rendering pipeline from legacy software SDL_Surface CPU blitting to native hardware-accelerated SDL3 (SDL_Window*, SDL_Renderer*, SDL_Texture*). Added letterboxed 640x480 logical presentation canvas and coordinate mapping for windowed and fullscreen modes (SDL_RenderCoordinatesFromWindow).
+ * Audio Engine: Refactored audio handling from low-level PCM audio stream conversion to native SDL3_mixer (MIX_Init, MIX_CreateMixerDevice, MIX_LoadAudio, MIX_PlayAudio).
+ * Font Engine: Upgraded CFont into a hybrid font renderer supporting vector TrueType/OpenType fonts via SDL3_ttf with INI configuration (UseTTF=1, TTFFontPath=...) while preserving 100% fallback support for original 2005 compressed .fnt bitmap fonts (eng.fnt, fra.fnt, chs.fnt, jpn.fnt).
+ * State & File System: Encapsulated loose global pointers into a unified Application context singleton. Modernized save/config handling to use SDL_GetPrefPath() and std::filesystem::path for cross-platform preference storage.
+ * C++23 Modernization: Refactored raw memory management to std::unique_ptr and stack RAII, modernized C-string/printf formatting with std::println and <print>, and updated random number generation with <random> (std::mt19937).
+ * Continuous Integration: Created GitHub Actions matrix workflow (.github/workflows/build.yml) automating build validation on Windows, macOS, and Linux runners.
+
 7/31/2009 Wei Mingzhi <whistler at openoffice.org>:
  * src/util.cpp (RandomLong, RandomFloat): Fixed x86_64 compatibility bug.
  * COPYING.draft: Removed old draft of GPLv3.

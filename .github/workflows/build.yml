@@ -1,0 +1,48 @@
+name: Cross-Platform Build CI
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        build_type: [Release]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Linux Dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          ninja-build \
+          libasound2-dev \
+          libpulse-dev \
+          libwayland-dev \
+          libx11-dev \
+          libxext-dev \
+          libxrandr-dev \
+          libxss-dev \
+          libxcursor-dev \
+          libxi-dev \
+          libxdamage-dev \
+          libxinerama-dev \
+          libdbus-1-dev
+
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+    - name: Build Executable
+      run: cmake --build build --config ${{ matrix.build_type }}

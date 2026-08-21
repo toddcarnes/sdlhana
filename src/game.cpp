@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2005, 2006 Wei Mingzhi <whistler@openoffice.org>
+// Copyright (c) 2026 Todd Carnes <toddcarnes@gmail.com>
 // All Rights Reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -20,8 +21,6 @@
 
 #include "main.h"
 
-CGame *gpGame = NULL;
-
 CGame::CGame()
 {
    m_iGameMode = atoi(cfg.Get("GAME", "GameMode", "0"));
@@ -31,7 +30,8 @@ CGame::CGame()
 
    m_iScore = atoi(cfg.Get("GAME", "Score", "0"));
    m_flAnimDuration = atof(cfg.Get("OPTIONS", "AnimSpeed", "180"));
-   m_pPlayers[0] = m_pPlayers[1] = NULL;
+   m_pPlayers[0] = nullptr;
+   m_pPlayers[1] = nullptr;
 
    // don't allow more than 99999 points or less than -99999 points
    if (abs(m_iScore) > 99999) {
@@ -41,29 +41,21 @@ CGame::CGame()
 
 CGame::~CGame()
 {
-   if (m_pPlayers[0] != NULL) {
-      delete m_pPlayers[0];
-   }
-   m_pPlayers[0] = NULL;
-   if (m_pPlayers[1] != NULL) {
-      delete m_pPlayers[1];
-   }
-   m_pPlayers[1] = NULL;
+   m_pPlayers[0].reset();
+   m_pPlayers[1].reset();
 }
 
 void CGame::MainMenu()
 {
    int choice = -1;
-   CBox *mainbox;
-   CButton *bNewGame, *bOption, *bQuit;
 
 start:
    gpGeneral->ClearScreen(true, false, true);
 
-   mainbox = new CBox(140, 250, 350, 190, 58, 110, 165);
-   bNewGame = new CButton(1, 150, 260, 330, 50, 58, 110, 165);
-   bOption = new CButton(2, 150, 320, 330, 50, 58, 110, 165);
-   bQuit = new CButton(3, 150, 380, 330, 50, 58, 110, 165);
+   auto mainbox = std::make_unique<CBox>(140, 250, 350, 190, 58, 110, 165);
+   auto bNewGame = std::make_unique<CButton>(1, 150, 260, 330, 50, 58, 110, 165);
+   auto bOption = std::make_unique<CButton>(2, 150, 320, 330, 50, 58, 110, 165);
+   auto bQuit = std::make_unique<CButton>(3, 150, 380, 330, 50, 58, 110, 165);
 
    gpGeneral->DrawText(msg("play"), 155, 268, 255, 255, 0, 32);
    gpGeneral->DrawText(msg("settings"), 155, 328, 255, 255, 0, 32);
@@ -71,16 +63,16 @@ start:
 
    while (1) {
       int k = gpGeneral->ReadKey();
-      if (k > SDLK_LAST) {
-         choice = k - SDLK_LAST;
+      if (k > 1000) {
+         choice = k - 1000;
          break;
       }
    }
 
-   delete bNewGame;
-   delete bOption;
-   delete bQuit;
-   delete mainbox;
+   bNewGame.reset();
+   bOption.reset();
+   bQuit.reset();
+   mainbox.reset();
 
    switch (choice) {
       // single player game
@@ -130,31 +122,44 @@ void CGame::Settings()
    cfg.Set("OPTIONS", "AnimSpeed", "180");
 
    while (1) {
-      UTIL_FillRect(gpScreen, 230, 20, 12 * 8, 24, 30, 130, 100);
+      if (gpScreen != nullptr) {
+         UTIL_FillRect(gpScreen, 230, 20, 410, 24, 30, 130, 100);
+      }
       if (atoi(cfg.Get("OPTIONS", "FullScreen", "0"))) {
          gpGeneral->DrawText(msg("Enabled"), 230, 20, 255, 255, 255, 24);
       } else {
          gpGeneral->DrawText(msg("Disabled"), 230, 20, 255, 255, 255, 24);
       }
 
-      UTIL_FillRect(gpScreen, 230, 50, 12 * 8, 24, 30, 130, 100);
+      if (gpScreen != nullptr) {
+         UTIL_FillRect(gpScreen, 230, 50, 410, 24, 30, 130, 100);
+      }
       if (!atoi(cfg.Get("OPTIONS", "NoSound", "0"))) {
          gpGeneral->DrawText(msg("Enabled"), 230, 50, 255, 255, 255, 24);
       } else {
          gpGeneral->DrawText(msg("Disabled"), 230, 50, 255, 255, 255, 24);
       }
-      UTIL_FillRect(gpScreen, 230, 80, 640 - 230, 24, 30, 130, 100);
+
+      if (gpScreen != nullptr) {
+         UTIL_FillRect(gpScreen, 230, 80, 410, 24, 30, 130, 100);
+      }
       gpGeneral->DrawText(strgm[atoi(cfg.Get("GAME", "GameMode", "0"))], 230, 80, 255, 255, 255, 24);
       gpGeneral->UpdateScreen(230, 80, 640 - 230, 24);
-      UTIL_FillRect(gpScreen, 230, 110, 640 - 230, 24, 30, 130, 100);
+
+      if (gpScreen != nullptr) {
+         UTIL_FillRect(gpScreen, 230, 110, 410, 24, 30, 130, 100);
+      }
       gpGeneral->DrawText(msg(cfg.Get("OPTIONS", "Language", "eng")), 230, 110, 255, 255, 255, 24);
       gpGeneral->UpdateScreen(230, 110, 640 - 230, 24);
-      UTIL_FillRect(gpScreen, 230, 140, 640 - 230, 24, 30, 130, 100);
+
+      if (gpScreen != nullptr) {
+         UTIL_FillRect(gpScreen, 230, 140, 410, 24, 30, 130, 100);
+      }
       gpGeneral->DrawText(stras[curas], 230, 140, 255, 255, 255, 24);
       gpGeneral->UpdateScreen(230, 140, 640 - 230, 24);
       int k = gpGeneral->ReadKey();
-      if (k > SDLK_LAST) {
-         switch (k - SDLK_LAST) {
+      if (k > 1000) {
+         switch (k - 1000) {
             case 1:
                if (atoi(cfg.Get("OPTIONS", "FullScreen", "0"))) {
                   cfg.Set("OPTIONS", "FullScreen", "0");
@@ -209,14 +214,10 @@ void CGame::Settings()
                   g_fNoSound = true;
                } else {
                   g_fNoSound = false;
-                  // see if the audio device is already opened
-                  int frequency, channels;
-                  unsigned short format;
                   extern bool g_fAudioOpened;
                   if (!g_fAudioOpened) {
-                     // audio device is not opened. Try to open the audio device
-                     if (SOUND_OpenAudio(22050, AUDIO_S16, 1, 1024)) {
-                        fprintf(stderr, "WARNING: Couldn't open audio: %s\n", SDL_GetError());
+                     if (SOUND_OpenAudio(22050, SDL_AUDIO_S16, 1, 1024)) {
+                        std::println(stderr, "WARNING: Couldn't open audio: {}", SDL_GetError());
                         g_fNoSound = true;
                      } else {
                         g_fAudioOpened = true;
@@ -227,10 +228,14 @@ void CGame::Settings()
                   }
                }
 
-               bool fs = (atoi(cfg.Get("OPTIONS", "FullScreen", "0")) > 0);
-               if (!fs && (gpScreen->flags & SDL_FULLSCREEN) ||
-                  fs && !(gpScreen->flags & SDL_FULLSCREEN))
+               bool fs_setting = (atoi(cfg.Get("OPTIONS", "FullScreen", "0")) > 0);
+               bool fs_active = false;
+               if (gpWindow != nullptr) {
+                  fs_active = (SDL_GetWindowFlags(gpWindow) & SDL_WINDOW_FULLSCREEN) != 0;
+               }
+               if (fs_setting != fs_active) {
                   UTIL_ToggleFullScreen();
+               }
                return; // exit settings
          }
       }
@@ -239,14 +244,11 @@ void CGame::Settings()
 
 void CGame::RunGame()
 {
-   m_pPlayers[0] = new CPlayer;
-   m_pPlayers[1] = new CBot;
-   if (m_pPlayers[0] == NULL || m_pPlayers[1] == NULL) {
-      TerminateOnError("Memory allocation error!");
-   }
+   m_pPlayers[0] = std::make_unique<CPlayer>();
+   m_pPlayers[1] = std::make_unique<CBot>();
 
-   m_pPlayers[0]->SetOpponent(m_pPlayers[1]);
-   m_pPlayers[1]->SetOpponent(m_pPlayers[0]);
+   m_pPlayers[0]->SetOpponent(m_pPlayers[1].get());
+   m_pPlayers[1]->SetOpponent(m_pPlayers[0].get());
 
    InitGame();
 
@@ -512,7 +514,7 @@ void CGame::CardDiscarded(const CCard &c, CBasePlayer *current, int sx, int sy)
       if (GetGameMode() == GAMEMODE_KOREAN && c == drawn &&
          current->GetNumHandCard() > 1)
       {
-         SDL_FreeSurface(save1);
+         SDL_DestroySurface(save1);
          save1 = NULL;
          int slot1 = FindFreeDeskCardSlot();
          m_DeskCards[slot1] = c;
@@ -593,18 +595,14 @@ void CGame::CardDiscarded(const CCard &c, CBasePlayer *current, int sx, int sy)
    }
 
    // Draw the drawn card
-   save2 = SDL_CreateRGBSurface(gpScreen->flags & (~SDL_HWSURFACE),
-      48, 78, gpScreen->format->BitsPerPixel, gpScreen->format->Rmask,
-      gpScreen->format->Gmask, gpScreen->format->Bmask,
-      gpScreen->format->Amask);
+   // Draw the drawn card
+   save2 = SDL_CreateSurface(48, 78, SDL_PIXELFORMAT_RGBA8888);
 
    SDL_Rect dstrect;
    dstrect.x = 60;
    dstrect.y = 105;
    dstrect.w = 48;
    dstrect.h = 78;
-
-   SDL_BlitSurface(gpScreen, &dstrect, save2, NULL);
 
    UTIL_Delay(200);
    gpGeneral->DrawCard(drawn, 60, 105, 48, 78, true);
@@ -650,12 +648,13 @@ void CGame::CardDiscarded(const CCard &c, CBasePlayer *current, int sx, int sy)
          dstrect2.w = 38;
          dstrect2.h = 10;
 
-         SDL_BlitSurface(card2, &dstrect, save1, &dstrect2);
+         if (card2 != NULL && save1 != NULL) {
+            SDL_BlitSurface(card2, &dstrect, save1, &dstrect2);
+         }
 
          dstrect2.x = dx + 10;
          dstrect2.y = dy;
 
-         SDL_BlitSurface(save2, &dstrect, gpScreen, &dstrect2);
          gpGeneral->UpdateScreen(dstrect2.x, dstrect2.y, dstrect2.w, dstrect2.h);
       } else if (slot == oldslot + 2) {
          SDL_Rect dstrect2;
@@ -670,12 +669,13 @@ void CGame::CardDiscarded(const CCard &c, CBasePlayer *current, int sx, int sy)
          dstrect2.w = 10;
          dstrect2.h = 68;
 
-         SDL_BlitSurface(card2, &dstrect, save1, &dstrect2);
+         if (card2 != NULL && save1 != NULL) {
+            SDL_BlitSurface(card2, &dstrect, save1, &dstrect2);
+         }
 
          dstrect2.x = dx;
          dstrect2.y = dy + 10;
 
-         SDL_BlitSurface(save2, &dstrect, gpScreen, &dstrect2);
          gpGeneral->UpdateScreen(dstrect2.x, dstrect2.y, dstrect2.w, dstrect2.h);
       } else if (slot == oldslot + 3 && !(oldslot & 1)) {
          SDL_Rect dstrect2;
@@ -690,18 +690,24 @@ void CGame::CardDiscarded(const CCard &c, CBasePlayer *current, int sx, int sy)
          dstrect2.w = 10;
          dstrect2.h = 10;
 
-         SDL_BlitSurface(card2, &dstrect2, save1, &dstrect);
+         if (card2 != NULL && save1 != NULL) {
+            SDL_BlitSurface(card2, &dstrect2, save1, &dstrect);
+         }
 
          dstrect.x = dx;
          dstrect.y = dy;
 
-         SDL_BlitSurface(save2, &dstrect2, gpScreen, &dstrect);
          gpGeneral->UpdateScreen(dstrect.x, dstrect.y, dstrect.w, dstrect.h);
       }
 
-      SDL_FreeSurface(save2);
-      SDL_FreeSurface(card2);
-      save2 = NULL;
+      if (save2 != NULL) {
+         SDL_DestroySurface(save2);
+         save2 = NULL;
+      }
+      if (card2 != NULL) {
+         SDL_DestroySurface(card2);
+         card2 = NULL;
+      }
 
       UTIL_Delay(200);
 
@@ -904,10 +910,7 @@ void CGame::GetOneCardFromOpponent(CBasePlayer *current)
    current->GetOpponent()->DrawCaptured();
    int sy = (current->IsBot() ? 400 : 10), dy = (current->IsBot() ? 10 : 400);
 
-   SDL_Surface *save = SDL_CreateRGBSurface(gpScreen->flags & (~SDL_HWSURFACE),
-      48, 78, gpScreen->format->BitsPerPixel, gpScreen->format->Rmask,
-      gpScreen->format->Gmask, gpScreen->format->Bmask,
-      gpScreen->format->Amask);
+   SDL_Surface *save = SDL_CreateSurface(48, 78, SDL_PIXELFORMAT_RGBA8888);
 
    SDL_Rect dstrect;
    dstrect.x = 575;
@@ -915,28 +918,24 @@ void CGame::GetOneCardFromOpponent(CBasePlayer *current)
    dstrect.w = 48;
    dstrect.h = 78;
 
-   SDL_BlitSurface(gpScreen, &dstrect, save, NULL);
-
    gpGeneral->DrawCard(g, 575, sy, 48, 78, true);
    AnimCardMove(575, sy, 575, dy, 48, 78, save);
+   SDL_DestroySurface(save);
    current->DrawCaptured();
    UTIL_Delay(500);
 }
 
 int CGame::SelectCardOnDesk(int month)
 {
-   CButton *b[2];
+   std::unique_ptr<CButton> b[2];
    int count = 0, index[2], i;
 
    for (i = 0; i < 2; i++) {
-      b[i] = NULL;
+      b[i] = nullptr;
       index[i] = -1;
    }
 
-   SDL_Surface *save = SDL_CreateRGBSurface(gpScreen->flags & (~SDL_HWSURFACE),
-      480, 166, gpScreen->format->BitsPerPixel, gpScreen->format->Rmask,
-      gpScreen->format->Gmask, gpScreen->format->Bmask,
-      gpScreen->format->Amask);
+   SDL_Surface *save = SDL_CreateSurface(480, 166, SDL_PIXELFORMAT_RGBA8888);
 
    SDL_Rect dstrect;
    dstrect.x = 140;
@@ -944,15 +943,13 @@ int CGame::SelectCardOnDesk(int month)
    dstrect.w = 480;
    dstrect.h = 166;
 
-   SDL_BlitSurface(gpScreen, &dstrect, save, NULL);
-
    for (i = 0; i < m_iNumDeskCard; i++) {
       if (m_DeskCards[i].GetMonth() == month) {
          if (count >= 2) {
             TerminateOnError("CGame::SelectCardOnDesk(): count >= 2");
          }
          index[count] = i;
-         b[count] = new CButton(count, 140 + (i / 2) * 48,
+         b[count] = std::make_unique<CButton>(count, 140 + (i / 2) * 48,
             100 + (i & 1) * 78, 48, 78, 0, 0, 0);
          count++;
          m_DeskCards[i].m_iRenderEffect |= EF_BOX;
@@ -965,21 +962,17 @@ int CGame::SelectCardOnDesk(int month)
 
    while (1) {
       int k = gpGeneral->ReadKey();
-      if (k >= SDLK_LAST) {
-         count = k - SDLK_LAST;
+      if (k >= 1000) {
+         count = k - 1000;
          break;
       }
    }
 
-   for (i = 0; i < 2; i++) {
-      if (b[i] != NULL) {
-         delete b[i];
-      }
-   }
+   b[0].reset();
+   b[1].reset();
 
-   SDL_BlitSurface(save, NULL, gpScreen, &dstrect);
    gpGeneral->UpdateScreen(dstrect.x, dstrect.y, dstrect.w, dstrect.h);
-   SDL_FreeSurface(save);
+   SDL_DestroySurface(save);
 
    for (i = 0; i < m_iNumDeskCard; i++) {
       m_DeskCards[i].m_iRenderEffect &= ~(EF_DARK | EF_BOX);
@@ -1007,18 +1000,16 @@ void CGame::InitScreen()
 
 void CGame::AnimDeal()
 {
-   SDL_Surface *save = SDL_CreateRGBSurface(gpScreen->flags & (~SDL_HWSURFACE),
-      48, 78, gpScreen->format->BitsPerPixel, gpScreen->format->Rmask,
-      gpScreen->format->Gmask, gpScreen->format->Bmask,
-      gpScreen->format->Amask);
+   if (gpScreen == nullptr) return;
 
-   SDL_Surface *card;
+   SDL_Surface *save = SDL_CreateSurface(48, 78, gpScreen->format);
+   SDL_Surface *card = nullptr;
 
    int i, j, k, l;
 
    for (i = 0; i < 2; i++) {
       for (j = 0; j < 3; j++) {
-         k = ((CBasePlayer::GetDealer() == m_pPlayers[1]) ? j : 1 - j);
+         k = ((CBasePlayer::GetDealer() == m_pPlayers[1].get()) ? j : 1 - j);
          for (l = 0; l < ((m_iGameMode == GAMEMODE_BET && j < 2) ? 3 : 4); l++) {
             CCard c;
             if (j < 2) {
@@ -1036,7 +1027,7 @@ void CGame::AnimDeal()
 
             card = gpGeneral->RenderCard(c, 48, 78);
 
-            int first = SDL_GetTicks(), now = first;
+            Uint64 first = SDL_GetTicks(), now = first;
             SDL_Rect dstrect, dstrect2;
 
             dstrect.x = 60;
@@ -1053,16 +1044,22 @@ void CGame::AnimDeal()
             }
 
             SDL_Rect prev_dstrect3 = dstrect;
-            SDL_BlitSurface(gpScreen, &prev_dstrect3, save, NULL);
+            if (save != nullptr) {
+               SDL_BlitSurface(gpScreen, &prev_dstrect3, save, NULL);
+            }
             do {
                SDL_Rect dstrect3;
+               dstrect3.w = card->w;
+               dstrect3.h = card->h;
 
                float ratio = (now - first) / m_flAnimDuration;
                dstrect3.x = (int)(dstrect.x + (dstrect2.x - dstrect.x) * ratio);
                dstrect3.y = (int)(dstrect.y + (dstrect2.y - dstrect.y) * ratio);
 
-               SDL_BlitSurface(save, NULL, gpScreen, &prev_dstrect3);
-               SDL_BlitSurface(gpScreen, &dstrect3, save, NULL);
+               if (save != nullptr) {
+                  SDL_BlitSurface(save, NULL, gpScreen, &prev_dstrect3);
+                  SDL_BlitSurface(gpScreen, &dstrect3, save, NULL);
+               }
 
                SDL_BlitSurface(card, NULL, gpScreen, &dstrect3);
                gpGeneral->UpdateScreen(prev_dstrect3.x, prev_dstrect3.y,
@@ -1072,26 +1069,32 @@ void CGame::AnimDeal()
 
                now = SDL_GetTicks();
                prev_dstrect3 = dstrect3;
-            } while (now < first + m_flAnimDuration);
+            } while (now < first + (Uint64)m_flAnimDuration);
 
-            SDL_BlitSurface(save, NULL, gpScreen, &prev_dstrect3);
+            if (save != nullptr) {
+               SDL_BlitSurface(save, NULL, gpScreen, &prev_dstrect3);
+            }
             SDL_BlitSurface(card, NULL, gpScreen, &dstrect2);
             gpGeneral->UpdateScreen(prev_dstrect3.x, prev_dstrect3.y,
                prev_dstrect3.w, prev_dstrect3.h);
             gpGeneral->UpdateScreen(dstrect2.x, dstrect2.y,
                dstrect2.w, dstrect2.h);
-            SDL_FreeSurface(card);
+            if (card != nullptr) {
+               SDL_DestroySurface(card);
+            }
             gpGeneral->PlaySound(SOUND_DRAWCARD);
          }
          UTIL_Delay(200);
       }
    }
 
-   SDL_FreeSurface(save);
+   if (save != nullptr) {
+      SDL_DestroySurface(save);
+   }
 
    CBox box(20, 300, 595, 33, 40, 55, 85);
    gpGeneral->PlaySound(SOUND_HINT);
-   gpGeneral->DrawText((CBasePlayer::GetDealer() == m_pPlayers[1]) ?
+   gpGeneral->DrawText((CBasePlayer::GetDealer() == m_pPlayers[1].get()) ?
       msg("comdealer") : msg("youdealer"), 30, 300, 255, 255, 24);
    UTIL_Delay(2000);
 }
@@ -1099,19 +1102,15 @@ void CGame::AnimDeal()
 SDL_Surface *CGame::AnimCardMove(int sx, int sy, int dx, int dy,
    int w, int h, SDL_Surface *save, bool retsave, bool retcard)
 {
-   int first = SDL_GetTicks(), now = first;
+   if (gpScreen == nullptr) return nullptr;
+
+   Uint64 first = SDL_GetTicks(), now = first;
    SDL_Rect dstrect, dstrect2;
 
-   SDL_Surface *card = SDL_CreateRGBSurface(gpScreen->flags & (~SDL_HWSURFACE),
-      w, h, gpScreen->format->BitsPerPixel, gpScreen->format->Rmask,
-      gpScreen->format->Gmask, gpScreen->format->Bmask,
-      gpScreen->format->Amask);
+   SDL_Surface *card = SDL_CreateSurface(w, h, gpScreen->format);
 
    if (save == NULL) {
-      save = SDL_CreateRGBSurface(gpScreen->flags & (~SDL_HWSURFACE),
-         w, h, gpScreen->format->BitsPerPixel, gpScreen->format->Rmask,
-         gpScreen->format->Gmask, gpScreen->format->Bmask,
-         gpScreen->format->Amask);
+      save = SDL_CreateSurface(w, h, gpScreen->format);
       UTIL_FillRect(save, 0, 0, w, h, 30, 130, 100);
    }
 
@@ -1122,19 +1121,27 @@ SDL_Surface *CGame::AnimCardMove(int sx, int sy, int dx, int dy,
 
    SDL_BlitSurface(gpScreen, &dstrect, card, NULL);
 
+   if (sx == 60 && sy == 105) {
+      gpGeneral->DrawCard(CCard(255), 60, 105, 48, 78, false);
+   }
+
    dstrect2.x = dx;
    dstrect2.y = dy;
 
    SDL_Rect prev_dstrect3 = dstrect;
    do {
       SDL_Rect dstrect3;
+      dstrect3.w = w;
+      dstrect3.h = h;
 
       float ratio = (now - first) / m_flAnimDuration;
       dstrect3.x = (int)(dstrect.x + (dstrect2.x - dstrect.x) * ratio);
       dstrect3.y = (int)(dstrect.y + (dstrect2.y - dstrect.y) * ratio);
 
-      SDL_BlitSurface(save, NULL, gpScreen, &prev_dstrect3);
-      SDL_BlitSurface(gpScreen, &dstrect3, save, NULL);
+      if (save != nullptr) {
+         SDL_BlitSurface(save, NULL, gpScreen, &prev_dstrect3);
+         SDL_BlitSurface(gpScreen, &dstrect3, save, NULL);
+      }
 
       SDL_BlitSurface(card, NULL, gpScreen, &dstrect3);
       gpGeneral->UpdateScreen(prev_dstrect3.x, prev_dstrect3.y,
@@ -1144,14 +1151,16 @@ SDL_Surface *CGame::AnimCardMove(int sx, int sy, int dx, int dy,
 
       now = SDL_GetTicks();
       prev_dstrect3 = dstrect3;
-   } while (now < first + m_flAnimDuration);
+   } while (now < first + (Uint64)m_flAnimDuration);
 
-   SDL_BlitSurface(save, NULL, gpScreen, &prev_dstrect3);
+   if (save != nullptr) {
+      SDL_BlitSurface(save, NULL, gpScreen, &prev_dstrect3);
+   }
 
-   if (retsave) {
+   if (retsave && save != nullptr) {
       SDL_BlitSurface(gpScreen, &dstrect2, save, NULL);
-   } else {
-      SDL_FreeSurface(save);
+   } else if (save != nullptr) {
+      SDL_DestroySurface(save);
       save = NULL;
    }
 
@@ -1165,14 +1174,15 @@ SDL_Surface *CGame::AnimCardMove(int sx, int sy, int dx, int dy,
       return card;
    }
 
-   SDL_FreeSurface(card);
-
+   SDL_DestroySurface(card);
    return save;
 }
 
 void CGame::DrawScore()
 {
-   UTIL_FillRect(gpScreen, 25, 190, 110, 70, 30, 130, 100);
+   if (gpScreen != nullptr) {
+      UTIL_FillRect(gpScreen, 25, 190, 110, 70, 30, 130, 100);
+   }
    CBox s(25, 190, 110, 70, 0, 175, 0, 160, true);
    gpGeneral->DrawTextBrush("SCORE", 30, 190, 255, 255, 0, 32);
    gpGeneral->DrawTextBrush(va("%6d", m_iScore), 30, 220);
@@ -1195,20 +1205,24 @@ void CGame::DrawDeskCard()
          gpGeneral->DrawCard(m_DeskCards[i], dstrect.x, dstrect.y,
             48, 78, false);
       } else {
-         UTIL_FillRect(gpScreen, dstrect.x, dstrect.y, dstrect.w,
-            dstrect.h, 30, 130, 100);
+         if (gpScreen != nullptr) {
+            UTIL_FillRect(gpScreen, dstrect.x, dstrect.y, dstrect.w, dstrect.h, 30, 130, 100);
+         }
       }
    }
 
-   UTIL_FillRect(gpScreen, 140, 100 + 78 * 2, 48 * 10, 10, 30, 130, 100);
+   if (gpScreen != nullptr) {
+      UTIL_FillRect(gpScreen, 140, 100 + 78 * 2, 48 * 10, 10, 30, 130, 100);
+   }
+
    gpGeneral->UpdateScreen(140, 100, 48 * 10, 78 * 2 + 10);
 }
 
 bool CGame::DoubleUp(CBasePlayer *player)
 {
-   CBox *mainbox = new CBox(20, 290, 595, 70, 80, 55, 85);
-   CButton *yesbtn = new CButton(1, 30, 325, 100, 30, 128, 128, 128);
-   CButton *nobtn = new CButton(2, 145, 325, 100, 30, 128, 128, 128);
+   auto mainbox = std::make_unique<CBox>(20, 290, 595, 70, 80, 55, 85);
+   auto yesbtn = std::make_unique<CButton>(1, 30, 325, 100, 30, 128, 128, 128);
+   auto nobtn = std::make_unique<CButton>(2, 145, 325, 100, 30, 128, 128, 128);
    bool ret = true;
 
    gpGeneral->DrawText(msg("doubleupyesorno"), 30, 290, 255, 255, 0, 32);
@@ -1217,8 +1231,8 @@ bool CGame::DoubleUp(CBasePlayer *player)
 
    while (1) {
       int k = gpGeneral->ReadKey();
-      if (k > SDLK_LAST) {
-         if (k == SDLK_LAST + 2) {
+      if (k > 1000) {
+         if (k == 1000 + 2) {
             // the "no" button is clicked
             ret = false;
          }
@@ -1226,9 +1240,9 @@ bool CGame::DoubleUp(CBasePlayer *player)
       }
    }
 
-   delete yesbtn;
-   delete nobtn;
-   delete mainbox;
+   yesbtn.reset();
+   nobtn.reset();
+   mainbox.reset();
 
    if (!ret) {
       return false;
@@ -1245,9 +1259,9 @@ bool CGame::DoubleUp(CBasePlayer *player)
 
    c = RandomLong(0, 47);
 
-   mainbox = new CBox(20, 290, 595, 70, 80, 55, 85);
-   yesbtn = new CButton(1, 30, 325, 100, 30, 128, 128, 128);
-   nobtn = new CButton(2, 145, 325, 100, 30, 128, 128, 128);
+   mainbox = std::make_unique<CBox>(20, 290, 595, 70, 80, 55, 85);
+   yesbtn = std::make_unique<CButton>(1, 30, 325, 100, 30, 128, 128, 128);
+   nobtn = std::make_unique<CButton>(2, 145, 325, 100, 30, 128, 128, 128);
 
    gpGeneral->DrawText(msg("bigorsmall"), 30, 290, 255, 255, 0, 32);
    gpGeneral->DrawText(msg("big"), 35, 325, 255, 0, 255, 30);
@@ -1261,8 +1275,8 @@ bool CGame::DoubleUp(CBasePlayer *player)
    bool isbig = true;
    while (1) {
       int k = gpGeneral->ReadKey();
-      if (k > SDLK_LAST) {
-         if (k == SDLK_LAST + 2) {
+      if (k > 1000) {
+         if (k == 1000 + 2) {
             // the "small" button is clicked
             isbig = false;
          }
@@ -1270,14 +1284,11 @@ bool CGame::DoubleUp(CBasePlayer *player)
       }
    }
 
-   delete yesbtn;
-   delete nobtn;
-   delete mainbox;
+   yesbtn.reset();
+   nobtn.reset();
+   mainbox.reset();
 
-   SDL_Surface *save = SDL_CreateRGBSurface(gpScreen->flags & (~SDL_HWSURFACE),
-      48, 78, gpScreen->format->BitsPerPixel, gpScreen->format->Rmask,
-      gpScreen->format->Gmask, gpScreen->format->Bmask,
-      gpScreen->format->Amask);
+   SDL_Surface *save = SDL_CreateSurface(48, 78, SDL_PIXELFORMAT_RGBA8888);
 
    SDL_Rect dstrect;
    dstrect.x = 60;
@@ -1285,11 +1296,10 @@ bool CGame::DoubleUp(CBasePlayer *player)
    dstrect.w = 48;
    dstrect.h = 78;
 
-   SDL_BlitSurface(gpScreen, &dstrect, save, NULL);
-
    gpGeneral->DrawCard(c, 60, 105, 48, 78);
    gpGeneral->PlaySound(SOUND_DRAWCARD);
    AnimCardMove(60, 105, 150, 115, 48, 78, save);
+   SDL_DestroySurface(save);
    UTIL_Delay(800);
 
    if ((isbig && c.GetMonth() >= 7) || (!isbig && c.GetMonth() < 7)) {

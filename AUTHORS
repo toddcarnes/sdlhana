@@ -1,6 +1,10 @@
-This program is primarily written by:
+This program was originally written by:
 
 Wei Mingzhi <whistler at openoffice dot org>
 
-Also see the file 'CREDITS' for credits.
+Modernization to C++23, SDL3, SDL3_mixer, SDL3_ttf, and CMake by:
+
+Todd Carnes <toddcarnes@gmail.com>
+
+Also see the file 'CREDITS' for full credits.
 

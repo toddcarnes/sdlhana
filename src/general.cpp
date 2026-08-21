@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2005, 2006 Wei Mingzhi <whistler@openoffice.org>
+// Copyright (c) 2026 Todd Carnes <toddcarnes@gmail.com>
 // All Rights Reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -19,8 +20,6 @@
 //
 
 #include "main.h"
-
-CGeneral *gpGeneral = NULL;
 
 const char *soundfile[NUM_SOUND + 1] = {
    "card1",
@@ -52,156 +51,105 @@ CGeneral::~CGeneral()
 
 void CGeneral::ScreenFade(int duration, SDL_Surface *s)
 {
-   SDL_Surface *pNewFadeSurface = SDL_CreateRGBSurface(gpScreen->flags & (~SDL_HWSURFACE),
-      gpScreen->w, gpScreen->h, gpScreen->format->BitsPerPixel, gpScreen->format->Rmask,
-      gpScreen->format->Gmask, gpScreen->format->Bmask,
-      gpScreen->format->Amask);
-
-   if (!pNewFadeSurface) {
-      // cannot create surface, just blit the surface to the screen
-      if (s != NULL) {
-         SDL_BlitSurface(s, NULL, gpScreen, NULL);
-         SDL_UpdateRect(gpScreen, 0, 0, gpScreen->w, gpScreen->h);
-      }
-      return;
+   (void)duration;
+   (void)s;
+   if (gpRenderer != nullptr) {
+      SDL_RenderPresent(gpRenderer);
    }
-
-   if (s == NULL) {
-      // make black screen
-      SDL_FillRect(pNewFadeSurface, NULL,
-         SDL_MapRGB(pNewFadeSurface->format, 0, 0, 0));
-   } else {
-      SDL_BlitSurface(s, NULL, pNewFadeSurface, NULL);
-   }
-
-   if (SDL_MUSTLOCK(gpScreen)) {
-      if (SDL_LockSurface(gpScreen) < 0) {
-         // cannot lock screen, just blit the surface to the screen
-         if (s != NULL) {
-            SDL_BlitSurface(s, NULL, gpScreen, NULL);
-            SDL_UpdateRect(gpScreen, 0, 0, gpScreen->w, gpScreen->h);
-         }
-         return;
-      }
-   }
-
-   const unsigned int size = gpScreen->pitch * gpScreen->h;
-   unsigned char *fadeFromRGB = (unsigned char *)calloc(size, 1);
-   unsigned char *fadeToRGB = (unsigned char *)calloc(size, 1);
-   if (fadeFromRGB == NULL || fadeToRGB == NULL) {
-      TerminateOnError("Memory allocation error !");
-   }
-
-   memcpy(fadeFromRGB, gpScreen->pixels, size);
-   memcpy(fadeToRGB, pNewFadeSurface->pixels, size);
-
-   int first = SDL_GetTicks(), now = first;
-
-   do {
-      // The +50 is to allow first frame to show some change
-      float ratio = (now - first + 50) / (float)duration;
-      const unsigned char amount = (unsigned char)(ratio * 255);
-      const unsigned char oldamount = 255 - amount;
-      unsigned char *pw = (unsigned char *)gpScreen->pixels;
-      unsigned char *stop = pw + size;
-      unsigned char *from = fadeFromRGB;
-      unsigned char *to = fadeToRGB;
-
-      do {
-         //dividing by 256 instead of 255 provides huge optimization
-         *pw = (oldamount * *(from++) + amount * *(to++)) / 256;
-      } while (++pw != stop);
-
-      now = SDL_GetTicks();
-      SDL_UpdateRect(gpScreen, 0, 0, gpScreen->w, gpScreen->h);
-   } while (now - first + 50 < duration);
-
-   free(fadeFromRGB);
-   free(fadeToRGB);
-
-   SDL_BlitSurface(pNewFadeSurface, NULL, gpScreen, NULL);
-   SDL_UpdateRect(gpScreen, 0, 0, gpScreen->w, gpScreen->h);
-
-   if (SDL_MUSTLOCK(gpScreen))
-      SDL_UnlockSurface(gpScreen);
-
-   SDL_FreeSurface(pNewFadeSurface);
 }
 
 int CGeneral::ReadKey()
 {
    SDL_Event event;
 
-   // clear the event queue
-   while (SDL_PollEvent(&event)) {
-   }
-
    while (1) {
       if (SDL_WaitEvent(&event)) {
-         if (event.type == SDL_KEYDOWN) {
-            break;
-         } else if (event.type == SDL_MOUSEBUTTONDOWN) {
+         if (event.type == SDL_EVENT_KEY_DOWN) {
+            return (int)event.key.key;
+         } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
             if (event.button.button == SDL_BUTTON_RIGHT) {
                return SDLK_RIGHT;
             } else if (event.button.button == SDL_BUTTON_LEFT) {
-               int id = CButton::GetButtonId(event.button.x, event.button.y);
+               float lx = event.button.x;
+               float ly = event.button.y;
+               if (gpRenderer != nullptr) {
+                  SDL_RenderCoordinatesFromWindow(gpRenderer, event.button.x, event.button.y, &lx, &ly);
+               }
+               int id = CButton::GetButtonId((int)lx, (int)ly);
                if (id < 0) {
                   return SDLK_RETURN;
                }
-               return SDLK_LAST + id;
+               return 1000 + id;
             }
          }
       }
    }
+}
 
-   return event.key.keysym.sym;
+static void BlitSurfaceToRenderer(SDL_Surface *surface, const SDL_Rect *dstrect)
+{
+   if (surface == nullptr || gpRenderer == nullptr) return;
+   SDL_Texture *tex = SDL_CreateTextureFromSurface(gpRenderer, surface);
+   if (tex != nullptr) {
+      SDL_FRect frect;
+      frect.x = dstrect ? (float)dstrect->x : 0.0f;
+      frect.y = dstrect ? (float)dstrect->y : 0.0f;
+      frect.w = dstrect ? (float)dstrect->w : (float)surface->w;
+      frect.h = dstrect ? (float)dstrect->h : (float)surface->h;
+      SDL_RenderTexture(gpRenderer, tex, NULL, &frect);
+      SDL_DestroyTexture(tex);
+   }
 }
 
 void CGeneral::UpdateScreen(int x, int y, int w, int h)
 {
-   SDL_UpdateRect(gpScreen, x, y, w, h);
+   (void)x; (void)y; (void)w; (void)h;
+   if (gpRenderer != nullptr && gpScreen != nullptr) {
+      if (gpScreenTexture == nullptr) {
+         gpScreenTexture = SDL_CreateTextureFromSurface(gpRenderer, gpScreen);
+      } else {
+         SDL_UpdateTexture(gpScreenTexture, NULL, gpScreen->pixels, gpScreen->pitch);
+      }
+      SDL_RenderClear(gpRenderer);
+      SDL_RenderTexture(gpRenderer, gpScreenTexture, NULL, NULL);
+      SDL_RenderPresent(gpRenderer);
+   }
 }
 
 void CGeneral::ClearScreen(bool fadein, bool fadeout, bool bg)
 {
-   SDL_Surface *r = SDL_CreateRGBSurface(gpScreen->flags,
-      gpScreen->w, gpScreen->h, gpScreen->format->BitsPerPixel,
-      gpScreen->format->Rmask, gpScreen->format->Gmask,
-      gpScreen->format->Bmask, gpScreen->format->Amask);
+   (void)fadein; (void)fadeout;
+   if (gpScreen == nullptr) return;
 
-   if (bg) {
-      int w = r->w;
+   if (bg && m_imgBack != nullptr) {
+      int w = gpScreen->w;
       while (w > 0) {
-         int h = r->h;
+         int h = gpScreen->h;
          while (h > 0) {
             SDL_Rect dstrect;
-            dstrect.x = r->w - w;
-            dstrect.y = r->h - h;
+            dstrect.x = gpScreen->w - w;
+            dstrect.y = gpScreen->h - h;
             dstrect.w = m_imgBack->w;
             dstrect.h = m_imgBack->h;
-            SDL_BlitSurface(m_imgBack, NULL, r, &dstrect);
+            SDL_BlitSurface(m_imgBack, NULL, gpScreen, &dstrect);
             h -= m_imgBack->h;
          }
          w -= m_imgBack->w;
       }
    } else {
-      UTIL_FillRect(r, 0, 0, gpScreen->w, gpScreen->h, 30, 130, 100);
+      UTIL_FillRect(gpScreen, 0, 0, 640, 480, 30, 130, 100);
    }
 
-   UTIL_RectShade(r, 0, 0, gpScreen->w, gpScreen->h, 196, 196,
+   UTIL_RectShade(gpScreen, 0, 0, 640, 480, 196, 196,
       0, 0, 196, 196, 196, 0, 196);
 
-   if (fadeout) {
-      ScreenFade(300);
-   }
-
-   ScreenFade(fadein ? 300 : 0, r);
-   SDL_FreeSurface(r);
+   UpdateScreen(0, 0, 640, 480);
 }
 
 void CGeneral::DrawTextBrush(const char *t, int x, int y, int r, int g, int b, int size)
 {
    SDL_Surface *s = m_fntBrush.Render(t, r, g, b, size, ((size < 32) ? false : true));
+   if (s == nullptr || gpScreen == nullptr) return;
 
    SDL_Rect dstrect;
    dstrect.x = x;
@@ -210,7 +158,7 @@ void CGeneral::DrawTextBrush(const char *t, int x, int y, int r, int g, int b, i
    dstrect.h = s->h;
 
    SDL_BlitSurface(s, NULL, gpScreen, &dstrect);
-   SDL_FreeSurface(s);
+   SDL_DestroySurface(s);
 
    UpdateScreen(x, y, dstrect.w, dstrect.h);
 }
@@ -218,6 +166,7 @@ void CGeneral::DrawTextBrush(const char *t, int x, int y, int r, int g, int b, i
 void CGeneral::DrawText(const char *t, int x, int y, int r, int g, int b, int size)
 {
    SDL_Surface *s = m_fnt.Render(t, r, g, b, size);
+   if (s == nullptr || gpScreen == nullptr) return;
 
    SDL_Rect dstrect;
    dstrect.x = x;
@@ -226,7 +175,7 @@ void CGeneral::DrawText(const char *t, int x, int y, int r, int g, int b, int si
    dstrect.h = s->h;
 
    SDL_BlitSurface(s, NULL, gpScreen, &dstrect);
-   SDL_FreeSurface(s);
+   SDL_DestroySurface(s);
 
    UpdateScreen(x, y, dstrect.w, dstrect.h);
 }
@@ -236,15 +185,12 @@ SDL_Surface *CGeneral::RenderCard(const CCard &c, int w, int h)
    SDL_Surface *s;
    int pw = m_imgCards->w / 4, ph = m_imgCards->h / 13;
 
-   s = SDL_CreateRGBSurface(gpScreen->flags & ~SDL_HWSURFACE,
-      w, h, gpScreen->format->BitsPerPixel,
-      gpScreen->format->Rmask, gpScreen->format->Gmask,
-      gpScreen->format->Bmask, gpScreen->format->Amask);
+   s = SDL_CreateSurface(w, h, SDL_PIXELFORMAT_RGBA8888);
 
    w--;
    h--;
 
-   SDL_SetColorKey(s, SDL_SRCCOLORKEY, SDL_MapRGBA(s->format, 0, 0, 0, 0));
+   SDL_SetSurfaceColorKey(s, true, SDL_MapSurfaceRGBA(s, 0, 0, 0, 0));
    UTIL_FillRect(s, w, 1, 1, h - 1, 1, 1, 1);
    UTIL_FillRect(s, 1, h, w, 1, 1, 1, 1);
 
@@ -262,7 +208,7 @@ SDL_Surface *CGeneral::RenderCard(const CCard &c, int w, int h)
    dstrect2.w = w;
    dstrect2.h = h;
 
-   UTIL_ScaleBlit(m_imgCards, &dstrect, s, &dstrect2);
+   SDL_BlitSurfaceScaled(m_imgCards, &dstrect, s, &dstrect2, SDL_SCALEMODE_LINEAR);
 
    if (c.m_iRenderEffect & EF_DARK) {
       int i, j;
@@ -289,15 +235,16 @@ SDL_Surface *CGeneral::RenderCard(const CCard &c, int w, int h)
 void CGeneral::DrawCard(const CCard &c, int x, int y, int w, int h, bool update)
 {
    SDL_Surface *p = RenderCard(c, w, h);
-   SDL_Rect dstrect;
+   if (p == nullptr || gpScreen == nullptr) return;
 
+   SDL_Rect dstrect;
    dstrect.x = x;
    dstrect.y = y;
    dstrect.w = w;
    dstrect.h = h;
 
    SDL_BlitSurface(p, NULL, gpScreen, &dstrect);
-   SDL_FreeSurface(p);
+   SDL_DestroySurface(p);
 
    if (update) {
       UpdateScreen(x, y, dstrect.w, dstrect.h);
@@ -318,8 +265,8 @@ void CGeneral::LoadImages()
 
 void CGeneral::FreeImages()
 {
-   SDL_FreeSurface(m_imgCards);
-   SDL_FreeSurface(m_imgBack);
+   SDL_DestroySurface(m_imgCards);
+   SDL_DestroySurface(m_imgBack);
 }
 
 void CGeneral::LoadSound()
@@ -360,11 +307,12 @@ void CGeneral::FreeSound()
 
 void CGeneral::PlaySound(int num)
 {
-   assert(num >= 0 && num < NUM_SOUND);
-   if (g_fNoSound) {
-      return;
+   if (g_fNoSound) return;
+   if (num < 0 || num >= NUM_SOUND) return;
+
+   if (m_snd[num] != NULL) {
+      SOUND_PlayWAV(m_snd[num]);
    }
-   SOUND_PlayWAV(m_snd[num]);
 }
 
 SDL_Surface *CGeneral::LoadBitmapFile(const char *filename)
@@ -372,19 +320,20 @@ SDL_Surface *CGeneral::LoadBitmapFile(const char *filename)
    SDL_Surface *pic = SDL_LoadBMP(filename);
 
    if (pic == NULL) {
-      TerminateOnError("Cannot load Bitmap file %s: %s", filename, SDL_GetError());
+      TerminateOnError("Cannot load bitmap file %s: %s",
+         filename, SDL_GetError());
    }
 
    return pic;
 }
 
-SDL_AudioCVT *CGeneral::LoadSoundFile(const char *filename)
+SoundSample *CGeneral::LoadSoundFile(const char *filename)
 {
    if (g_fNoSound) {
       return NULL;
    }
 
-   SDL_AudioCVT *s = SOUND_LoadWAV(filename);
+   SoundSample *s = SOUND_LoadWAV(filename);
 
    if (s == NULL) {
       TerminateOnError("Cannot load sound file %s: %s",
@@ -421,13 +370,11 @@ void CGeneral::InitCursor()
       "*****          ***"
    };
 
-   unsigned char data[24 * 3], mask[24 * 3];
-
+   Uint8 data[24 * 3], mask[24 * 3];
    int i, j, index = -1;
 
-   for (i = 0; i < 24 * 3; i++) {
-      data[i] = mask[i] = 0;
-   }
+   memset(data, 0, sizeof(data));
+   memset(mask, 0, sizeof(mask));
 
    for (i = 0; i < 22; i++) {
       for (j = 0; j < 24; j++) {
@@ -461,7 +408,10 @@ void CGeneral::InitCursor()
 
 void CGeneral::FreeCursor()
 {
-   SDL_FreeCursor(m_HandCursor);
+   if (m_HandCursor != nullptr) {
+      SDL_DestroyCursor(m_HandCursor);
+      m_HandCursor = nullptr;
+   }
 }
 
 CBox::CBox(int x, int y, int w, int h, int r, int g, int b, int a, bool keep)
@@ -472,39 +422,46 @@ CBox::CBox(int x, int y, int w, int h, int r, int g, int b, int a, bool keep)
    }
 
    m_fFakeBox = false;
+   m_SavedRect.x = x;
+   m_SavedRect.y = y;
+   m_SavedRect.w = w;
+   m_SavedRect.h = h;
 
-   if (keep) {
-      m_pSavedArea = NULL;
+   if (!keep && gpScreen != nullptr) {
+      m_pSavedArea = SDL_CreateSurface(w, h, gpScreen->format);
+      if (m_pSavedArea != nullptr) {
+         SDL_Rect srcrect = {x, y, w, h};
+         SDL_BlitSurface(gpScreen, &srcrect, m_pSavedArea, NULL);
+      }
    } else {
-      m_pSavedArea = SDL_CreateRGBSurface(gpScreen->flags,
-         w, h, gpScreen->format->BitsPerPixel,
-         gpScreen->format->Rmask, gpScreen->format->Gmask,
-         gpScreen->format->Bmask, gpScreen->format->Amask);
-
-      m_SavedRect.x = x;
-      m_SavedRect.y = y;
-      m_SavedRect.w = w;
-      m_SavedRect.h = h;
-
-      SDL_BlitSurface(gpScreen, &m_SavedRect, m_pSavedArea, NULL);
+      m_pSavedArea = nullptr;
    }
 
-   UTIL_FillRectAlpha(gpScreen, x, y, w, h, r, g, b, a);
-   UTIL_RectShade(gpScreen, x, y, w, h, 255, 255, 255, 0, 0, 0,
-      128, 128, 128);
+   if (gpScreen != nullptr) {
+      UTIL_FillRectAlpha(gpScreen, x, y, w, h, r, g, b, a);
+      UTIL_RectShade(gpScreen, x, y, w, h, 255, 255, 255, 0, 0, 0, 128, 128, 128);
+   }
 
-   gpGeneral->UpdateScreen(x, y, w, h);
+   if (gpGeneral) {
+      gpGeneral->UpdateScreen(x, y, w, h);
+   }
 }
 
 CBox::~CBox()
 {
-   if (m_fFakeBox || m_pSavedArea == NULL) {
+   if (m_fFakeBox) {
       return;
    }
 
-   SDL_BlitSurface(m_pSavedArea, NULL, gpScreen, &m_SavedRect);
-   SDL_FreeSurface(m_pSavedArea);
-   gpGeneral->UpdateScreen(m_SavedRect.x, m_SavedRect.y, m_SavedRect.w, m_SavedRect.h);
+   if (m_pSavedArea != nullptr && gpScreen != nullptr) {
+      SDL_BlitSurface(m_pSavedArea, NULL, gpScreen, &m_SavedRect);
+      SDL_DestroySurface(m_pSavedArea);
+      m_pSavedArea = nullptr;
+   }
+
+   if (gpGeneral) {
+      gpGeneral->UpdateScreen(m_SavedRect.x, m_SavedRect.y, m_SavedRect.w, m_SavedRect.h);
+   }
 }
 
 int CButton::bx[MAX_BUTTONS], CButton::by[MAX_BUTTONS];

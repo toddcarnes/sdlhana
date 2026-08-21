@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2005, 2006 Wei Mingzhi <whistler@openoffice.org>
+// Copyright (c) 2026 Todd Carnes <toddcarnes@gmail.com>
 // All Rights Reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -22,13 +23,15 @@
 
 CFont::CFont():
 m_iNumChar(0),
-m_pChars(NULL)
+m_pChars(NULL),
+m_pTTFFont(NULL)
 {
 }
 
 CFont::CFont(const char *filename):
 m_iNumChar(0),
-m_pChars(NULL)
+m_pChars(NULL),
+m_pTTFFont(NULL)
 {
    Load(filename);
 }
@@ -42,6 +45,17 @@ int CFont::Load(const char *filename)
 {
    if (IsLoaded()) {
       FreeAllTheStuff();
+   }
+
+   int useTTF = atoi(cfg.Get("OPTIONS", "UseTTF", "0"));
+   const char *ttfPath = cfg.Get("OPTIONS", "TTFFontPath", "");
+
+   if (useTTF && ttfPath != nullptr && strlen(ttfPath) > 0) {
+      m_pTTFFont = TTF_OpenFont(ttfPath, 32.0f);
+      if (m_pTTFFont != nullptr) {
+         return 0;
+      }
+      std::println(stderr, "WARNING: Could not open TTF font {}, falling back to bitmap font", ttfPath);
    }
 
    FILE *fp = fopen(filename, "rb");
@@ -76,6 +90,15 @@ int CFont::Load(const char *filename)
 
 SDL_Surface *CFont::Render(const char *sz, int r, int g, int b, int size, bool shadow)
 {
+   if (m_pTTFFont != nullptr) {
+      TTF_SetFontSize(m_pTTFFont, (float)size);
+      SDL_Color color = { (Uint8)r, (Uint8)g, (Uint8)b, 255 };
+      SDL_Surface *surface = TTF_RenderText_Blended(m_pTTFFont, sz, 0, color);
+      if (surface == nullptr) {
+         std::println(stderr, "WARNING: TTF_RenderText_Blended failed: {}", SDL_GetError());
+      }
+      return surface;
+   }
    int length = 0, i, j, cur = 0;
    const char *p = sz;
    SDL_Surface *s = NULL;
@@ -90,13 +113,10 @@ SDL_Surface *CFont::Render(const char *sz, int r, int g, int b, int size, bool s
       }
    }
 
-   s = SDL_CreateRGBSurface((gpScreen->flags & (~SDL_HWSURFACE)) | SDL_SRCALPHA,
-      size / 2 * (length + 2), size, gpScreen->format->BitsPerPixel,
-      gpScreen->format->Rmask, gpScreen->format->Gmask,
-      gpScreen->format->Bmask, gpScreen->format->Amask);
+   s = SDL_CreateSurface(size / 2 * (length + 2), size, SDL_PIXELFORMAT_RGBA8888);
 
-   SDL_SetColorKey(s, SDL_SRCCOLORKEY, SDL_MapRGBA(s->format, 0, 0, 0, 0));
-   SDL_FillRect(s, NULL, SDL_MapRGBA(s->format, 0, 0, 0, 0));
+   SDL_SetSurfaceColorKey(s, true, SDL_MapSurfaceRGBA(s, 0, 0, 0, 0));
+   SDL_FillSurfaceRect(s, NULL, SDL_MapSurfaceRGBA(s, 0, 0, 0, 0));
 
    // HACKHACK: to make black color not transparent
    if (r == 0 && g == 0 && b == 0) {
@@ -109,6 +129,7 @@ SDL_Surface *CFont::Render(const char *sz, int r, int g, int b, int size, bool s
          unsigned int i;
          char c[4];
       } code;
+      code.i = 0;
 
       int bb = 1;
       if ((unsigned char)*p & 0x80) {
@@ -148,20 +169,16 @@ SDL_Surface *CFont::Render(const char *sz, int r, int g, int b, int size, bool s
          dstrect.w = size;
          dstrect.h = size;
 
-         SDL_Surface *char_surface = SDL_CreateRGBSurface(s->flags,
-            (shadow ? 66 : 64), (shadow ? 66 : 64),
-            gpScreen->format->BitsPerPixel,
-            gpScreen->format->Rmask, gpScreen->format->Gmask,
-            gpScreen->format->Bmask, gpScreen->format->Amask);
+         SDL_Surface *char_surface = SDL_CreateSurface(shadow ? 66 : 64, shadow ? 66 : 64, SDL_PIXELFORMAT_RGBA8888);
 
-         SDL_SetColorKey(char_surface, SDL_SRCCOLORKEY, SDL_MapRGBA(s->format, 0, 0, 0, 0));
-         SDL_FillRect(char_surface, NULL, SDL_MapRGBA(char_surface->format, 0, 0, 0, 0));
+         SDL_SetSurfaceColorKey(char_surface, true, SDL_MapSurfaceRGBA(char_surface, 0, 0, 0, 0));
+         SDL_FillSurfaceRect(char_surface, NULL, SDL_MapSurfaceRGBA(char_surface, 0, 0, 0, 0));
 
          if (shadow) {
             for (i = 0; i < 64; i++) {
                for (j = 0; j < 64; j++) {
                   if (c->pixeldata[i][j / 8] & (1 << (j & 7))) {
-                     UTIL_PutPixel(char_surface, j + 2, i + 2, SDL_MapRGBA(char_surface->format, 1, 1, 1, 255));
+                     UTIL_PutPixel(char_surface, j + 2, i + 2, 1, 1, 1);
                   }
                }
             }
@@ -170,13 +187,13 @@ SDL_Surface *CFont::Render(const char *sz, int r, int g, int b, int size, bool s
          for (i = 0; i < 64; i++) {
             for (j = 0; j < 64; j++) {
                if (c->pixeldata[i][j / 8] & (1 << (j & 7))) {
-                  UTIL_PutPixel(char_surface, j, i, SDL_MapRGBA(char_surface->format, r, g, b, 255));
+                  UTIL_PutPixel(char_surface, j, i, (unsigned char)r, (unsigned char)g, (unsigned char)b);
                }
             }
          }
 
-         SDL_SoftStretch(char_surface, NULL, s, &dstrect);
-         SDL_FreeSurface(char_surface);
+         SDL_BlitSurfaceScaled(char_surface, NULL, s, &dstrect, SDL_SCALEMODE_LINEAR);
+         SDL_DestroySurface(char_surface);
       }
 
       cur += ((bb == 3) ? size : size / 2);
@@ -232,6 +249,10 @@ fntchar_t *CFont::FindChar(unsigned int code)
 
 void CFont::FreeAllTheStuff()
 {
+   if (m_pTTFFont != nullptr) {
+      TTF_CloseFont(m_pTTFFont);
+      m_pTTFFont = nullptr;
+   }
    if (m_pChars != NULL)
       free(m_pChars);
    m_pChars = NULL;

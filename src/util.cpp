@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2005, 2006 Wei Mingzhi <whistler@openoffice.org>
+// Copyright (c) 2026 Todd Carnes <toddcarnes@gmail.com>
 // Portions Copyright (c) 2001 Gregory Velichansky <hmaon@bumba.net>
 // Portions Copyright (c) 2000 Stephane Magnenat <nct@ysagoon.com>
 // All Rights Reserved.
@@ -45,44 +46,21 @@ void trim(char *str)
       *(dest--) = '\0';
 }
 
-// Does a varargs printf into a temp buffer, so we don't need to have
+// Does a varargs printf into a thread-local buffer, so we don't need to have
 // varargs versions of all text functions.
 char *va(const char *format, ...)
 {
-   static char string[256];
-   va_list     argptr;
+   static thread_local char string[1024];
+   va_list argptr;
 
    va_start(argptr, format);
-   vsnprintf(string, 256, format, argptr);
+   vsnprintf(string, sizeof(string), format, argptr);
    va_end(argptr);
 
    return string;
 }
 
-static int glSeed = 0, glGen2 = 0, glGen1 = 0; // our random number generator's seed
-
-// This function initializes the random seed based on the initial seed value passed in the
-// initial_seed parameter.
-static void lsrand(unsigned int initial_seed)
-{
-   // Pick two large integers such that one is double the other
-   glGen2 = 3719;
-   glGen1 = glGen2 / 2;
-
-   // fill in the initial seed of the random number generator
-   glSeed = (glGen1 * initial_seed) + glGen2;
-}
-
-// This function is the equivalent of the rand() standard C library function, except that
-// whereas rand() works only with short integers (i.e. not above 32767), this function is
-// able to generate 32-bit random numbers. Isn't that nice?
-static int lrand(void)
-{
-   if (glSeed == 0) // if the random seed isn't initialized...
-      lsrand(time(NULL)); // initialize it first
-   glSeed = (glGen1 * glSeed) + glGen2; // do some twisted math
-   return (glSeed > 0) ? glSeed : -glSeed; // and return absolute value of the result
-}
+static std::mt19937 g_rng{std::random_device{}()};
 
 // This function returns a random integer number between (and including) the starting and
 // ending values passed by parameters from and to.
@@ -91,7 +69,8 @@ int RandomLong(int from, int to)
    if (to <= from)
       return from;
 
-   return from + lrand() / (INT_MAX / (to - from + 1));
+   std::uniform_int_distribution<int> dist(from, to);
+   return dist(g_rng);
 }
 
 // This function returns a random floating-point number between (and including) the starting
@@ -101,7 +80,8 @@ float RandomFloat(float from, float to)
    if (to <= from)
       return from;
 
-   return from + (float)lrand() / (INT_MAX / (to - from));
+   std::uniform_real_distribution<float> dist(from, to);
+   return dist(g_rng);
 }
 
 int log2(int val)
@@ -121,17 +101,17 @@ int log2(int val)
 void TerminateOnError(const char *fmt, ...)
 {
    va_list argptr;
-   char string[256];
+   char string[1024];
 
    // concatenate all the arguments in one string
    va_start(argptr, fmt);
    vsnprintf(string, sizeof(string), fmt, argptr);
    va_end(argptr);
 
-   fprintf(stderr, "\nFATAL ERROR: %s\n", string);
+   std::println(stderr, "\nFATAL ERROR: {}", string);
 
 #ifdef _WIN32
-   MessageBox(0, string, "ERROR", MB_ICONERROR);
+   MessageBoxA(0, string, "ERROR", MB_ICONERROR);
 #endif
 
    assert(!"TerminateOnError()"); // allows jumping to debugger
@@ -183,7 +163,8 @@ char *UTIL_StrGetLine(const char *buf, int width, int &length)
 // NOTE: The surface must be locked before calling this!
 unsigned int UTIL_GetPixel(SDL_Surface *surface, int x, int y)
 {
-   int bpp = surface->format->BytesPerPixel;
+   const SDL_PixelFormatDetails *details = SDL_GetPixelFormatDetails(surface->format);
+   int bpp = details ? details->bytes_per_pixel : 4;
 
    // Here p is the address to the pixel we want to retrieve
    unsigned char *p = (unsigned char *)surface->pixels + y * surface->pitch + x * bpp;
@@ -213,18 +194,19 @@ unsigned int UTIL_GetPixel(SDL_Surface *surface, int x, int y)
 // NOTE: The surface must be locked before calling this!
 void UTIL_PutPixel(SDL_Surface *surface, int x, int y, unsigned int pixel)
 {
-   int bpp = surface->format->BytesPerPixel;
+   const SDL_PixelFormatDetails *details = SDL_GetPixelFormatDetails(surface->format);
+   int bpp = details ? details->bytes_per_pixel : 4;
 
    // Here p is the address to the pixel we want to set
    unsigned char *p = (unsigned char *)surface->pixels + y * surface->pitch + x * bpp;
 
    switch (bpp) {
       case 1:
-         *p = pixel;
+         *p = (unsigned char)pixel;
          break;
 
       case 2:
-         *(unsigned short *)p = pixel;
+         *(unsigned short *)p = (unsigned short)pixel;
          break;
 
       case 3:
@@ -300,44 +282,6 @@ int UTIL_GetPixel(SDL_Surface *f, int x, int y,
 {
    unsigned int pixel;
    unsigned char *pp;
-
-   int n; /* general purpose 'n'. */
-
-   if (f == NULL)
-      return -1;
-
-   pp = (unsigned char *)f->pixels;
-
-   if (x >= f->w || y >= f->h)
-      return -1;
-
-   pp += (f->pitch * y);
-   pp += (x * f->format->BytesPerPixel);
-
-   // we do not lock the surface here, it would be inefficient XXX
-   // this reads the pixel as though it was a big-endian integer XXX
-   // I'm trying to avoid reading part the end of the pixel data by
-   // using a data-type that's larger than the pixels
-   for (n = 0, pixel = 0; n < f->format->BytesPerPixel; ++n, ++pp) {
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN
-      pixel >>= 8;
-      pixel |= *pp << (f->format->BitsPerPixel - 8);
-#else
-      pixel |= *pp;
-      pixel <<= 8;
-#endif
-   }
-
-   SDL_GetRGB(pixel, f->format, r, g, b);
-   return 0;
-}
-
-int UTIL_PutPixel(SDL_Surface *f, int x, int y,
-   unsigned char r, unsigned char g, unsigned char b)
-{
-   unsigned int pixel;
-   unsigned char *pp;
-
    int n;
 
    if (f == NULL)
@@ -348,12 +292,48 @@ int UTIL_PutPixel(SDL_Surface *f, int x, int y,
    if (x >= f->w || y >= f->h)
       return -1;
 
+   const SDL_PixelFormatDetails *details = SDL_GetPixelFormatDetails(f->format);
+
    pp += (f->pitch * y);
-   pp += (x * f->format->BytesPerPixel);
+   pp += (x * details->bytes_per_pixel);
 
-   pixel = SDL_MapRGB(f->format, r, g, b);
+   for (n = 0, pixel = 0; n < details->bytes_per_pixel; ++n, ++pp) {
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+      pixel >>= 8;
+      pixel |= *pp << (details->bits_per_pixel - 8);
+#else
+      pixel |= *pp;
+      pixel <<= 8;
+#endif
+   }
 
-   for (n = 0; n < f->format->BytesPerPixel; ++n, ++pp) {
+   SDL_GetRGB(pixel, details, NULL, r, g, b);
+   return 0;
+}
+
+int UTIL_PutPixel(SDL_Surface *f, int x, int y,
+   unsigned char r, unsigned char g, unsigned char b)
+{
+   unsigned int pixel;
+   unsigned char *pp;
+   int n;
+
+   if (f == NULL)
+      return -1;
+
+   pp = (unsigned char *)f->pixels;
+
+   if (x >= f->w || y >= f->h)
+      return -1;
+
+   const SDL_PixelFormatDetails *details = SDL_GetPixelFormatDetails(f->format);
+
+   pp += (f->pitch * y);
+   pp += (x * details->bytes_per_pixel);
+
+   pixel = SDL_MapRGB(details, NULL, r, g, b);
+
+   for (n = 0; n < details->bytes_per_pixel; ++n, ++pp) {
       *pp = (unsigned char)(pixel & 0xFF);
       pixel >>= 8;
    }
@@ -372,7 +352,8 @@ int UTIL_PutPixelAlpha(SDL_Surface *surface, int x, int y, unsigned char r,
    if ((x < 0) || (x >= surface->w) || (y < 0) || (y >= surface->h))
       return 1;
 
-   bpp = surface->format->BytesPerPixel;
+   const SDL_PixelFormatDetails *details = SDL_GetPixelFormatDetails(surface->format);
+   bpp = details->bytes_per_pixel;
    bits = ((Uint8 *) surface->pixels) + y * surface->pitch + x * bpp;
 
    /* Set the pixel */
@@ -380,45 +361,45 @@ int UTIL_PutPixelAlpha(SDL_Surface *surface, int x, int y, unsigned char r,
    case 1:
       {
          pixel = *((Uint8 *) (bits));
-         SDL_GetRGB(pixel, surface->format, &tr, &tg, &tb);
-         tr = (r * (255 - a) + tr * a) >> 8;
-         tg = (g * (255 - a) + tg * a) >> 8;
-         tb = (b * (255 - a) + tb * a) >> 8;
-         pixel = SDL_MapRGB(surface->format, tr, tg, tb);
+         SDL_GetRGB(pixel, details, NULL, &tr, &tg, &tb);
+         tr = (Uint8)((r * (255 - a) + tr * a) >> 8);
+         tg = (Uint8)((g * (255 - a) + tg * a) >> 8);
+         tb = (Uint8)((b * (255 - a) + tb * a) >> 8);
+         pixel = SDL_MapRGB(details, NULL, tr, tg, tb);
          *((Uint8 *) (bits)) = (Uint8) pixel;
       }
       break;
    case 2:
       {
          pixel = *((Uint16 *) (bits));
-         SDL_GetRGB(pixel, surface->format, &tr, &tg, &tb);
-         tr = (r * (255 - a) + tr * a) >> 8;
-         tg = (g * (255 - a) + tg * a) >> 8;
-         tb = (b * (255 - a) + tb * a) >> 8;
-         pixel = SDL_MapRGB(surface->format, tr, tg, tb);
+         SDL_GetRGB(pixel, details, NULL, &tr, &tg, &tb);
+         tr = (Uint8)((r * (255 - a) + tr * a) >> 8);
+         tg = (Uint8)((g * (255 - a) + tg * a) >> 8);
+         tb = (Uint8)((b * (255 - a) + tb * a) >> 8);
+         pixel = SDL_MapRGB(details, NULL, tr, tg, tb);
          *((Uint16 *) (bits)) = (Uint16) pixel;
       }
       break;
    case 3:
       {
          pixel = *((Uint32 *) (bits));
-         SDL_GetRGB(pixel, surface->format, &tr, &tg, &tb);
-         tr = (r * (255 - a) + tr * a) >> 8;
-         tg = (g * (255 - a) + tg * a) >> 8;
-         tb = (b * (255 - a) + tb * a) >> 8;
-         *((bits) + surface->format->Rshift / 8) = tr;
-         *((bits) + surface->format->Gshift / 8) = tg;
-         *((bits) + surface->format->Bshift / 8) = tb;
+         SDL_GetRGB(pixel, details, NULL, &tr, &tg, &tb);
+         tr = (Uint8)((r * (255 - a) + tr * a) >> 8);
+         tg = (Uint8)((g * (255 - a) + tg * a) >> 8);
+         tb = (Uint8)((b * (255 - a) + tb * a) >> 8);
+         *((bits) + details->Rshift / 8) = tr;
+         *((bits) + details->Gshift / 8) = tg;
+         *((bits) + details->Bshift / 8) = tb;
       }
       break;
    case 4:
       {
          pixel = *((Uint32 *) (bits));
-         SDL_GetRGB(pixel, surface->format, &tr, &tg, &tb);
-         tr = (r * (255 - a) + tr * a) >> 8;
-         tg = (g * (255 - a) + tg * a) >> 8;
-         tb = (b * (255 - a) + tb * a) >> 8;
-         pixel = SDL_MapRGB(surface->format, tr, tg, tb);
+         SDL_GetRGB(pixel, details, NULL, &tr, &tg, &tb);
+         tr = (Uint8)((r * (255 - a) + tr * a) >> 8);
+         tg = (Uint8)((g * (255 - a) + tg * a) >> 8);
+         tb = (Uint8)((b * (255 - a) + tb * a) >> 8);
+         pixel = SDL_MapRGB(details, NULL, tr, tg, tb);
          *((Uint32 *) (bits)) = (Uint32) pixel;
       }
       break;
@@ -519,8 +500,8 @@ int UTIL_ScaleBlit(SDL_Surface *src, SDL_Rect *sr, SDL_Surface *dst, SDL_Rect *d
          bs /= area;
 
          if (rs >= 256 || gs >= 256 || bs >= 256) {
-            fprintf(stderr, "fixed point weighted average overflow!");
-            fprintf(stderr, "Values: %d, %d, %d\n", rs, gs, bs);
+            std::println(stderr, "fixed point weighted average overflow!");
+            std::println(stderr, "Values: {}, {}, {}", rs, gs, bs);
          }
 
          r = (unsigned char)rs;
@@ -543,24 +524,9 @@ int UTIL_ScaleBlit(SDL_Surface *src, SDL_Rect *sr, SDL_Surface *dst, SDL_Rect *d
 
 SDL_Surface *UTIL_ScaleSurface(SDL_Surface *s, int w, int h)
 {
-   SDL_Surface *r = SDL_CreateRGBSurface(s->flags,
-      w, h, s->format->BitsPerPixel, s->format->Rmask,
-      s->format->Gmask, s->format->Bmask,
-      s->format->Amask);
-
-   SDL_Rect dstrect, dstrect2;
-
-   dstrect.x = 0;
-   dstrect.y = 0;
-   dstrect.w = w;
-   dstrect.h = h;
-
-   dstrect2.x = 0;
-   dstrect2.y = 0;
-   dstrect2.w = s->w;
-   dstrect2.h = s->h;
-
-   UTIL_ScaleBlit(s, &dstrect2, r, &dstrect);
+   SDL_Surface *r = SDL_CreateSurface(w, h, s->format);
+   SDL_Rect dstrect = {0, 0, w, h};
+   SDL_BlitSurfaceScaled(s, NULL, r, &dstrect, SDL_SCALEMODE_LINEAR);
    return r;
 }
 
@@ -584,8 +550,10 @@ void UTIL_Scale2X(SDL_Surface *src, SDL_Surface *dst)
    const int dstpitch = dst->pitch;
    const int width = src->w;
    const int height = src->h;
+   const SDL_PixelFormatDetails *details = SDL_GetPixelFormatDetails(src->format);
+   int bpp = details ? details->bytes_per_pixel : 4;
 
-   switch (src->format->BytesPerPixel) {
+   switch (bpp) {
    case 1:
       {
          Uint8 E0, E1, E2, E3, B, D, E, F, H;
@@ -721,9 +689,10 @@ void UTIL_HorzLine(SDL_Surface *surface, short x, short y, short l,
    if (l == 0)
       return;
 
-   pixel = SDL_MapRGB(surface->format, r, g, b);
+   pixel = SDL_MapSurfaceRGB(surface, r, g, b);
+   const SDL_PixelFormatDetails *details = SDL_GetPixelFormatDetails(surface->format);
 
-   bpp = surface->format->BytesPerPixel;
+   bpp = details ? details->bytes_per_pixel : 4;
    bits = ((Uint8 *)surface->pixels) + y * surface->pitch + x * bpp;
 
    /* Set the pixels */
@@ -746,12 +715,12 @@ void UTIL_HorzLine(SDL_Surface *surface, short x, short y, short l,
          /* Format/endian independent */
          Uint8 nr, ng, nb;
          for (n = 0; n < (unsigned)l; n++) {
-            nr = (pixel >> surface->format->Rshift) & 0xFF;
-            ng = (pixel >> surface->format->Gshift) & 0xFF;
-            nb = (pixel >> surface->format->Bshift) & 0xFF;
-            *((bits) + surface->format->Rshift / 8) = nr; 
-            *((bits) + surface->format->Gshift / 8) = ng;
-            *((bits) + surface->format->Bshift / 8) = nb;
+            nr = (Uint8)((pixel >> details->Rshift) & 0xFF);
+            ng = (Uint8)((pixel >> details->Gshift) & 0xFF);
+            nb = (Uint8)((pixel >> details->Bshift) & 0xFF);
+            *((bits) + details->Rshift / 8) = nr; 
+            *((bits) + details->Gshift / 8) = ng;
+            *((bits) + details->Bshift / 8) = nb;
             bits += 3;
          }
          break;
@@ -797,9 +766,10 @@ void UTIL_VertLine(SDL_Surface *surface, short x, short y, short l,
    if (l == 0)
       return;
 
-   pixel = SDL_MapRGB(surface->format, r, g, b);
+   pixel = SDL_MapSurfaceRGB(surface, r, g, b);
+   const SDL_PixelFormatDetails *details = SDL_GetPixelFormatDetails(surface->format);
 
-   bpp = surface->format->BytesPerPixel;
+   bpp = details ? details->bytes_per_pixel : 4;
    bits = ((Uint8 *) surface->pixels) + y * surface->pitch + x * bpp;
 
    /* Set the pixels */
@@ -820,12 +790,12 @@ void UTIL_VertLine(SDL_Surface *surface, short x, short y, short l,
       /* Format/endian independent */
       Uint8 nr, ng, nb;
       for (n = 0; n < (unsigned) l; n++) {
-         nr = (pixel >> surface->format->Rshift) & 0xFF;
-         ng = (pixel >> surface->format->Gshift) & 0xFF;
-         nb = (pixel >> surface->format->Bshift) & 0xFF;
-         *((bits) + surface->format->Rshift / 8) = nr;
-         *((bits) + surface->format->Gshift / 8) = ng;
-         *((bits) + surface->format->Bshift / 8) = nb;
+         nr = (Uint8)((pixel >> details->Rshift) & 0xFF);
+         ng = (Uint8)((pixel >> details->Gshift) & 0xFF);
+         nb = (Uint8)((pixel >> details->Bshift) & 0xFF);
+         *((bits) + details->Rshift / 8) = nr;
+         *((bits) + details->Gshift / 8) = ng;
+         *((bits) + details->Bshift / 8) = nb;
          bits += surface->pitch;
       }
       break;
@@ -841,10 +811,10 @@ void UTIL_VertLine(SDL_Surface *surface, short x, short y, short l,
 void UTIL_Rect(SDL_Surface *surface, int x1, int y1, int w, int h,
                int r, int g, int b)
 {
-   UTIL_HorzLine(surface, x1, y1, w, r, g, b);
-   UTIL_HorzLine(surface, x1, y1 + h - 1, w, r, g, b);
-   UTIL_VertLine(surface, x1, y1, h, r, g, b);
-   UTIL_VertLine(surface, x1 + w - 1, y1, h, r, g, b);
+   UTIL_HorzLine(surface, (short)x1, (short)y1, (short)w, (unsigned char)r, (unsigned char)g, (unsigned char)b);
+   UTIL_HorzLine(surface, (short)x1, (short)(y1 + h - 1), (short)w, (unsigned char)r, (unsigned char)g, (unsigned char)b);
+   UTIL_VertLine(surface, (short)x1, (short)y1, (short)h, (unsigned char)r, (unsigned char)g, (unsigned char)b);
+   UTIL_VertLine(surface, (short)(x1 + w - 1), (short)y1, (short)h, (unsigned char)r, (unsigned char)g, (unsigned char)b);
 }
 
 void UTIL_VertLineShade(SDL_Surface *surface, short x, short y, short l,
@@ -880,15 +850,16 @@ void UTIL_VertLineShade(SDL_Surface *surface, short x, short y, short l,
    if (l == 0)
       return;
 
-   bpp = surface->format->BytesPerPixel;
+   const SDL_PixelFormatDetails *details = SDL_GetPixelFormatDetails(surface->format);
+   bpp = details ? details->bytes_per_pixel : 4;
    bits = ((Uint8 *)surface->pixels) + y * surface->pitch + x * bpp;
 
    /* Set the pixels */
    switch (bpp) {
    case 1:
       for (n = 0; n < (unsigned) l; n++) {
-         pixel = SDL_MapRGB(surface->format, (r1 * (l - n) + r2 * n) / l,
-            (g1 * (l - n) + g2 * n) / l, (b1 * (l - n) + b2 * n) / l);
+         pixel = SDL_MapSurfaceRGB(surface, (Uint8)((r1 * (l - n) + r2 * n) / l),
+            (Uint8)((g1 * (l - n) + g2 * n) / l), (Uint8)((b1 * (l - n) + b2 * n) / l));
          *((Uint8 *)(bits)) = (Uint8)pixel;
          bits += surface->pitch;
       }
@@ -896,8 +867,8 @@ void UTIL_VertLineShade(SDL_Surface *surface, short x, short y, short l,
 
    case 2:
       for (n = 0; n < (unsigned) l; n++) {
-         pixel = SDL_MapRGB(surface->format, (r1 * (l - n) + r2 * n) / l,
-            (g1 * (l - n) + g2 * n) / l, (b1 * (l - n) + b2 * n) / l);
+         pixel = SDL_MapSurfaceRGB(surface, (Uint8)((r1 * (l - n) + r2 * n) / l),
+            (Uint8)((g1 * (l - n) + g2 * n) / l), (Uint8)((b1 * (l - n) + b2 * n) / l));
          *((Uint16 *)(bits)) = (Uint16)pixel;
          bits += surface->pitch;
       }
@@ -907,22 +878,22 @@ void UTIL_VertLineShade(SDL_Surface *surface, short x, short y, short l,
       /* Format/endian independent */
       Uint8 nr, ng, nb;
       for (n = 0; n < (unsigned) l; n++) {
-         pixel = SDL_MapRGB(surface->format, (r1 * (l - n) + r2 * n) / l,
-            (g1 * (l - n) + g2 * n) / l, (b1 * (l - n) + b2 * n) / l);
-         nr = (pixel >> surface->format->Rshift) & 0xFF;
-         ng = (pixel >> surface->format->Gshift) & 0xFF;
-         nb = (pixel >> surface->format->Bshift) & 0xFF;
-         *((bits) + surface->format->Rshift / 8) = nr;
-         *((bits) + surface->format->Gshift / 8) = ng;
-         *((bits) + surface->format->Bshift / 8) = nb;
+         pixel = SDL_MapSurfaceRGB(surface, (Uint8)((r1 * (l - n) + r2 * n) / l),
+            (Uint8)((g1 * (l - n) + g2 * n) / l), (Uint8)((b1 * (l - n) + b2 * n) / l));
+         nr = (Uint8)((pixel >> details->Rshift) & 0xFF);
+         ng = (Uint8)((pixel >> details->Gshift) & 0xFF);
+         nb = (Uint8)((pixel >> details->Bshift) & 0xFF);
+         *((bits) + details->Rshift / 8) = nr;
+         *((bits) + details->Gshift / 8) = ng;
+         *((bits) + details->Bshift / 8) = nb;
          bits += surface->pitch;
       }
       break;
 
    case 4:
       for (n = 0; n < (unsigned) l; n++) {
-         pixel = SDL_MapRGB(surface->format, (r1 * (l - n) + r2 * n) / l,
-            (g1 * (l - n) + g2 * n) / l, (b1 * (l - n) + b2 * n) / l);
+         pixel = SDL_MapSurfaceRGB(surface, (Uint8)((r1 * (l - n) + r2 * n) / l),
+            (Uint8)((g1 * (l - n) + g2 * n) / l), (Uint8)((b1 * (l - n) + b2 * n) / l));
          *((Uint32 *) (bits)) = (Uint32) pixel;
          bits += surface->pitch;
       }
@@ -964,23 +935,24 @@ void UTIL_HorzLineShade(SDL_Surface *surface, short x, short y, short l,
    if (l == 0)
       return;
 
-   bpp = surface->format->BytesPerPixel;
+   const SDL_PixelFormatDetails *details = SDL_GetPixelFormatDetails(surface->format);
+   bpp = details ? details->bytes_per_pixel : 4;
    bits = ((Uint8 *) surface->pixels) + y * surface->pitch + x * bpp;
 
    /* Set the pixels */
    switch (bpp) {
    case 1:
       for (n = 0; n < (unsigned) l; n++) {
-         pixel = SDL_MapRGB(surface->format, (r1 * (l - n) + r2 * n) / l,
-            (g1 * (l - n) + g2 * n) / l, (b1 * (l - n) + b2 * n) / l);
+         pixel = SDL_MapSurfaceRGB(surface, (Uint8)((r1 * (l - n) + r2 * n) / l),
+            (Uint8)((g1 * (l - n) + g2 * n) / l), (Uint8)((b1 * (l - n) + b2 * n) / l));
          *((Uint8 *) (bits)) = (Uint8) pixel;
          bits++;
       }
       break;
    case 2:
       for (n = 0; n < (unsigned) l; n++) {
-         pixel = SDL_MapRGB(surface->format, (r1 * (l - n) + r2 * n) / l,
-            (g1 * (l - n) + g2 * n) / l, (b1 * (l - n) + b2 * n) / l);
+         pixel = SDL_MapSurfaceRGB(surface, (Uint8)((r1 * (l - n) + r2 * n) / l),
+            (Uint8)((g1 * (l - n) + g2 * n) / l), (Uint8)((b1 * (l - n) + b2 * n) / l));
          *((Uint16 *) (bits)) = (Uint16) pixel;
          bits += 2;
       }
@@ -989,21 +961,21 @@ void UTIL_HorzLineShade(SDL_Surface *surface, short x, short y, short l,
       /* Format/endian independent */
       Uint8 nr, ng, nb;
       for (n = 0; n < (unsigned) l; n++) {
-         pixel = SDL_MapRGB(surface->format, (r1 * (l - n) + r2 * n) / l,
-            (g1 * (l - n) + g2 * n) / l, (b1 * (l - n) + b2 * n) / l);
-         nr = (pixel >> surface->format->Rshift) & 0xFF;
-         ng = (pixel >> surface->format->Gshift) & 0xFF;
-         nb = (pixel >> surface->format->Bshift) & 0xFF;
-         *((bits) + surface->format->Rshift / 8) = nr;
-         *((bits) + surface->format->Gshift / 8) = ng;
-         *((bits) + surface->format->Bshift / 8) = nb;
+         pixel = SDL_MapSurfaceRGB(surface, (Uint8)((r1 * (l - n) + r2 * n) / l),
+            (Uint8)((g1 * (l - n) + g2 * n) / l), (Uint8)((b1 * (l - n) + b2 * n) / l));
+         nr = (Uint8)((pixel >> details->Rshift) & 0xFF);
+         ng = (Uint8)((pixel >> details->Gshift) & 0xFF);
+         nb = (Uint8)((pixel >> details->Bshift) & 0xFF);
+         *((bits) + details->Rshift / 8) = nr;
+         *((bits) + details->Gshift / 8) = ng;
+         *((bits) + details->Bshift / 8) = nb;
          bits += 3;
       }
       break;
    case 4:
       for (n = 0; n < (unsigned) l; n++) {
-         pixel = SDL_MapRGB(surface->format, (r1 * (l - n) + r2 * n) / l,
-            (g1 * (l - n) + g2 * n) / l, (b1 * (l - n) + b2 * n) / l);
+         pixel = SDL_MapSurfaceRGB(surface, (Uint8)((r1 * (l - n) + r2 * n) / l),
+            (Uint8)((g1 * (l - n) + g2 * n) / l), (Uint8)((b1 * (l - n) + b2 * n) / l));
          *((Uint32 *) (bits)) = (Uint32) pixel;
          bits += 4;
       }
@@ -1025,22 +997,22 @@ void UTIL_FillRect(SDL_Surface *surface, int x, int y, int w, int h,
                    int r, int g, int b)
 {
    SDL_Rect rect;
-   unsigned int color;
-   rect.x = (Sint16)x;
-   rect.y = (Sint16)y;
-   rect.w = (Uint16)w;
-   rect.h = (Uint16)h;
-   color = SDL_MapRGB(surface->format, r, g, b);
-   SDL_FillRect(surface, &rect, color);
+   rect.x = x;
+   rect.y = y;
+   rect.w = w;
+   rect.h = h;
+   const SDL_PixelFormatDetails *details = SDL_GetPixelFormatDetails(surface->format);
+   Uint32 color = SDL_MapRGB(details, NULL, (Uint8)r, (Uint8)g, (Uint8)b);
+   SDL_FillSurfaceRect(surface, &rect, color);
 }
 
 void UTIL_FillRectAlpha(SDL_Surface *surface, int x, int y, int w, int h,
                         int r, int g, int b, int a)
 {
    int cx, cy;
-   unsigned int pixel;
-   unsigned char *bits, bpp;
-   unsigned char tr, tg, tb;
+   Uint32 pixel;
+   Uint8 *bits, bpp;
+   Uint8 tr, tg, tb;
 
    if (x >= surface->w || y >= surface->h)
       return;
@@ -1062,7 +1034,8 @@ void UTIL_FillRectAlpha(SDL_Surface *surface, int x, int y, int w, int h,
       h -= surface->h - y;
    }
 
-   bpp = surface->format->BytesPerPixel;
+   const SDL_PixelFormatDetails *details = SDL_GetPixelFormatDetails(surface->format);
+   bpp = details ? details->bytes_per_pixel : 4;
    bits = ((Uint8 *)surface->pixels) + y * surface->pitch + x * bpp;
 
    // Fill with alpha, premult
@@ -1077,11 +1050,11 @@ void UTIL_FillRectAlpha(SDL_Surface *surface, int x, int y, int w, int h,
             bits = ((Uint8 *) surface->pixels) + (y + cy) * surface->pitch + x * bpp;
             for (cx = w - 1; cx >= 0; cx--) {
                pixel = *((Uint8 *) (bits));
-               SDL_GetRGB(pixel, surface->format, &tr, &tg, &tb);
-               tr = (r + tr * a) >> 8;
-               tg = (g + tg * a) >> 8;
-               tb = (b + tb * a) >> 8;
-               pixel = SDL_MapRGB(surface->format, tr, tg, tb);
+               SDL_GetRGB(pixel, details, NULL, &tr, &tg, &tb);
+               tr = (Uint8)((r + tr * a) >> 8);
+               tg = (Uint8)((g + tg * a) >> 8);
+               tb = (Uint8)((b + tb * a) >> 8);
+               pixel = SDL_MapRGB(details, NULL, tr, tg, tb);
                *((Uint8 *) (bits)) = (Uint8) pixel;
                bits += 1;
             }
@@ -1095,11 +1068,11 @@ void UTIL_FillRectAlpha(SDL_Surface *surface, int x, int y, int w, int h,
             bits = ((Uint8 *) surface->pixels) + (y + cy) * surface->pitch + x * bpp;
             for (cx = w - 1; cx >= 0; cx--) {
                pixel = *((Uint16 *) (bits));
-               SDL_GetRGB(pixel, surface->format, &tr, &tg, &tb);
-               tr = (r + tr * a) >> 8;
-               tg = (g + tg * a) >> 8;
-               tb = (b + tb * a) >> 8;
-               pixel = SDL_MapRGB(surface->format, tr, tg, tb);
+               SDL_GetRGB(pixel, details, NULL, &tr, &tg, &tb);
+               tr = (Uint8)((r + tr * a) >> 8);
+               tg = (Uint8)((g + tg * a) >> 8);
+               tb = (Uint8)((b + tb * a) >> 8);
+               pixel = SDL_MapRGB(details, NULL, tr, tg, tb);
                *((Uint16 *) (bits)) = (Uint16) pixel;
                bits += 2;
             }
@@ -1113,13 +1086,13 @@ void UTIL_FillRectAlpha(SDL_Surface *surface, int x, int y, int w, int h,
             bits = ((Uint8 *) surface->pixels) + (y + cy) * surface->pitch + x * bpp;
             for (cx = w - 1; cx >= 0; cx--) {
                pixel = *((Uint32 *)(bits));
-               SDL_GetRGB(pixel, surface->format, &tr, &tg, &tb);
-               tr = (r + tr * a) >> 8;
-               tg = (g + tg * a) >> 8;
-               tb = (b + tb * a) >> 8;
-               *((bits) + surface->format->Rshift / 8) = tr;
-               *((bits) + surface->format->Gshift / 8) = tg;
-               *((bits) + surface->format->Bshift / 8) = tb;
+               SDL_GetRGB(pixel, details, NULL, &tr, &tg, &tb);
+               tr = (Uint8)((r + tr * a) >> 8);
+               tg = (Uint8)((g + tg * a) >> 8);
+               tb = (Uint8)((b + tb * a) >> 8);
+               *((bits) + details->Rshift / 8) = tr;
+               *((bits) + details->Gshift / 8) = tg;
+               *((bits) + details->Bshift / 8) = tb;
                bits += 3;
             }
          }
@@ -1131,11 +1104,11 @@ void UTIL_FillRectAlpha(SDL_Surface *surface, int x, int y, int w, int h,
             bits = ((Uint8 *) surface->pixels) + (y + cy) * surface->pitch + x * bpp;
             for (cx = w - 1; cx >= 0; cx--) {
                pixel = *((Uint32 *) (bits));
-               SDL_GetRGB(pixel, surface->format, &tr, &tg, &tb);
-               tr = (r + tr * a) >> 8;
-               tg = (g + tg * a) >> 8;
-               tb = (b + tb * a) >> 8;
-               pixel = SDL_MapRGB(surface->format, tr, tg, tb);
+               SDL_GetRGB(pixel, details, NULL, &tr, &tg, &tb);
+               tr = (Uint8)((r + tr * a) >> 8);
+               tg = (Uint8)((g + tg * a) >> 8);
+               tb = (Uint8)((b + tb * a) >> 8);
+               pixel = SDL_MapRGB(details, NULL, tr, tg, tb);
                *((Uint32 *) (bits)) = (Uint32) pixel;
                bits += 4;
             }
@@ -1147,18 +1120,18 @@ void UTIL_FillRectAlpha(SDL_Surface *surface, int x, int y, int w, int h,
 
 void UTIL_Delay(int duration)
 {
-   unsigned int begin = SDL_GetTicks();
+   Uint64 begin = SDL_GetTicks();
 
-   while (SDL_GetTicks() - begin < (unsigned int)duration) {
+   while (SDL_GetTicks() - begin < (Uint64)duration) {
       SDL_Event event;
       while (SDL_PollEvent(&event)) {
-         if (event.type == SDL_KEYDOWN) {
-            if (event.key.keysym.sym == SDLK_ESCAPE) {
+         if (event.type == SDL_EVENT_KEY_DOWN) {
+            if (event.key.key == SDLK_ESCAPE) {
                // Quit the program immediately if user pressed ESC
                UserQuit();
             }
             break;
-         } else if (event.type == SDL_QUIT) {
+         } else if (event.type == SDL_EVENT_QUIT) {
             UserQuit();
          }
       }
@@ -1168,24 +1141,10 @@ void UTIL_Delay(int duration)
 
 void UTIL_ToggleFullScreen()
 {
-   SDL_Surface *save = SDL_CreateRGBSurface(gpScreen->flags & (~SDL_HWSURFACE),
-      gpScreen->w, gpScreen->h, gpScreen->format->BitsPerPixel, gpScreen->format->Rmask,
-      gpScreen->format->Gmask, gpScreen->format->Bmask,
-      gpScreen->format->Amask);
-
-   SDL_BlitSurface(gpScreen, NULL, save, NULL);
-
-   int flags = gpScreen->flags;
-   if (flags & SDL_FULLSCREEN) {
-      flags &= ~SDL_FULLSCREEN;
-   } else {
-      flags |= SDL_FULLSCREEN;
+   if (gpWindow != nullptr) {
+      Uint32 flags = SDL_GetWindowFlags(gpWindow);
+      bool is_fullscreen = (flags & SDL_WINDOW_FULLSCREEN) != 0;
+      SDL_SetWindowFullscreen(gpWindow, !is_fullscreen);
    }
-
-   gpScreen = SDL_SetVideoMode(gpScreen->w, gpScreen->h,
-      gpScreen->format->BitsPerPixel, flags);
-   SDL_BlitSurface(save, NULL, gpScreen, NULL);
-   SDL_FreeSurface(save);
-   SDL_UpdateRect(gpScreen, 0, 0, gpScreen->w, gpScreen->h);
 }
 

@@ -1,0 +1,69 @@
+# CMake build directories & generated files
+build/
+build-*/
+cmake-build-*/
+out/
+_build/
+bin/
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+CTestTestfile.cmake
+compile_commands.json
+install_manifest.txt
+
+# Visual Studio & MSVC artifacts
+.vs/
+*.user
+*.suo
+*.sln.docstates
+*.idb
+*.pdb
+*.ilk
+*.obj
+*.exe
+*.dll
+*.lib
+*.exp
+*.dir/
+*.vcxproj.user
+
+# Antigravity IDE & Editor files
+.agents/
+.gemini/
+.vscode/
+.idea/
+*.swp
+*~
+
+# macOS & OS artifacts
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Executables & binary artifacts
+/src/sdlhana
+/src/sdlhana.exe
+/tools/bdf2fnt
+/tools/bdf2fnt.exe
+
+# Legacy Autotools leftovers
+config.log
+config.status
+config.h
+stamp-h1
+autom4te.cache/
+.deps/
+.libs/
+Makefile
+src/Makefile
+src/.deps/
+src/.libs/
+src/data/Makefile
+src/fonts/Makefile
+src/images/Makefile
+src/sound/Makefile
