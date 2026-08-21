@@ -91,13 +91,10 @@ SDL_Surface *CFont::Render(const char *sz, int r, int g, int b, int size, bool s
       }
    }
 
-   s = SDL_CreateRGBSurface((gpScreen->flags & (~SDL_HWSURFACE)) | SDL_SRCALPHA,
-      size / 2 * (length + 2), size, gpScreen->format->BitsPerPixel,
-      gpScreen->format->Rmask, gpScreen->format->Gmask,
-      gpScreen->format->Bmask, gpScreen->format->Amask);
+   s = SDL_CreateSurface(size / 2 * (length + 2), size, SDL_PIXELFORMAT_RGBA8888);
 
-   SDL_SetColorKey(s, SDL_SRCCOLORKEY, SDL_MapRGBA(s->format, 0, 0, 0, 0));
-   SDL_FillRect(s, NULL, SDL_MapRGBA(s->format, 0, 0, 0, 0));
+   SDL_SetSurfaceColorKey(s, true, SDL_MapSurfaceRGBA(s, 0, 0, 0, 0));
+   SDL_FillSurfaceRect(s, NULL, SDL_MapSurfaceRGBA(s, 0, 0, 0, 0));
 
    // HACKHACK: to make black color not transparent
    if (r == 0 && g == 0 && b == 0) {
@@ -110,6 +107,7 @@ SDL_Surface *CFont::Render(const char *sz, int r, int g, int b, int size, bool s
          unsigned int i;
          char c[4];
       } code;
+      code.i = 0;
 
       int bb = 1;
       if ((unsigned char)*p & 0x80) {
@@ -149,20 +147,16 @@ SDL_Surface *CFont::Render(const char *sz, int r, int g, int b, int size, bool s
          dstrect.w = size;
          dstrect.h = size;
 
-         SDL_Surface *char_surface = SDL_CreateRGBSurface(s->flags,
-            (shadow ? 66 : 64), (shadow ? 66 : 64),
-            gpScreen->format->BitsPerPixel,
-            gpScreen->format->Rmask, gpScreen->format->Gmask,
-            gpScreen->format->Bmask, gpScreen->format->Amask);
+         SDL_Surface *char_surface = SDL_CreateSurface(shadow ? 66 : 64, shadow ? 66 : 64, SDL_PIXELFORMAT_RGBA8888);
 
-         SDL_SetColorKey(char_surface, SDL_SRCCOLORKEY, SDL_MapRGBA(s->format, 0, 0, 0, 0));
-         SDL_FillRect(char_surface, NULL, SDL_MapRGBA(char_surface->format, 0, 0, 0, 0));
+         SDL_SetSurfaceColorKey(char_surface, true, SDL_MapSurfaceRGBA(char_surface, 0, 0, 0, 0));
+         SDL_FillSurfaceRect(char_surface, NULL, SDL_MapSurfaceRGBA(char_surface, 0, 0, 0, 0));
 
          if (shadow) {
             for (i = 0; i < 64; i++) {
                for (j = 0; j < 64; j++) {
                   if (c->pixeldata[i][j / 8] & (1 << (j & 7))) {
-                     UTIL_PutPixel(char_surface, j + 2, i + 2, SDL_MapRGBA(char_surface->format, 1, 1, 1, 255));
+                     UTIL_PutPixel(char_surface, j + 2, i + 2, 1, 1, 1);
                   }
                }
             }
@@ -171,13 +165,13 @@ SDL_Surface *CFont::Render(const char *sz, int r, int g, int b, int size, bool s
          for (i = 0; i < 64; i++) {
             for (j = 0; j < 64; j++) {
                if (c->pixeldata[i][j / 8] & (1 << (j & 7))) {
-                  UTIL_PutPixel(char_surface, j, i, SDL_MapRGBA(char_surface->format, r, g, b, 255));
+                  UTIL_PutPixel(char_surface, j, i, (unsigned char)r, (unsigned char)g, (unsigned char)b);
                }
             }
          }
 
-         SDL_SoftStretch(char_surface, NULL, s, &dstrect);
-         SDL_FreeSurface(char_surface);
+         SDL_BlitSurfaceScaled(char_surface, NULL, s, &dstrect, SDL_SCALEMODE_LINEAR);
+         SDL_DestroySurface(char_surface);
       }
 
       cur += ((bb == 3) ? size : size / 2);

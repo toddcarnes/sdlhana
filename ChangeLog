@@ -1,7 +1,6 @@
 8/20/2026 Todd Carnes:
- * CMakeLists.txt: Created C++23 CMake build system (v0.34) using FetchContent for SDL2 and sdl12-compat bridge. Enforced strict MSVC (/permissive- /W4) and GCC/Clang (-Wall -Wextra -Wpedantic) compilation for Windows, Linux, and macOS parity.
- * Autotools: Removed legacy configure, Makefile.am/in, and helper scripts.
- * IDE: Removed legacy sdlhana.dsp and sdlhana.kdevelop files.
+ * Graphics & Audio: Migrated entire rendering pipeline from software SDL_Surface CPU blitting (SDL1.2/sdl12-compat) to native hardware-accelerated SDL3 (SDL_Window*, SDL_Renderer*, SDL_Texture*). Refactored audio handling to native SDL3 audio streams (SDL_OpenAudioDeviceStream).
+ * CMakeLists.txt: Updated FetchContent dependency to official SDL3 repository. Enforced strict MSVC (/permissive- /W4) and GCC/Clang (-Wall -Wextra -Wpedantic) compiler flags for full Windows, Linux, and macOS parity.
  * Memory Management: Refactored raw new/delete in main.cpp, game.cpp, player.cpp, and general.h to std::unique_ptr and stack RAII allocations.
  * String & Print Formatting: Removed platform vsnprintf macro hacks, replaced fprintf calls with C++23 std::println, and updated va() to thread-local buffer storage.
  * Randomness: Modernized C rand() and modulo math in util.cpp using C++23 <random> (std::mt19937).

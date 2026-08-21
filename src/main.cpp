@@ -19,10 +19,14 @@
 // 02110-1301, USA
 //
 
+#include <SDL3/SDL_main.h>
 #include "main.h"
 
-SDL_Surface *gpScreen = NULL;
-bool g_fNoSound = false;
+SDL_Window   *gpWindow = nullptr;
+SDL_Renderer *gpRenderer = nullptr;
+SDL_Surface  *gpScreen = nullptr;
+SDL_Texture  *gpScreenTexture = nullptr;
+bool          g_fNoSound = false;
 
 CIniFile cfg;
 
@@ -61,61 +65,66 @@ void SaveCfg()
    cfg.Save(MakeFileName(CONFIG_FILE));
 }
 
-static int EventFilter(const SDL_Event *event)
+static bool SDLCALL EventFilter(void *userdata, SDL_Event *event)
 {
-   if (event->type == SDL_KEYDOWN) {
-      if (event->key.keysym.sym == SDLK_RETURN &&
-         event->key.keysym.mod & KMOD_ALT)
-      {
+   (void)userdata;
+   if (event->type == SDL_EVENT_KEY_DOWN) {
+      if (event->key.key == SDLK_RETURN && (event->key.mod & SDL_KMOD_ALT)) {
          UTIL_ToggleFullScreen();
-         return 0;
-      } else if (event->key.keysym.sym == SDLK_ESCAPE) {
-         // Quit the program immediately if user pressed ESC
+         return false;
+      } else if (event->key.key == SDLK_ESCAPE) {
          UserQuit();
-         return 0;
+         return false;
       }
-   } else if (event->type == SDL_QUIT) {
+   } else if (event->type == SDL_EVENT_QUIT) {
       UserQuit();
-      return 0;
+      return false;
    }
 
-   return 1;
+   return true;
 }
 
 int main(int argc, char *argv[])
 {
+   (void)argc;
+   (void)argv;
    LoadCfg(); // load the configuration file
 
-   // Initialize defaults, video and audio
-   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER | SDL_INIT_NOPARACHUTE) == -1) { 
-      std::println(stderr, "FATAL ERROR: Could not initialize SDL: {}.", SDL_GetError());
+   // Initialize SDL3 defaults, video and audio
+   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) { 
+      std::println(stderr, "FATAL ERROR: Could not initialize SDL3: {}.", SDL_GetError());
       exit(1);
    }
 
-   // Initialize the display in a 640x480 24-bit mode
-   int f = (atoi(cfg.Get("OPTIONS", "FullScreen", "0")) > 0);
-   if (f) {
-      f = SDL_FULLSCREEN;
-   }
+   bool fullscreen = (atoi(cfg.Get("OPTIONS", "FullScreen", "0")) > 0);
+   SDL_WindowFlags window_flags = fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
 
-   gpScreen = SDL_SetVideoMode(640, 480, 24, SDL_HWSURFACE | f);
-
-   if (gpScreen == NULL) {
-      gpScreen = SDL_SetVideoMode(640, 480, 24, SDL_SWSURFACE | f);
-   }
-
-   if (gpScreen == NULL) {
-      std::println(stderr, "FATAL ERROR: Could not set video mode: {}", SDL_GetError());
+   gpWindow = SDL_CreateWindow("SDLHana", 640, 480, window_flags);
+   if (gpWindow == nullptr) {
+      std::println(stderr, "FATAL ERROR: Could not create SDL3 window: {}", SDL_GetError());
       exit(1);
    }
 
-   SDL_WM_SetCaption(va("SDLHana (%s)", __DATE__), NULL);
+   gpRenderer = SDL_CreateRenderer(gpWindow, NULL);
+   if (gpRenderer == nullptr) {
+      std::println(stderr, "FATAL ERROR: Could not create SDL3 renderer: {}", SDL_GetError());
+      exit(1);
+   }
+
+   SDL_SetRenderLogicalPresentation(gpRenderer, 640, 480, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+
+   gpScreen = SDL_CreateSurface(640, 480, SDL_PIXELFORMAT_XRGB8888);
+   if (gpScreen == nullptr) {
+      std::println(stderr, "FATAL ERROR: Could not create main screen surface: {}", SDL_GetError());
+      exit(1);
+   }
+   gpScreenTexture = nullptr;
 
    g_fNoSound = (atoi(cfg.Get("OPTIONS", "NoSound", "0")) > 0);
 
    // Open the audio device
    if (!g_fNoSound) {
-      if (SOUND_OpenAudio(22050, AUDIO_S16, 1, 1024)) {
+      if (SOUND_OpenAudio(22050, SDL_AUDIO_S16, 1, 1024)) {
          std::println(stderr, "WARNING: Couldn't open audio: {}", SDL_GetError());
          g_fNoSound = true;
       }
@@ -126,12 +135,12 @@ int main(int argc, char *argv[])
    gpGeneral = std::make_unique<CGeneral>();
    gpGame = std::make_unique<CGame>();
 
-   SDL_SetEventFilter(EventFilter);
+   SDL_SetEventFilter(EventFilter, NULL);
    gpGame->MainMenu();
 
    UserQuit();
 
-   return 255;
+   return 0;
 }
 
 void UserQuit()
@@ -139,10 +148,26 @@ void UserQuit()
    gpGame.reset();
    gpGeneral.reset();
 
-   if (gpScreen != NULL)
-      SDL_FreeSurface(gpScreen);
+   if (gpScreenTexture != nullptr) {
+      SDL_DestroyTexture(gpScreenTexture);
+      gpScreenTexture = nullptr;
+   }
 
-   SDL_CloseAudio();
+   if (gpScreen != nullptr) {
+      SDL_DestroySurface(gpScreen);
+      gpScreen = nullptr;
+   }
+
+   if (gpRenderer != nullptr) {
+      SDL_DestroyRenderer(gpRenderer);
+      gpRenderer = nullptr;
+   }
+
+   if (gpWindow != nullptr) {
+      SDL_DestroyWindow(gpWindow);
+      gpWindow = nullptr;
+   }
+
    SDL_Quit();
 
    FreeTextMessage();

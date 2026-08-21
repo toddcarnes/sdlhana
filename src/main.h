@@ -43,7 +43,7 @@
 #include <unistd.h>
 #endif
 
-#include "SDL.h"
+#include <SDL3/SDL.h>
 
 #ifdef WITH_CONFIG_H
 #include "config.h"
@@ -77,8 +77,11 @@
 #define FONTS_DIR DATA_ROOT "fonts/"
 #endif
 
-extern SDL_Surface *gpScreen;
-extern bool g_fNoSound;
+extern SDL_Window   *gpWindow;
+extern SDL_Renderer *gpRenderer;
+extern SDL_Surface  *gpScreen;
+extern SDL_Texture  *gpScreenTexture;
+extern bool          g_fNoSound;
 
 // main.cpp functions...
 void UserQuit();
@@ -127,12 +130,18 @@ int Encode(const char *filename, unsigned char *header, int headersize, unsigned
 void LoadCfg();
 void SaveCfg();
 
+struct SoundSample {
+   Uint8 *buf = nullptr;
+   Uint32 len = 0;
+   SDL_AudioSpec spec{};
+};
+
 // sound.cpp functions...
 int SOUND_OpenAudio(int freq, int format, int channels, int samples);
 void SOUND_FillAudio(void *udata, unsigned char *stream, int len);
-void SOUND_PlayWAV(SDL_AudioCVT *audio);
-void SOUND_FreeWAV(SDL_AudioCVT *audio);
-SDL_AudioCVT *SOUND_LoadWAV(const char *filename);
+void SOUND_PlayWAV(SoundSample *audio);
+void SOUND_FreeWAV(SoundSample *audio);
+SoundSample *SOUND_LoadWAV(const char *filename);
 
 #include "ini.h"
 #include "font.h"

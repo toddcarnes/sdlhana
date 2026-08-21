@@ -8,37 +8,20 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Fetch Dependencies via FetchContent
 include(FetchContent)
 
-# 1. Fetch SDL2 (required backend for sdl12-compat)
-set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries" FORCE)
-set(SDL_SHARED ON CACHE BOOL "Enable SDL2 shared library" FORCE)
-set(SDL_STATIC OFF CACHE BOOL "Disable SDL2 static library" FORCE)
-set(SDL_TEST OFF CACHE BOOL "Disable SDL2 tests" FORCE)
+# 1. Fetch SDL3 (native hardware rendering framework)
+set(SDL_SHARED ON CACHE BOOL "Enable SDL3 shared library" FORCE)
+set(SDL_STATIC OFF CACHE BOOL "Disable SDL3 static library" FORCE)
+set(SDL_TEST OFF CACHE BOOL "Disable SDL3 tests" FORCE)
+set(SDL_JOYSTICK_GAMEINPUT OFF CACHE BOOL "Disable GameInput driver" FORCE)
+set(SDL_LIBC ON CACHE BOOL "Use standard C library" FORCE)
 
 FetchContent_Declare(
-    SDL2
+    SDL3
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG        release-2.30.12
-    GIT_SHALLOW    TRUE
-)
-FetchContent_MakeAvailable(SDL2)
-
-# Supply SDL2 variables required by sdl12-compat's find_package(SDL2)
-set(SDL2_INCLUDE_DIR "${sdl2_SOURCE_DIR}/include" CACHE PATH "SDL2 Include Dir" FORCE)
-set(SDL2_INCLUDE_DIRS "${sdl2_SOURCE_DIR}/include;${sdl2_BINARY_DIR}/include" CACHE PATH "SDL2 Include Dirs" FORCE)
-set(SDL2_LIBRARY SDL2 CACHE STRING "SDL2 Library" FORCE)
-set(SDL2_LIBRARIES SDL2 CACHE STRING "SDL2 Libraries" FORCE)
-set(SDL2_FOUND TRUE CACHE BOOL "SDL2 Found" FORCE)
-
-# 2. Fetch sdl12-compat (SDL 1.2 API translation layer)
-set(SDL12_TESTS OFF CACHE BOOL "Disable sdl12-compat tests" FORCE)
-
-FetchContent_Declare(
-    sdl12_compat
-    GIT_REPOSITORY https://github.com/libsdl-org/sdl12-compat.git
     GIT_TAG        main
     GIT_SHALLOW    TRUE
 )
-FetchContent_MakeAvailable(sdl12_compat)
+FetchContent_MakeAvailable(SDL3)
 
 # Source files
 set(SDLHANA_SOURCES
@@ -56,14 +39,17 @@ set(SDLHANA_SOURCES
     src/util.cpp
 )
 
-add_executable(sdlhana ${SDLHANA_SOURCES})
+if(WIN32)
+    add_executable(sdlhana WIN32 ${SDLHANA_SOURCES})
+elseif(APPLE)
+    add_executable(sdlhana MACOSX_BUNDLE ${SDLHANA_SOURCES})
+else()
+    add_executable(sdlhana ${SDLHANA_SOURCES})
+endif()
 
 # Target Include Directories
 target_include_directories(sdlhana PRIVATE
     src
-    ${sdl12_compat_SOURCE_DIR}/include/SDL
-    ${sdl12_compat_SOURCE_DIR}/include
-    ${sdl2_SOURCE_DIR}/include
 )
 
 # Compiler definitions for legacy path resolutions and compatibility
@@ -80,16 +66,16 @@ else()
     target_compile_options(sdlhana PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-# Link against sdl12-compat and SDLmain (handles WinMain -> SDL_main redirection)
-if(TARGET SDLmain)
-    target_link_libraries(sdlhana PRIVATE SDLmain SDL)
-elseif(TARGET SDL::SDL)
-    target_link_libraries(sdlhana PRIVATE SDLmain SDL::SDL)
+# Link against native SDL3
+if(TARGET SDL3::SDL3_main)
+    target_link_libraries(sdlhana PRIVATE SDL3::SDL3 SDL3::SDL3_main)
+elseif(TARGET SDL3_main)
+    target_link_libraries(sdlhana PRIVATE SDL3::SDL3 SDL3_main)
 else()
-    target_link_libraries(sdlhana PRIVATE SDLmain sdl12_compat)
+    target_link_libraries(sdlhana PRIVATE SDL3::SDL3)
 endif()
 
-# Copy asset directories, SDL.dll, and SDL2.dll into executable build directory post-build
+# Copy asset directories and SDL3.dll into executable build directory post-build
 add_custom_command(TARGET sdlhana POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_CURRENT_SOURCE_DIR}/src/data
@@ -104,13 +90,7 @@ add_custom_command(TARGET sdlhana POST_BUILD
             ${CMAKE_CURRENT_SOURCE_DIR}/src/fonts
             $<TARGET_FILE_DIR:sdlhana>/fonts
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:SDL>
-            $<TARGET_FILE_DIR:sdlhana>/SDL.dll
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:SDL2>
-            $<TARGET_FILE_DIR:sdlhana>/$<TARGET_FILE_NAME:SDL2>
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:SDL2>
-            $<TARGET_FILE_DIR:sdlhana>/SDL2.dll
-    COMMENT "Copying game assets, SDL.dll, and SDL2.dll to target build output directory..."
+            $<TARGET_FILE:SDL3::SDL3>
+            $<TARGET_FILE_DIR:sdlhana>/$<TARGET_FILE_NAME:SDL3::SDL3>
+    COMMENT "Copying game assets and SDL3.dll to target build output directory..."
 )

@@ -553,8 +553,9 @@ void CBasePlayer::DrawHand()
 
    int i;
 
-   UTIL_FillRect(gpScreen, dstrect.x, dstrect.y, dstrect.w * 8,
-      dstrect.h, 30, 130, 100);
+   if (gpScreen != nullptr) {
+      UTIL_FillRect(gpScreen, dstrect.x, dstrect.y, dstrect.w * 8, dstrect.h, 30, 130, 100);
+   }
 
    for (i = 0; i < m_iNumHandCard; i++) {
       gpGeneral->DrawCard(IsBot() ? CCard(255) : m_HandCards[i],
@@ -595,8 +596,10 @@ void CBasePlayer::DrawCaptured()
    }
 
    if (IsBot()) {
-      UTIL_FillRect(gpScreen, 10 + 48 * m_iNumHandCard, 10,
-         640 - (10 + 48 * m_iNumHandCard), 78, 30, 130, 100);
+      if (gpScreen != nullptr) {
+         UTIL_FillRect(gpScreen, 10 + 48 * m_iNumHandCard, 10,
+            640 - (10 + 48 * m_iNumHandCard), 78, 30, 130, 100);
+      }
 
       // Draw normal cards
       int x = 588;
@@ -631,8 +634,10 @@ void CBasePlayer::DrawCaptured()
       }
       gpGeneral->UpdateScreen(x, 10, 640 - x, 78);
    } else {
-      UTIL_FillRect(gpScreen, 10 + 48 * m_iNumHandCard, 400,
-         640 - (10 + 48 * m_iNumHandCard), 78, 30, 130, 100);
+      if (gpScreen != nullptr) {
+         UTIL_FillRect(gpScreen, 10 + 48 * m_iNumHandCard, 400,
+            640 - (10 + 48 * m_iNumHandCard), 78, 30, 130, 100);
+      }
 
       // Draw normal cards
       for (i = 0; i < 9; i++) {
@@ -691,8 +696,8 @@ int CPlayer::SelectCard()
 
    while (1) {
       int k = gpGeneral->ReadKey();
-      if (k > SDLK_LAST) {
-         sel = k - SDLK_LAST - 1;
+      if (k > 1000) {
+         sel = k - 1000 - 1;
          break;
       } else {
          // maybe implement some other features here
@@ -715,8 +720,8 @@ bool CPlayer::WantToContinue()
 
    while (1) {
       int k = gpGeneral->ReadKey();
-      if (k > SDLK_LAST) {
-         if (k == SDLK_LAST + 2) {
+      if (k > 1000) {
+         if (k == 1000 + 2) {
             // the "stop" button is clicked
             ret = false;
          }
