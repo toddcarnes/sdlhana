@@ -30,7 +30,6 @@ install_manifest.txt
 *.vcxproj.user
 
 # Antigravity IDE & Editor files
-MODERNIZATION_PLAN.md
 .agents/
 .gemini/
 .vscode/

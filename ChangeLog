@@ -1,3 +1,8 @@
+8/20/2026 Antigravity / Todd Carnes:
+ * CMakeLists.txt: Created C++23 CMake build system (v0.34) using FetchContent for SDL2 and sdl12-compat bridge.
+ * Autotools: Removed legacy configure, Makefile.am/in, and helper scripts.
+ * IDE: Removed legacy sdlhana.dsp and sdlhana.kdevelop files.
+
 7/31/2009 Wei Mingzhi <whistler at openoffice.org>:
  * src/util.cpp (RandomLong, RandomFloat): Fixed x86_64 compatibility bug.
  * COPYING.draft: Removed old draft of GPLv3.
