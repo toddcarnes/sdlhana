@@ -13,16 +13,11 @@ Enjoy playing.
 
 INSTALLATION
 ===========
-If you are installing with the source package, make sure you have the SDL
-runtime and development files correctly installed. Otherwise the source
-code will fail to compile. You may download it at http://www.libsdl.org.
+SDLHana uses CMake (3.25+) and FetchContent. Dependencies (SDL3, SDL3_mixer, SDL3_ttf) are automatically fetched during the build.
 
-Decompress the source package with the following command:
-tar xjf sdlhana-0.33.tar.bz2
+To build on Windows, macOS, or Linux:
 
-Then, compile and install:
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
 
-cd sdlhana-0.33
-./configure
-make
-make install
+The compiled executable `sdlhana` (or `sdlhana.exe`) will be generated inside `build/Release` or `build/Debug`.
