@@ -60,30 +60,7 @@ char *va(const char *format, ...)
    return string;
 }
 
-static int glSeed = 0, glGen2 = 0, glGen1 = 0; // our random number generator's seed
-
-// This function initializes the random seed based on the initial seed value passed in the
-// initial_seed parameter.
-static void lsrand(unsigned int initial_seed)
-{
-   // Pick two large integers such that one is double the other
-   glGen2 = 3719;
-   glGen1 = glGen2 / 2;
-
-   // fill in the initial seed of the random number generator
-   glSeed = (glGen1 * initial_seed) + glGen2;
-}
-
-// This function is the equivalent of the rand() standard C library function, except that
-// whereas rand() works only with short integers (i.e. not above 32767), this function is
-// able to generate 32-bit random numbers. Isn't that nice?
-static int lrand(void)
-{
-   if (glSeed == 0) // if the random seed isn't initialized...
-      lsrand((unsigned int)time(NULL)); // initialize it first
-   glSeed = (glGen1 * glSeed) + glGen2; // do some twisted math
-   return (glSeed > 0) ? glSeed : -glSeed; // and return absolute value of the result
-}
+static std::mt19937 g_rng{std::random_device{}()};
 
 // This function returns a random integer number between (and including) the starting and
 // ending values passed by parameters from and to.
@@ -92,7 +69,8 @@ int RandomLong(int from, int to)
    if (to <= from)
       return from;
 
-   return from + lrand() / (INT_MAX / (to - from + 1));
+   std::uniform_int_distribution<int> dist(from, to);
+   return dist(g_rng);
 }
 
 // This function returns a random floating-point number between (and including) the starting
@@ -102,7 +80,8 @@ float RandomFloat(float from, float to)
    if (to <= from)
       return from;
 
-   return from + (float)lrand() / (INT_MAX / (to - from));
+   std::uniform_real_distribution<float> dist(from, to);
+   return dist(g_rng);
 }
 
 int log2(int val)
