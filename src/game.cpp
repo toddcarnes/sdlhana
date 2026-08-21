@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2005, 2006 Wei Mingzhi <whistler@openoffice.org>
+// Copyright (c) 2026 Todd Carnes <toddcarnes@gmail.com>
 // All Rights Reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -203,13 +204,11 @@ void CGame::Settings()
                } else {
                   g_fNoSound = false;
                   // see if the audio device is already opened
-                  int frequency, channels;
-                  unsigned short format;
                   extern bool g_fAudioOpened;
                   if (!g_fAudioOpened) {
                      // audio device is not opened. Try to open the audio device
                      if (SOUND_OpenAudio(22050, AUDIO_S16, 1, 1024)) {
-                        fprintf(stderr, "WARNING: Couldn't open audio: %s\n", SDL_GetError());
+                        std::println(stderr, "WARNING: Couldn't open audio: {}", SDL_GetError());
                         g_fNoSound = true;
                      } else {
                         g_fAudioOpened = true;

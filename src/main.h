@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2005, 2006 Wei Mingzhi <whistler@openoffice.org>
+// Copyright (c) 2026 Todd Carnes <toddcarnes@gmail.com>
 // All Rights Reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -21,17 +22,23 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <time.h>
-#include <math.h>
-#include <limits.h>
-#include <assert.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstdarg>
+#include <ctime>
+#include <cmath>
+#include <climits>
+#include <cassert>
+#include <print>
+#include <format>
+#include <string>
+#include <string_view>
+#include <random>
+#include <memory>
+
 #ifdef _WIN32
 #include <io.h>
 #include <windows.h>
-#define vsnprintf _vsnprintf
 #else
 #include <unistd.h>
 #endif

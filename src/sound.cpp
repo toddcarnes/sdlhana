@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2005, 2006 Wei Mingzhi <whistler@openoffice.org>
+// Copyright (c) 2026 Todd Carnes <toddcarnes@gmail.com>
 // All Rights Reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -18,11 +19,8 @@
 // 02110-1301, USA
 //
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <malloc.h>
-#include "SDL.h"
+#include "main.h"
+#include <cstring>
 
 static unsigned int audio_len = 0;
 static unsigned char *audio_pos = NULL;
@@ -60,7 +58,7 @@ int SOUND_OpenAudio(int freq, int format, int channels, int samples)
 
    // Open the audio device, forcing the desired format
    if (SDL_OpenAudio(&audio_spec, NULL) < 0) {
-      fprintf(stderr, "WARNING: Couldn't open audio: %s\n", SDL_GetError());
+      std::println(stderr, "WARNING: Couldn't open audio: {}", SDL_GetError());
       return -1;
    } else {
       g_fAudioOpened = true;

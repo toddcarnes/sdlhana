@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2005, 2006 Wei Mingzhi <whistler@openoffice.org>
+// Copyright (c) 2026 Todd Carnes <toddcarnes@gmail.com>
 // All Rights Reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -27,12 +28,12 @@ CIniFile cfg;
 
 static char *MakeFileName(const char *fn)
 {
-   static char str[256];
-   char *p = str, *p1;
+   static thread_local char str[1024];
+   char *p = str;
    while (fn != NULL && *fn != '\0') {
       if (*fn == '~') {
 #ifndef _WIN32
-         p1 = getenv("HOME");
+         const char *p1 = getenv("HOME");
          while (p1 != NULL && *p1 != '\0') {
             *p++ = *p1++;
          }
@@ -44,6 +45,7 @@ static char *MakeFileName(const char *fn)
       }
       fn++;
    }
+   *p = '\0';
    return str;
 }
 
@@ -86,7 +88,7 @@ int main(int argc, char *argv[])
 
    // Initialize defaults, video and audio
    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER | SDL_INIT_NOPARACHUTE) == -1) { 
-      fprintf(stderr, "FATAL ERROR: Could not initialize SDL: %s.\n", SDL_GetError());
+      std::println(stderr, "FATAL ERROR: Could not initialize SDL: {}.", SDL_GetError());
       exit(1);
    }
 
@@ -103,7 +105,7 @@ int main(int argc, char *argv[])
    }
 
    if (gpScreen == NULL) {
-      fprintf(stderr, "FATAL ERROR: Could not set video mode: %s\n", SDL_GetError());
+      std::println(stderr, "FATAL ERROR: Could not set video mode: {}", SDL_GetError());
       exit(1);
    }
 
@@ -114,7 +116,7 @@ int main(int argc, char *argv[])
    // Open the audio device
    if (!g_fNoSound) {
       if (SOUND_OpenAudio(22050, AUDIO_S16, 1, 1024)) {
-         fprintf(stderr, "WARNING: Couldn't open audio: %s\n", SDL_GetError());
+         std::println(stderr, "WARNING: Couldn't open audio: {}", SDL_GetError());
          g_fNoSound = true;
       }
    }

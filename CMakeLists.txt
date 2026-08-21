@@ -73,7 +73,7 @@ target_compile_definitions(sdlhana PRIVATE
     _CRT_NONSTDC_NO_WARNINGS
 )
 
-# Temporary legacy compiler flags for MSVC during Step 1
+# Temporary legacy compiler flags for MSVC
 if(MSVC)
     target_compile_options(sdlhana PRIVATE /permissive /W3)
 endif()

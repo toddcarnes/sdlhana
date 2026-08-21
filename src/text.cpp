@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2005, 2006 Wei Mingzhi <whistler@openoffice.org>
+// Copyright (c) 2026 Todd Carnes <toddcarnes@gmail.com>
 // All Rights Reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -52,7 +53,7 @@ void InitTextMessage()
 {
    FILE *fp = fopen(va("%stitles%s.txt", DATA_DIR, cfg.Get("OPTIONS", "Language", "eng")), "r");
    if (fp == NULL) {
-      fprintf(stderr, "WARNING: cannot load %s!\n", va("titles%s.txt", cfg.Get("OPTIONS", "Language", "")));
+      std::println(stderr, "WARNING: cannot load titles{}.txt!", cfg.Get("OPTIONS", "Language", ""));
       return;
    }
 
@@ -97,7 +98,7 @@ void InitTextMessage()
                gMessageTable[gMessageTableCount].message = strdup(msgbuf);
                gMessageTableCount++;
                if (gMessageTableCount >= MAX_MESSAGES) {
-                  fprintf(stderr, "WARNING: TOO MANY MESSAGES IN TITIES.TXT, MAX IS %d\n", MAX_MESSAGES);
+                  std::println(stderr, "WARNING: TOO MANY MESSAGES IN TITLES.TXT, MAX IS {}", MAX_MESSAGES);
                   goto end;
                }
             } else {

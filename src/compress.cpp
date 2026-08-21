@@ -1,4 +1,8 @@
 //
+// Copyright (c) 2005, 2006 Wei Mingzhi <whistler@openoffice.org>
+// Copyright (c) 2026 Todd Carnes <toddcarnes@gmail.com>
+// All Rights Reserved.
+//
 // compress.cpp
 //
 // Data Compress Routines based on LZSS

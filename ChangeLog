@@ -3,6 +3,8 @@
  * Autotools: Removed legacy configure, Makefile.am/in, and helper scripts.
  * IDE: Removed legacy sdlhana.dsp and sdlhana.kdevelop files.
  * Memory Management: Refactored raw new/delete in main.cpp, game.cpp, player.cpp, and general.h to std::unique_ptr and stack RAII allocations.
+ * String & Print Formatting: Removed platform vsnprintf macro hacks, replaced fprintf calls with C++23 std::println, and updated va() to thread-local buffer storage.
+ * Metadata: Updated copyright headers across all 20 source files to include Todd Carnes <toddcarnes@gmail.com>.
 
 7/31/2009 Wei Mingzhi <whistler at openoffice.org>:
  * src/util.cpp (RandomLong, RandomFloat): Fixed x86_64 compatibility bug.

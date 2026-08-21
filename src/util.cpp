@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2005, 2006 Wei Mingzhi <whistler@openoffice.org>
+// Copyright (c) 2026 Todd Carnes <toddcarnes@gmail.com>
 // Portions Copyright (c) 2001 Gregory Velichansky <hmaon@bumba.net>
 // Portions Copyright (c) 2000 Stephane Magnenat <nct@ysagoon.com>
 // All Rights Reserved.
@@ -45,15 +46,15 @@ void trim(char *str)
       *(dest--) = '\0';
 }
 
-// Does a varargs printf into a temp buffer, so we don't need to have
+// Does a varargs printf into a thread-local buffer, so we don't need to have
 // varargs versions of all text functions.
 char *va(const char *format, ...)
 {
-   static char string[256];
-   va_list     argptr;
+   static thread_local char string[1024];
+   va_list argptr;
 
    va_start(argptr, format);
-   vsnprintf(string, 256, format, argptr);
+   vsnprintf(string, sizeof(string), format, argptr);
    va_end(argptr);
 
    return string;
@@ -79,7 +80,7 @@ static void lsrand(unsigned int initial_seed)
 static int lrand(void)
 {
    if (glSeed == 0) // if the random seed isn't initialized...
-      lsrand(time(NULL)); // initialize it first
+      lsrand((unsigned int)time(NULL)); // initialize it first
    glSeed = (glGen1 * glSeed) + glGen2; // do some twisted math
    return (glSeed > 0) ? glSeed : -glSeed; // and return absolute value of the result
 }
@@ -121,17 +122,17 @@ int log2(int val)
 void TerminateOnError(const char *fmt, ...)
 {
    va_list argptr;
-   char string[256];
+   char string[1024];
 
    // concatenate all the arguments in one string
    va_start(argptr, fmt);
    vsnprintf(string, sizeof(string), fmt, argptr);
    va_end(argptr);
 
-   fprintf(stderr, "\nFATAL ERROR: %s\n", string);
+   std::println(stderr, "\nFATAL ERROR: {}", string);
 
 #ifdef _WIN32
-   MessageBox(0, string, "ERROR", MB_ICONERROR);
+   MessageBoxA(0, string, "ERROR", MB_ICONERROR);
 #endif
 
    assert(!"TerminateOnError()"); // allows jumping to debugger
@@ -519,8 +520,8 @@ int UTIL_ScaleBlit(SDL_Surface *src, SDL_Rect *sr, SDL_Surface *dst, SDL_Rect *d
          bs /= area;
 
          if (rs >= 256 || gs >= 256 || bs >= 256) {
-            fprintf(stderr, "fixed point weighted average overflow!");
-            fprintf(stderr, "Values: %d, %d, %d\n", rs, gs, bs);
+            std::println(stderr, "fixed point weighted average overflow!");
+            std::println(stderr, "Values: {}, {}, {}", rs, gs, bs);
          }
 
          r = (unsigned char)rs;
