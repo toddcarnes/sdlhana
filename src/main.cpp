@@ -76,7 +76,7 @@ Application &Application::GetInstance()
 
 std::filesystem::path GetUserConfigPath()
 {
-   char *pref_path = SDL_GetPrefPath("ToddCarnes", "SDLHana");
+   char *pref_path = SDL_GetPrefPath("CarneSoft", "SDLHana");
    std::filesystem::path path;
    if (pref_path != nullptr) {
       path = std::filesystem::path(pref_path) / "sdlhana.ini";

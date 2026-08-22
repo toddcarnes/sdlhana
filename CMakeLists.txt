@@ -79,7 +79,7 @@ elseif(APPLE)
     set_target_properties(sdlhana PROPERTIES
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_BUNDLE_NAME "SDLHana"
-        MACOSX_BUNDLE_GUI_IDENTIFIER "com.toddcarnes.sdlhana"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.carnesoft.sdlhana"
         MACOSX_BUNDLE_SHORT_VERSION_STRING "0.35"
         MACOSX_BUNDLE_BUNDLE_VERSION "0.35"
         MACOSX_BUNDLE_ICON_FILE "sdlhana.icns"
