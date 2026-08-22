@@ -23,6 +23,15 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include "main.h"
 
+Application::Application() = default;
+Application::~Application() = default;
+
+Application &Application::GetInstance()
+{
+   static Application instance;
+   return instance;
+}
+
 std::filesystem::path GetUserConfigPath()
 {
    char *pref_path = SDL_GetPrefPath("ToddCarnes", "SDLHana");

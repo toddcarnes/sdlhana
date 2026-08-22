@@ -40,6 +40,9 @@ FetchContent_Declare(
     GIT_SHALLOW    TRUE
 )
 
+set(SDLTTF_VENDORED ON CACHE BOOL "Use vendored dependencies for SDL3_ttf" FORCE)
+set(SDL3TTF_VENDORED ON CACHE BOOL "Use vendored dependencies for SDL3_ttf" FORCE)
+
 FetchContent_Declare(
     SDL3_ttf
     GIT_REPOSITORY https://github.com/libsdl-org/SDL_ttf.git

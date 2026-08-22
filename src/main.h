@@ -85,10 +85,9 @@ class CGame;
 
 class Application {
 public:
-   static Application &GetInstance() {
-      static Application instance;
-      return instance;
-   }
+   Application();
+   ~Application();
+   static Application &GetInstance();
 
    SDL_Window               *window = nullptr;
    SDL_Renderer             *renderer = nullptr;
