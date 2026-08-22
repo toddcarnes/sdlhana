@@ -135,7 +135,11 @@ int main(int argc, char *argv[])
 
    LoadCfg(); // load the configuration file
 
-   SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal,direct3d11,opengl");
+#ifdef __APPLE__
+   SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
+#else
+   SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d11,opengl,software");
+#endif
 
    // Initialize SDL3 defaults, video and audio
    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) { 
