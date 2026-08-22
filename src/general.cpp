@@ -86,10 +86,7 @@ int CGeneral::ReadKey()
                return 1000 + id;
             }
          } else if (event.type == SDL_EVENT_WINDOW_RESIZED || event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
-            if (gpScreenTexture != nullptr) {
-               SDL_DestroyTexture(gpScreenTexture);
-               gpScreenTexture = nullptr;
-            }
+            // Handled automatically by SDL_SetRenderLogicalPresentation
          }
       }
    }
@@ -119,16 +116,9 @@ void CGeneral::UpdateScreen(int x, int y, int w, int h)
          if (gpScreenTexture != nullptr) {
             SDL_SetTextureScaleMode(gpScreenTexture, SDL_SCALEMODE_LINEAR);
          }
-      } else {
-         if (!SDL_UpdateTexture(gpScreenTexture, NULL, gpScreen->pixels, gpScreen->pitch)) {
-            SDL_DestroyTexture(gpScreenTexture);
-            gpScreenTexture = SDL_CreateTextureFromSurface(gpRenderer, gpScreen);
-            if (gpScreenTexture != nullptr) {
-               SDL_SetTextureScaleMode(gpScreenTexture, SDL_SCALEMODE_LINEAR);
-            }
-         }
       }
       if (gpScreenTexture != nullptr) {
+         SDL_UpdateTexture(gpScreenTexture, NULL, gpScreen->pixels, gpScreen->pitch);
          SDL_RenderClear(gpRenderer);
          SDL_RenderTexture(gpRenderer, gpScreenTexture, NULL, NULL);
          SDL_RenderPresent(gpRenderer);
