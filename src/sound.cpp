@@ -34,21 +34,23 @@ void SOUND_FillAudio(void *udata, unsigned char *stream, int len)
 
 int SOUND_OpenAudio(int freq, int format, int channels, int samples)
 {
-   (void)freq;
-   (void)format;
-   (void)channels;
    (void)samples;
 
    if (g_fAudioOpened) {
       return 0;
    }
 
-   if (!MIX_Init()) {
-      std::println(stderr, "WARNING: Couldn't init SDL3_mixer: {}", SDL_GetError());
-      return -1;
+   SDL_AudioSpec spec;
+   SDL_zero(spec);
+   spec.freq = (freq > 0) ? freq : 44100;
+   spec.format = (format != 0) ? (SDL_AudioFormat)format : SDL_AUDIO_S16;
+   spec.channels = (channels > 0) ? channels : 2;
+
+   g_pMixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec);
+   if (!g_pMixer) {
+      g_pMixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, NULL);
    }
 
-   g_pMixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, NULL);
    if (!g_pMixer) {
       std::println(stderr, "WARNING: Couldn't create SDL3_mixer device: {}", SDL_GetError());
       return -1;
