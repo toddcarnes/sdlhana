@@ -140,6 +140,8 @@ int main(int argc, char *argv[])
 
    LoadCfg(); // load the configuration file
 
+   SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal,direct3d11,opengl");
+
    // Initialize SDL3 defaults, video and audio
    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) { 
       std::println(stderr, "FATAL ERROR: Could not initialize SDL3: {}.", SDL_GetError());
@@ -148,8 +150,6 @@ int main(int argc, char *argv[])
 
    cfg.Set("OPTIONS", "FullScreen", "0");
    SDL_WindowFlags window_flags = SDL_WINDOW_RESIZABLE;
-
-   SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal,direct3d11,opengl");
 
    gpWindow = SDL_CreateWindow("SDLHana", 1024, 768, window_flags);
    if (gpWindow == nullptr) {
