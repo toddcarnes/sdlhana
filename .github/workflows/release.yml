@@ -70,16 +70,26 @@ jobs:
     - name: Package Bundle (macOS)
       if: runner.os == 'macOS'
       run: |
-        if [ -d "build/sdlhana.app" ]; then
-          tar -czvf ${{ matrix.artifact_name }} -C build/sdlhana.app/Contents/MacOS .
-        else
-          tar -czvf ${{ matrix.artifact_name }} -C build sdlhana data fonts images sound *.dylib || tar -czvf ${{ matrix.artifact_name }} -C build .
-        fi
+        mkdir -p dist
+        cp build/sdlhana dist/ 2>/dev/null || true
+        cp -r build/data dist/
+        cp -r build/fonts dist/
+        cp -r build/images dist/
+        cp -r build/sound dist/
+        find build -name "*.dylib" -exec cp {} dist/ \; 2>/dev/null || true
+        tar -czvf ${{ matrix.artifact_name }} -C dist .
 
     - name: Package Bundle (Linux)
       if: runner.os == 'Linux'
       run: |
-        tar -czvf ${{ matrix.artifact_name }} -C build sdlhana data fonts images sound *.so* || tar -czvf ${{ matrix.artifact_name }} -C build .
+        mkdir -p dist
+        cp build/sdlhana dist/
+        cp -r build/data dist/
+        cp -r build/fonts dist/
+        cp -r build/images dist/
+        cp -r build/sound dist/
+        find build -name "*.so*" -exec cp {} dist/ \; 2>/dev/null || true
+        tar -czvf ${{ matrix.artifact_name }} -C dist .
 
     - name: Upload Release Asset to GitHub Release
       uses: softprops/action-gh-release@v2
