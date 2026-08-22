@@ -87,6 +87,9 @@ elseif(APPLE)
         MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
         MACOSX_BUNDLE_BUNDLE_VERSION "1.0.0"
         MACOSX_BUNDLE_ICON_FILE "sdlhana.icns"
+        MACOSX_RPATH TRUE
+        BUILD_WITH_INSTALL_RPATH TRUE
+        INSTALL_RPATH "@executable_path;@loader_path"
     )
 else()
     add_executable(sdlhana ${SDLHANA_SOURCES})

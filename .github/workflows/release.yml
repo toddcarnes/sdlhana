@@ -103,6 +103,28 @@ jobs:
         cp -r src/sound build/sdlhana.app/Contents/MacOS/
         find build -name "*.dylib" -exec cp {} build/sdlhana.app/Contents/MacOS/ \; 2>/dev/null || true
 
+        # Fix dynamic library load paths and rpaths for self-contained macOS App Bundle
+        install_name_tool -add_rpath "@executable_path" build/sdlhana.app/Contents/MacOS/sdlhana 2>/dev/null || true
+        install_name_tool -add_rpath "@loader_path" build/sdlhana.app/Contents/MacOS/sdlhana 2>/dev/null || true
+
+        for dylib in build/sdlhana.app/Contents/MacOS/*.dylib; do
+          if [ -f "$dylib" ]; then
+            dylib_name=$(basename "$dylib")
+            install_name_tool -id "@executable_path/$dylib_name" "$dylib" 2>/dev/null || true
+            install_name_tool -add_rpath "@executable_path" "$dylib" 2>/dev/null || true
+            install_name_tool -add_rpath "@loader_path" "$dylib" 2>/dev/null || true
+            install_name_tool -change "$dylib" "@executable_path/$dylib_name" build/sdlhana.app/Contents/MacOS/sdlhana 2>/dev/null || true
+            install_name_tool -change "@rpath/$dylib_name" "@executable_path/$dylib_name" build/sdlhana.app/Contents/MacOS/sdlhana 2>/dev/null || true
+            for other_dylib in build/sdlhana.app/Contents/MacOS/*.dylib; do
+              install_name_tool -change "$dylib" "@executable_path/$dylib_name" "$other_dylib" 2>/dev/null || true
+              install_name_tool -change "@rpath/$dylib_name" "@executable_path/$dylib_name" "$other_dylib" 2>/dev/null || true
+            done
+          fi
+        done
+
+        # Re-sign the app bundle locally (ad-hoc signing) so macOS dyld and Gatekeeper accept modifications
+        codesign --force --deep --sign - build/sdlhana.app 2>/dev/null || true
+
         # Compress native sdlhana.app bundle
         tar -czvf ${{ matrix.artifact_name }} -C build sdlhana.app
 
