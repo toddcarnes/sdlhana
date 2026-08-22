@@ -1,0 +1,87 @@
+name: Release Packaging & Deployment
+
+on:
+  push:
+    tags:
+      - 'v*'
+  release:
+    types: [published]
+
+jobs:
+  package-and-release:
+    name: Package Release (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact_name: sdlhana-windows-x64.zip
+          - os: macos-latest
+            artifact_name: sdlhana-macos-x64.tar.gz
+          - os: ubuntu-latest
+            artifact_name: sdlhana-linux-x64.tar.gz
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Linux Dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          gcc-14 \
+          g++-14 \
+          cmake \
+          ninja-build \
+          libasound2-dev \
+          libpulse-dev \
+          libwayland-dev \
+          libx11-dev \
+          libxext-dev \
+          libxrandr-dev \
+          libxss-dev \
+          libxcursor-dev \
+          libxi-dev \
+          libxdamage-dev \
+          libxinerama-dev \
+          libxtst-dev \
+          libfreetype6-dev \
+          libdbus-1-dev
+        echo "CC=gcc-14" >> $GITHUB_ENV
+        echo "CXX=g++-14" >> $GITHUB_ENV
+
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build Executable
+      run: cmake --build build --config Release --target sdlhana
+
+    - name: Package Bundle (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        Compress-Archive -Path build/Release/* -DestinationPath ${{ matrix.artifact_name }}
+
+    - name: Package Bundle (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        if [ -d "build/sdlhana.app" ]; then
+          tar -czvf ${{ matrix.artifact_name }} -C build/sdlhana.app/Contents/MacOS .
+        else
+          tar -czvf ${{ matrix.artifact_name }} -C build sdlhana data fonts images sound *.dylib || tar -czvf ${{ matrix.artifact_name }} -C build .
+        fi
+
+    - name: Package Bundle (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        tar -czvf ${{ matrix.artifact_name }} -C build sdlhana data fonts images sound *.so* || tar -czvf ${{ matrix.artifact_name }} -C build .
+
+    - name: Upload Release Asset to GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: ${{ matrix.artifact_name }}
