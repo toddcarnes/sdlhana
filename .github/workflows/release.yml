@@ -71,11 +71,11 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         mkdir -p dist
-        cp build/sdlhana dist/ 2>/dev/null || true
-        cp -r build/data dist/
-        cp -r build/fonts dist/
-        cp -r build/images dist/
-        cp -r build/sound dist/
+        find build -type f -name "sdlhana" -exec cp {} dist/ \;
+        cp -r src/data dist/
+        cp -r src/fonts dist/
+        cp -r src/images dist/
+        cp -r src/sound dist/
         find build -name "*.dylib" -exec cp {} dist/ \; 2>/dev/null || true
         tar -czvf ${{ matrix.artifact_name }} -C dist .
 
@@ -83,11 +83,11 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         mkdir -p dist
-        cp build/sdlhana dist/
-        cp -r build/data dist/
-        cp -r build/fonts dist/
-        cp -r build/images dist/
-        cp -r build/sound dist/
+        find build -type f -name "sdlhana" -exec cp {} dist/ \;
+        cp -r src/data dist/
+        cp -r src/fonts dist/
+        cp -r src/images dist/
+        cp -r src/sound dist/
         find build -name "*.so*" -exec cp {} dist/ \; 2>/dev/null || true
         tar -czvf ${{ matrix.artifact_name }} -C dist .
 
