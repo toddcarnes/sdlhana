@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
    LoadCfg(); // load the configuration file
 
 #ifdef __APPLE__
-   SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
+   SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal,software");
 #else
    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d11,opengl,software");
 #endif
