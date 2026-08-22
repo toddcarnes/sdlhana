@@ -64,23 +64,29 @@ int CGeneral::ReadKey()
 
    while (1) {
       if (SDL_WaitEvent(&event)) {
+         if (gpRenderer != nullptr) {
+            SDL_ConvertEventToRenderCoordinates(gpRenderer, &event);
+         }
          if (event.type == SDL_EVENT_KEY_DOWN) {
             return (int)event.key.key;
+         } else if (event.type == SDL_EVENT_MOUSE_WHEEL) {
+            if (event.wheel.y > 0.0f) {
+               return (int)SDLK_UP;
+            } else if (event.wheel.y < 0.0f) {
+               return (int)SDLK_DOWN;
+            }
          } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
             if (event.button.button == SDL_BUTTON_RIGHT) {
                return SDLK_RIGHT;
             } else if (event.button.button == SDL_BUTTON_LEFT) {
-               float lx = event.button.x;
-               float ly = event.button.y;
-               if (gpRenderer != nullptr) {
-                  SDL_RenderCoordinatesFromWindow(gpRenderer, event.button.x, event.button.y, &lx, &ly);
-               }
-               int id = CButton::GetButtonId((int)lx, (int)ly);
+               int id = CButton::GetButtonId((int)event.button.x, (int)event.button.y);
                if (id < 0) {
                   return SDLK_RETURN;
                }
                return 1000 + id;
             }
+         } else if (event.type == SDL_EVENT_WINDOW_RESIZED || event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+            UpdateScreen();
          }
       }
    }
@@ -143,8 +149,14 @@ void CGeneral::ClearScreen(bool fadein, bool fadeout, bool bg)
 
    UTIL_RectShade(gpScreen, 0, 0, 640, 480, 196, 196,
       0, 0, 196, 196, 196, 0, 196);
+}
 
-   UpdateScreen(0, 0, 640, 480);
+void CGeneral::ClearPromptArea()
+{
+   if (gpScreen != nullptr) {
+      UTIL_FillRect(gpScreen, 20, 260, 595, 65, 30, 130, 100);
+      UpdateScreen(20, 260, 595, 65);
+   }
 }
 
 void CGeneral::DrawTextBrush(const char *t, int x, int y, int r, int g, int b, int size)
@@ -179,6 +191,46 @@ void CGeneral::DrawText(const char *t, int x, int y, int r, int g, int b, int si
    SDL_DestroySurface(s);
 
    UpdateScreen(x, y, dstrect.w, dstrect.h);
+}
+
+void CGeneral::DrawTextInBox(const char *t, int box_x, int box_y, int box_w, int box_h, int r, int g, int b, int size)
+{
+   SDL_Surface *s = m_fnt.Render(t, r, g, b, size);
+   if (s == nullptr || gpScreen == nullptr) return;
+
+   SDL_Rect dstrect;
+   dstrect.x = box_x + (box_w > s->w ? (box_w - s->w) / 2 : 5);
+   dstrect.y = box_y + (box_h > s->h ? (box_h - s->h) / 2 : 5);
+   dstrect.w = s->w;
+   dstrect.h = s->h;
+
+   SDL_BlitSurface(s, NULL, gpScreen, &dstrect);
+   SDL_DestroySurface(s);
+
+   UpdateScreen(box_x, box_y, box_w, box_h);
+}
+
+void CGeneral::DrawWrappedTextInBox(const char *t, int box_x, int box_y, int box_w, int box_h, int r, int g, int b, int size)
+{
+   if (t == nullptr || gpScreen == nullptr) return;
+
+   SDL_Surface *s = m_fnt.RenderWrapped(t, r, g, b, size, box_w - 20);
+   if (s != nullptr) {
+      SDL_Rect dstrect;
+      dstrect.x = box_x + 10;
+      dstrect.y = box_y + (box_h > s->h ? (box_h - s->h) / 2 : 5);
+      dstrect.w = s->w;
+      dstrect.h = s->h;
+
+      SDL_BlitSurface(s, NULL, gpScreen, &dstrect);
+      SDL_DestroySurface(s);
+      UpdateScreen(box_x, box_y, box_w, box_h);
+   }
+}
+
+SDL_Surface *CGeneral::RenderTextWrapped(const char *t, int r, int g, int b, int size, int wrap_width)
+{
+   return m_fnt.RenderWrapped(t, r, g, b, size, wrap_width);
 }
 
 SDL_Surface *CGeneral::RenderCard(const CCard &c, int w, int h)
@@ -254,6 +306,7 @@ void CGeneral::DrawCard(const CCard &c, int x, int y, int w, int h, bool update)
 
 void CGeneral::LoadFonts()
 {
+   TTF_Init();
    m_fntBrush.Load(FONTS_DIR "brush.fnt");
    m_fnt.Load(va("%s%s.fnt", FONTS_DIR, cfg.Get("OPTIONS", "Language", "eng")));
 }

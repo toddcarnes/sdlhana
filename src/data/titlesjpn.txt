@@ -42,12 +42,12 @@ blue_ribbons
 
 normal_ribbons
 {
-草短
+くさ
 }
 
 ribbons
 {
-短札
+短冊
 }
 
 boar_deer_butterfly
@@ -67,22 +67,22 @@ animals
 
 flower_meets_sakecup
 {
-花見酒
+花見で一杯
 }
 
 moon_meets_sakecup
 {
-月見酒
+月見で一杯
 }
 
 cards
 {
-カス
+札
 }
 
 dealer
 {
-親権
+親
 }
 
 point
@@ -95,69 +95,44 @@ points
 文
 }
 
+total
+{
+合計:
+}
+
 koikoiyesorno
 {
-こいこいしますが?
+こいこいしますか？
 }
 
 go
 {
-はい
+こいこい
 }
 
 stop
 {
-いいえ
-}
-
-comdealer
-{
-わたしが親です。
-}
-
-youdealer
-{
-あなたが親です。
+勝負
 }
 
 discardcardselect
 {
-札を切って下さい。
+手札から出す札を選んでください。
+}
+
+comdealer
+{
+相手の手番から始まります。
+}
+
+youdealer
+{
+あなたの手番から始まります。
 }
 
 computerwin
 {
-あなたの負けです。
-}
-
-youwin
-{
-あなたの勝ちです。
-}
-
-total
-{
-合計
-}
-
-play
-{
-GAME START
-}
-
-settings
-{
-ゲームの設定
-}
-
-quit
-{
-終了
-}
-
-doubleupyesorno
-{
-W-UP しますが?
+コンピュータの勝ち！
 }
 
 yes
@@ -170,39 +145,14 @@ no
 いいえ
 }
 
-bigorsmall
+score
 {
-BIG or SMALL?
-}
-
-big
-{
-大
-}
-
-small
-{
-小
-}
-
-fullscreen
-{
-Full Screen
-}
-
-enablesound
-{
-効果音
+得点
 }
 
 gamemode
 {
-Game Mode
-}
-
-language
-{
-言語
+ゲームモード
 }
 
 gamemode0
@@ -212,22 +162,112 @@ gamemode0
 
 gamemode1
 {
-こいこい [BET]
+ベットモード
 }
 
 gamemode2
 {
-五鳥
+ゴーストップ
+}
+
+koikoi
+{
+こいこい
+}
+
+bet
+{
+ベットモード
+}
+
+korean
+{
+ゴーストップ
+}
+
+doubleupyesorno
+{
+ダブルアップしますか？
+}
+
+bigorsmall
+{
+次の札はハイかローか？
+}
+
+big
+{
+ハイ（7月以上）
+}
+
+small
+{
+ロー（6月以下）
+}
+
+youscores
+{
+あなたの得点: %d文
+}
+
+comscores
+{
+相手の得点: %d文
+}
+
+youwin
+{
+あなたの勝ち！
+}
+
+youlose
+{
+あなたの負け！
+}
+
+pressanykey
+{
+キーを押すと続行します...
+}
+
+play
+{
+ゲーム開始
+}
+
+settings
+{
+設定
+}
+
+quit
+{
+終了
+}
+
+fullscreen
+{
+フルスクリーン
+}
+
+enablesound
+{
+効果音
+}
+
+language
+{
+言語
 }
 
 animspeed
 {
-Game Speed
+アニメーション速度
 }
 
 veryslow
 {
-最遅
+非常に遅い
 }
 
 slow
@@ -247,12 +287,12 @@ fast
 
 veryfast
 {
-最速
+非常に速い
 }
 
 chs
 {
-中国語
+簡体字中国語
 }
 
 jpn
@@ -282,20 +322,130 @@ Disabled
 
 comget3pts
 {
-I got 3 points!
+相手が3点獲得！
 }
 
 youget3pts
 {
-You got 3 points!
+3点獲得！
 }
 
 comget5pts
 {
-You lost 5 points!
+相手が5点獲得！
 }
 
 youget5pts
 {
-You got 5 points!
+5点獲得！
+}
+
+match_victory
+{
+勝負勝利！
+}
+
+match_defeat
+{
+勝負敗北！
+}
+
+match_draw
+{
+引き分け！
+}
+
+congrats_win
+{
+おめでとうございます！花札の勝負に勝ちました！
+}
+
+better_luck_lose
+{
+残念！コンピュータの勝利です。
+}
+
+tie_game
+{
+引き分けです！好勝負でした。
+}
+
+final_score_fmt
+{
+12ヶ月の最終得点：%d文
+}
+
+btn_rules
+{
+ルールと得点
+}
+
+btn_prev
+{
+前へ
+}
+
+btn_next
+{
+次へ
+}
+
+btn_menu
+{
+メインメニュー
+}
+
+rules_header
+{
+花札ルールと得点ガイド
+}
+
+rules_p1_title
+{
+1. 札の構成と月
+}
+
+rules_p1_body
+{
+花札は12ヶ月各4枚の計48枚で構成されます。札は光札（20点）、短冊（5点）、タネ（5点）、カス（1点）の4種類に分かれます。
+}
+
+rules_p2_title
+{
+2. こいこいルール (日本)
+}
+
+rules_p2_body
+{
+手札と同月の場札を合わせます。役（光・短冊・タネ・カス）を完成させると得点を得ます。「こいこい」で続行できますが、相手が先に役を作ると相手の勝ちとなります。
+}
+
+rules_p3_title
+{
+3. ゴーストップルール (韓国)
+}
+
+rules_p3_body
+{
+3点以上獲得でゴーかストップを宣言できます。五鳥（ゴドリ）、短冊、皮などが主な役です。3ゴー以上、光縛り、皮縛りで得点が倍増します。
+}
+
+rules_p4_title
+{
+4. 勝負勝利とベットモード
+}
+
+rules_p4_body
+{
+標準マッチは12回戦（1月〜12月）で行われます。12回戦終了時に最高得点のプレイヤーが勝利します。ベットモードでは次の札が大きいか小さいかを当てて倍増を狙います。
+}
+
+dealer_cut_you
+{
+あなたは %d 月、相手は %d 月を引きました。あなたが先攻です！
+}
+
+dealer_cut_com
+{
+あなたは %d 月、相手は %d 月を引きました。相手が先攻です！
 }

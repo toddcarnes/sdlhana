@@ -5,48 +5,44 @@
 //
 ////////////////////////////////////////////////////////
 
-// French translation by rangzen
-// FIXME: (1) some strings are too long
-//        (2) new strings since 0.3 release are untranslated
-
 five_lights
 {
-Cinq lumières
+Cinq Lumières
 }
 
 four_lights
 {
-Quatre lumières
+Quatre Lumières
 }
 
 rain_four_lights
 {
-Pluie quatre lumières
+Quatre Lumières de Pluie
 }
 
 three_lights
 {
-Trois lumières
+Trois Lumières
 }
 
 rain_three_lights
 {
-Pluie trois lumière
+Trois Lumières de Pluie
 }
 
 red_ribbons
 {
-Rubans rouges
+Rubans Rouges
 }
 
 blue_ribbons
 {
-Rubans bleus
+Rubans Bleus
 }
 
 normal_ribbons
 {
-Rubans normaux
+Rubans d'Herbe
 }
 
 ribbons
@@ -56,12 +52,12 @@ Rubans
 
 boar_deer_butterfly
 {
-Boar, Deer & Butterfly
+Sanglier, Cerf et Papillon
 }
 
 five_birds
 {
-Cinq oiseaux
+Cinq Oiseaux
 }
 
 animals
@@ -71,12 +67,12 @@ Animaux
 
 flower_meets_sakecup
 {
-La fleur rencontre la coupe de sake
+Fleur rencontre Coupe de Saké
 }
 
 moon_meets_sakecup
 {
-La lune rencontre la coupe de sake
+Lune rencontre Coupe de Saké
 }
 
 cards
@@ -86,7 +82,7 @@ Cartes
 
 dealer
 {
-Distributeur
+Donneur
 }
 
 point
@@ -99,69 +95,44 @@ points
 Points
 }
 
+total
+{
+Total :
+}
+
 koikoiyesorno
 {
-Voulez vous continuez la partie ?
+Voulez-vous continuer la partie ?
 }
 
 go
 {
-Oui
+Continuer
 }
 
 stop
 {
-Non
-}
-
-comdealer
-{
-Je distribue ce tour-ci.
-}
-
-youdealer
-{
-Vous distribuez ce tour-ci.
+S'arrêter
 }
 
 discardcardselect
 {
-Veuillez selectionner une carte.
+Veuillez sélectionner une carte.
+}
+
+comdealer
+{
+L'adversaire commence.
+}
+
+youdealer
+{
+Vous commencez.
 }
 
 computerwin
 {
-Vous avez perdue !
-}
-
-youwin
-{
-Vous avez gagné !
-}
-
-total
-{
-Total
-}
-
-play
-{
-Commencer une partie
-}
-
-settings
-{
-Paramêtres du jeu
-}
-
-quit
-{
-Quitter la partie
-}
-
-doubleupyesorno
-{
-Voulez vous doubler ?
+Le CPU Gagne !
 }
 
 yes
@@ -174,44 +145,14 @@ no
 Non
 }
 
-bigorsmall
+score
 {
-Gros ou petit ?
-}
-
-big
-{
-Gros
-}
-
-small
-{
-Petit
-}
-
-fullscreen
-{
-Plein écran
-}
-
-enablesound
-{
-Activer le son
-}
-
-soundvolume
-{
-Volume sonore
+Score
 }
 
 gamemode
 {
-Mode de jeu
-}
-
-language
-{
-Langage
+Mode de Jeu
 }
 
 gamemode0
@@ -221,7 +162,7 @@ Koi-Koi
 
 gamemode1
 {
-Koi-Koi [BET]
+Mode Pari
 }
 
 gamemode2
@@ -229,83 +170,282 @@ gamemode2
 Go-Stop
 }
 
+koikoi
+{
+Koi-Koi
+}
+
+bet
+{
+Mode Pari
+}
+
+korean
+{
+Go-Stop
+}
+
+doubleupyesorno
+{
+Voulez-vous doubler ?
+}
+
+bigorsmall
+{
+La prochaine carte sera-t-elle grande ou petite ?
+}
+
+big
+{
+Grande (> 6ème mois)
+}
+
+small
+{
+Petite (<= 6ème mois)
+}
+
+youscores
+{
+Vous avez marqué : %d Pts
+}
+
+comscores
+{
+L'adversaire a marqué : %d Pts
+}
+
+youwin
+{
+Vous avez Gagné !
+}
+
+youlose
+{
+Vous avez Perdu !
+}
+
+pressanykey
+{
+Appuyez sur une touche pour continuer...
+}
+
+play
+{
+Jouer
+}
+
+settings
+{
+Paramètres
+}
+
+quit
+{
+Quitter
+}
+
+fullscreen
+{
+Plein Écran
+}
+
+enablesound
+{
+Effets Sonores
+}
+
+language
+{
+Langue
+}
+
 animspeed
 {
-Game Speed
+Vitesse d'Animation
 }
 
 veryslow
 {
-Very Slow
+Très Lente
 }
 
 slow
 {
-Slow
+Lente
 }
 
 middle
 {
-Middle
+Moyenne
 }
 
 fast
 {
-Fast
+Rapide
 }
 
 veryfast
 {
-Very Fast
+Très Rapide
 }
 
 chs
 {
-Simplified Chinese
+Chinois Simplifié
 }
 
 jpn
 {
-Japanese
+Japonais
 }
 
 eng
 {
-English
+Anglais
 }
 
 fra
 {
-French
+Français
 }
 
 Enabled
 {
-Enabled
+Activé
 }
 
 Disabled
 {
-Disabled
+Désactivé
 }
 
 comget3pts
 {
-You lost 3 points!
+Vous avez perdu 3 points !
 }
 
 youget3pts
 {
-You got 3 points!
+Vous avez gagné 3 points !
 }
 
 comget5pts
 {
-You lost 5 points!
+Vous avez perdu 5 points !
 }
 
 youget5pts
 {
-You got 5 points!
+Vous avez gagné 5 points !
 }
 
+match_victory
+{
+VICTOIRE DE LA PARTIE !
+}
+
+match_defeat
+{
+DÉFAITE DE LA PARTIE !
+}
+
+match_draw
+{
+MATCH NUL !
+}
+
+congrats_win
+{
+Félicitations ! Vous avez gagné la partie de Hanafuda !
+}
+
+better_luck_lose
+{
+Plus de chance la prochaine fois ! Le CPU a gagné la partie.
+}
+
+tie_game
+{
+Match nul ! Bien joué.
+}
+
+final_score_fmt
+{
+Score final sur 12 mois : %d
+}
+
+btn_rules
+{
+Règles & Scores
+}
+
+btn_prev
+{
+Précédent
+}
+
+btn_next
+{
+Suivant
+}
+
+btn_menu
+{
+Menu Principal
+}
+
+rules_header
+{
+Guide des Règles & Scores du Hanafuda
+}
+
+rules_p1_title
+{
+1. Cartes & Combinaisons
+}
+
+rules_p1_body
+{
+Un jeu de Hanafuda comprend 48 cartes réparties en 12 mois de 4 cartes. Les cartes sont divisées en 4 catégories : Lumières (20 pts), Rubans (5 pts), Animaux (5 pts), et Cartes Simples (1 pt).
+}
+
+rules_p2_title
+{
+2. Règles du Koi-Koi (Japonais)
+}
+
+rules_p2_body
+{
+Associez les cartes de votre main aux cartes du plateau du même mois. Formez des Yaku pour marquer des points. Déclarer Koi-Koi continue la manche pour marquer plus, mais si l'adversaire forme un Yaku en premier, il gagne la manche.
+}
+
+rules_p3_title
+{
+3. Règles du Go-Stop (Coréen)
+}
+
+rules_p3_body
+{
+Les joueurs doivent atteindre 3 points avant de déclarer Go ou Stop. Les Yaku incluent 5 Oiseaux (Godori), Rubans, et Cartes Simples. Gagner avec 3+ Go, Gwang-bak ou Pi-bak double le score total.
+}
+
+rules_p4_title
+{
+4. Victoire de Partie & Mode Pari
+}
+
+rules_p4_body
+{
+Un match dure 12 manches (janv. à déc.). Le joueur avec le score le plus élevé après 12 manches gagne. En mode Pari, doublez vos gains en devinant si la carte suivante est Grande ou Petite.
+}
+
+dealer_cut_you
+{
+Vous avez tiré le Mois %d, l'adversaire le Mois %d. Vous commencez !
+}
+
+dealer_cut_com
+{
+Vous avez tiré le Mois %d, l'adversaire le Mois %d. L'adversaire commence !
+}

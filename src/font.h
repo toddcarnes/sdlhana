@@ -53,6 +53,7 @@ public:
 
    int          Load(const char *filename);
    SDL_Surface *Render(const char *sz, int r = 255, int g = 255, int b = 255, int size = 32, bool shadow = true);
+   SDL_Surface *RenderWrapped(const char *sz, int r = 255, int g = 255, int b = 255, int size = 32, int wrap_width = 500);
 
 private:
    void         Sort(fntchar_t *begin = NULL, fntchar_t *end = NULL);

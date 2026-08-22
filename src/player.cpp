@@ -368,10 +368,11 @@ void CBasePlayer::DrawCurResult()
 
 #define DRAW_BOX_TEXT(text)                               \
    {                                                      \
-      CBox box(20, 270, 595, 33, 155, 40, 185);           \
+      CBox box(20, 260, 595, 50, 155, 40, 185);           \
       gpGeneral->PlaySound(SOUND_HINT);                   \
-      gpGeneral->DrawText(text, 30, 270, 255, 255, 24);   \
-      UTIL_Delay(2000);                                   \
+      gpGeneral->DrawTextInBox(text, 20, 260, 595, 50, 255, 255, 255, 18); \
+      UTIL_Delay(3500);                                   \
+      if (gpGame) gpGame->RedrawTable();                  \
    }
 
 #define CLEAR_EFFECT                                      \
@@ -684,8 +685,8 @@ CPlayer::~CPlayer()
 
 int CPlayer::SelectCard()
 {
-   CBox hint(20, 270, 595, 33, 40, 55, 85);
-   gpGeneral->DrawText(msg("discardcardselect"), 30, 270, 255, 255, 24);
+   CBox hint(20, 260, 595, 50, 40, 55, 85);
+   gpGeneral->DrawTextInBox(msg("discardcardselect"), 20, 260, 595, 50, 255, 255, 255, 18);
 
    int i, sel = -1;
    std::unique_ptr<CButton> b[8];
@@ -709,14 +710,15 @@ int CPlayer::SelectCard()
 
 bool CPlayer::WantToContinue()
 {
-   auto mainbox = std::make_unique<CBox>(20, 270, 595, 70, 80, 55, 85);
-   auto yesbtn = std::make_unique<CButton>(1, 30, 305, 100, 30, 128, 128, 128);
-   auto nobtn = std::make_unique<CButton>(2, 145, 305, 100, 30, 128, 128, 128);
+   if (gpGame) gpGame->RedrawTable();
+   auto mainbox = std::make_unique<CBox>(20, 250, 595, 100, 40, 55, 85);
+   auto yesbtn = std::make_unique<CButton>(1, 40, 300, 140, 38, 58, 110, 165);
+   auto nobtn = std::make_unique<CButton>(2, 200, 300, 140, 38, 165, 58, 58);
    bool ret = true;
 
-   gpGeneral->DrawText(msg("koikoiyesorno"), 30, 270, 255, 255, 0, 32);
-   gpGeneral->DrawText(msg("go"), 35, 305, 255, 0, 255, 30);
-   gpGeneral->DrawText(msg("stop"), 150, 305, 0, 255, 255, 30);
+   gpGeneral->DrawTextInBox(msg("koikoiyesorno"), 20, 255, 595, 35, 255, 255, 0, 20);
+   gpGeneral->DrawTextInBox(msg("go"), 40, 300, 140, 38, 255, 255, 255, 20);
+   gpGeneral->DrawTextInBox(msg("stop"), 200, 300, 140, 38, 255, 255, 255, 20);
 
    while (1) {
       int k = gpGeneral->ReadKey();
@@ -729,6 +731,11 @@ bool CPlayer::WantToContinue()
       }
    }
 
+   yesbtn.reset();
+   nobtn.reset();
+   mainbox.reset();
+
+   if (gpGame) gpGame->RedrawTable();
    return ret;
 }
 
