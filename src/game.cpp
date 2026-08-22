@@ -262,6 +262,9 @@ void CGame::RunGame()
 
 void CGame::InitGame()
 {
+   m_iScore = 0;
+   cfg.Set("GAME", "Score", "0");
+
    if (GetGameMode() != GAMEMODE_BET) {
       // set random player as the dealer
       m_pPlayers[RandomLong(0, 1)]->SetAsDealer();
@@ -711,9 +714,9 @@ void CGame::CardDiscarded(const CCard &c, CBasePlayer *current, int sx, int sy)
 
       UTIL_Delay(200);
 
-      if (leavethree) {
+      if (GetGameMode() == GAMEMODE_KOREAN && leavethree) {
          current->m_iNumLeaveThree++;
-         if (leavethree && current->GetNumHandCard() >= 8) {
+         if (current->GetNumHandCard() >= 8) {
             // This happens in first round. Get 3 points from opponent
             CBox box(20, 300, 595, 33, 40, 55, 85);
             gpGeneral->PlaySound(SOUND_HINT);

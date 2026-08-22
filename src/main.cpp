@@ -22,6 +22,48 @@
 #include <SDL3/SDL_main.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include "main.h"
+#include "sdlhana.xpm"
+
+static void SetAppWindowIcon(SDL_Window *window)
+{
+   if (window == nullptr) return;
+
+   SDL_Surface *icon = SDL_CreateSurface(32, 32, SDL_PIXELFORMAT_RGBA32);
+   if (icon == nullptr) return;
+
+   if (SDL_MUSTLOCK(icon)) {
+      SDL_LockSurface(icon);
+   }
+
+   Uint8 *pixels = (Uint8 *)icon->pixels;
+   for (int y = 0; y < 32; y++) {
+      const char *line = sdlhana_xpm[7 + y];
+      for (int x = 0; x < 32; x++) {
+         char c = line[x];
+         Uint8 r = 0, g = 0, b = 0, a = 255;
+         switch (c) {
+            case '.': r = 0;   g = 128; b = 0;   break;
+            case '+': r = 0;   g = 0;   b = 0;   break;
+            case '@': r = 255; g = 0;   b = 0;   break;
+            case '#': r = 255; g = 255; b = 255; break;
+            case '$': r = 0;   g = 255; b = 0;   break;
+            case ' ': default: a = 0;            break;
+         }
+         Uint8 *p = pixels + y * icon->pitch + x * 4;
+         p[0] = r;
+         p[1] = g;
+         p[2] = b;
+         p[3] = a;
+      }
+   }
+
+   if (SDL_MUSTLOCK(icon)) {
+      SDL_UnlockSurface(icon);
+   }
+
+   SDL_SetWindowIcon(window, icon);
+   SDL_DestroySurface(icon);
+}
 
 Application::Application() = default;
 Application::~Application() = default;
@@ -101,6 +143,7 @@ int main(int argc, char *argv[])
       std::println(stderr, "FATAL ERROR: Could not create SDL3 window: {}", SDL_GetError());
       exit(1);
    }
+   SetAppWindowIcon(gpWindow);
 
    gpRenderer = SDL_CreateRenderer(gpWindow, NULL);
    if (gpRenderer == nullptr) {
