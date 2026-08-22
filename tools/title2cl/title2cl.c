@@ -10,7 +10,11 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#if defined(__has_include) && __has_include(<malloc.h>) && !defined(__APPLE__)
 #include <malloc.h>
+#endif
 
 void
 trim (char *str)

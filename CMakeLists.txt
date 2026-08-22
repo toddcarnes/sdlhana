@@ -136,3 +136,9 @@ add_custom_command(TARGET sdlhana POST_BUILD
             $<TARGET_FILE_DIR:sdlhana>/$<TARGET_FILE_NAME:SDL3_ttf::SDL3_ttf-shared>
     COMMENT "Copying game assets and SDL3 DLLs to target build output directory..."
 )
+
+# Optional developer tools build
+option(SDLHANA_BUILD_TOOLS "Build developer font tools (title2cl)" OFF)
+if(SDLHANA_BUILD_TOOLS)
+    add_subdirectory(tools)
+endif()

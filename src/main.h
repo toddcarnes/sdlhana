@@ -63,10 +63,6 @@ namespace std {
 
 #include <SDL3/SDL.h>
 
-#ifdef WITH_CONFIG_H
-#include "config.h"
-#endif
-
 #ifndef PREFIX
 #define PREFIX "./"
 #endif
