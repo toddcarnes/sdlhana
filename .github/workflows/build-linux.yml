@@ -1,4 +1,4 @@
-name: Cross-Platform Build CI
+name: Linux Build
 
 on:
   push:
@@ -8,24 +8,20 @@ on:
 
 jobs:
   build:
-    name: Build on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-        build_type: [Release]
+    name: Build (Linux)
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
     - name: Install Linux Dependencies
-      if: runner.os == 'Linux'
       run: |
         sudo apt-get update
         sudo apt-get install -y \
           build-essential \
+          gcc-14 \
+          g++-14 \
           cmake \
           ninja-build \
           libasound2-dev \
@@ -42,9 +38,11 @@ jobs:
           libxtst-dev \
           libfreetype6-dev \
           libdbus-1-dev
+        echo "CC=gcc-14" >> $GITHUB_ENV
+        echo "CXX=g++-14" >> $GITHUB_ENV
 
     - name: Configure CMake
-      run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
     - name: Build Executable
-      run: cmake --build build --config ${{ matrix.build_type }}
+      run: cmake --build build --config Release

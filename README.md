@@ -1,6 +1,8 @@
 # SDLHana
 
-[![Build Status](https://github.com/toddcarnes/sdlhana/actions/workflows/build.yml/badge.svg)](https://github.com/toddcarnes/sdlhana/actions/workflows/build.yml)
+[![Windows Build](https://github.com/toddcarnes/sdlhana/actions/workflows/build-windows.yml/badge.svg)](https://github.com/toddcarnes/sdlhana/actions/workflows/build-windows.yml)
+[![macOS Build](https://github.com/toddcarnes/sdlhana/actions/workflows/build-macos.yml/badge.svg)](https://github.com/toddcarnes/sdlhana/actions/workflows/build-macos.yml)
+[![Linux Build](https://github.com/toddcarnes/sdlhana/actions/workflows/build-linux.yml/badge.svg)](https://github.com/toddcarnes/sdlhana/actions/workflows/build-linux.yml)
 [![Release Packaging](https://github.com/toddcarnes/sdlhana/actions/workflows/release.yml/badge.svg)](https://github.com/toddcarnes/sdlhana/actions/workflows/release.yml)
 [![Latest Release](https://img.shields.io/github/v/release/toddcarnes/sdlhana)](https://github.com/toddcarnes/sdlhana/releases/latest)
 
@@ -20,7 +22,7 @@ This project is a modern C++23 / SDL3 refactor and evolution of the original SDL
 - **Modern C++23 Architecture**: Built with standard library features (`<print>`, `<format>`, `<filesystem>`, `std::optional`, `std::unique_ptr`).
 - **Hardware-Accelerated SDL3**: Modern rendering engine using `SDL_Renderer` and `SDL_Texture`, paired with `SDL3_mixer` for audio and `SDL3_ttf` for font rendering.
 - **CMake 3.25+ Build System**: Clean FetchContent integration that automatically resolves and builds dependencies across all operating systems.
-- **Cross-Platform Compatibility**: Tested and verified on **Windows 11 (MSVC)**, **macOS (Clang)**, and **Linux (GCC)**.
+- **Cross-Platform Compatibility**: Tested and verified independently on **Windows 11 (MSVC)**, **macOS (Clang)**, and **Linux (GCC)**.
 
 ---
 
