@@ -3,19 +3,15 @@
   |  [ )(_][ )| \_)
 --------------------
 
-images/cards.bmp: from pysol-cardsets.
+images/cards.bmp: High-resolution vector Hanafuda cardset derived from 
+Wikimedia Commons (Category:SVG_Hanafuda).
 
-This cardset was created by T. Kirk. The cardset was merged
-into one file by Wei Mingzhi.
+Original vector cardset created by Louie Mantia Jr. and Wikimedia Commons contributors.
+Licensed under Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+/ Public Domain (CC0).
+https://commons.wikimedia.org/wiki/Category:SVG_Hanafuda
 
-Copyright (C) 1999, 2000 T. Kirk <grania@mailcity.com>
-
-This card set is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2 of
-the License, or (at your option) any later version.
-
-See the file "COPYING" for details.
+Legacy 1999 PySol cardset created by T. Kirk <grania@mailcity.com>.
 
 ---------------------------------------------------------------------
 sound/koi.wav, sound/win.wav, sound/lose.wav, sound/hint.wav,
@@ -29,9 +25,9 @@ Portions of the code are based on the work done by:
 
 Stephane Magnenat <nct@ysagoon.com>
 Gregory Velichansky <hmaon@bumba.net>
+Wei Mingzhi <whistler@openoffice.org>
 
 ---------------------------------------------------------------------
 C++23 & SDL3 Modernization Porting:
 
 Todd Carnes <toddcarnes@gmail.com>
-
