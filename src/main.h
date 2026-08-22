@@ -29,12 +29,30 @@
 #include <cmath>
 #include <climits>
 #include <cassert>
-#include <print>
 #include <format>
+#if defined(__has_include) && __has_include(<print>)
+#include <print>
+#endif
 #include <string>
 #include <string_view>
 #include <random>
 #include <memory>
+
+#if !defined(__cpp_lib_print)
+namespace std {
+   template<typename... Args>
+   inline void println(std::FILE *stream, std::format_string<Args...> fmt, Args&&... args) {
+      std::string s = std::format(fmt, std::forward<Args>(args)...);
+      std::fputs(s.c_str(), stream);
+      std::fputc('\n', stream);
+   }
+
+   template<typename... Args>
+   inline void println(std::format_string<Args...> fmt, Args&&... args) {
+      std::println(stdout, fmt, std::forward<Args>(args)...);
+   }
+}
+#endif
 
 #ifdef _WIN32
 #include <io.h>

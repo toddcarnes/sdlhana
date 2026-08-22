@@ -12,7 +12,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#if defined(__has_include) && __has_include(<malloc.h>) && !defined(__APPLE__)
 #include <malloc.h>
+#endif
 
 #define N           4096      // size of ring buffer
 #define F           18        // upper limit for match_length
