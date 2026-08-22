@@ -1,5 +1,5 @@
 /* XPM */
-static char * sdlhana_xpm[] = {
+static const char * const sdlhana_xpm[] = {
 "32 32 6 1",
 " 	c None",
 ".	c #008000",

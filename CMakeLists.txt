@@ -72,6 +72,7 @@ set(SDLHANA_SOURCES
 )
 
 if(WIN32)
+    list(APPEND SDLHANA_SOURCES src/sdlhana.rc)
     add_executable(sdlhana WIN32 ${SDLHANA_SOURCES})
 elseif(APPLE)
     add_executable(sdlhana MACOSX_BUNDLE ${SDLHANA_SOURCES})

@@ -10,6 +10,22 @@ SDLHana is a modern C++23 / SDL3 cross-platform Hanafuda game. Hanafuda is a tra
 
 ---
 
+## Game Modes & Supported Languages
+
+### Supported Game Modes
+- 🌸 **Koi-Koi (こいこい)**: The traditional Japanese 2-player Hanafuda game. Form combination yaku and choose to call *"Koi-Koi"* to double your points or end the hand early.
+- 🎴 **Go-Stop (고스톱)**: The popular Korean Hanafuda variant featuring Korean scoring rules (*"Sang-Puh"*, *"Leave Three"*), multipliers, and double-up opportunities.
+- 🪙 **Bet Mode**: Fast-paced scoring round mode.
+
+### Supported Languages
+The game interface supports full real-time language switching in the Settings menu:
+- 🇺🇸 **English** (`eng`)
+- 🇯🇵 **Japanese** (`jpn` / 日本語)
+- 🇨🇳 **Simplified Chinese** (`chs` / 简体中文)
+- 🇫🇷 **French** (`fra` / Français)
+
+---
+
 ## Acknowledgments & Project History
 
 This project is a modern C++23 / SDL3 refactor and evolution of the original SDLHana codebase created by Wei Mingzhi and hosted on GNU Savannah:
