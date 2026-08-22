@@ -118,6 +118,11 @@ static bool SDLCALL EventFilter(void *userdata, SDL_Event *event)
    } else if (event->type == SDL_EVENT_QUIT) {
       UserQuit();
       return false;
+   } else if (event->type == SDL_EVENT_WINDOW_RESIZED || event->type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+      if (gpScreenTexture != nullptr) {
+         SDL_DestroyTexture(gpScreenTexture);
+         gpScreenTexture = nullptr;
+      }
    }
 
    return true;

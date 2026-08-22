@@ -113,13 +113,23 @@ void CGeneral::UpdateScreen(int x, int y, int w, int h)
    if (gpRenderer != nullptr && gpScreen != nullptr) {
       if (gpScreenTexture == nullptr) {
          gpScreenTexture = SDL_CreateTextureFromSurface(gpRenderer, gpScreen);
-         SDL_SetTextureScaleMode(gpScreenTexture, SDL_SCALEMODE_LINEAR);
+         if (gpScreenTexture != nullptr) {
+            SDL_SetTextureScaleMode(gpScreenTexture, SDL_SCALEMODE_LINEAR);
+         }
       } else {
-         SDL_UpdateTexture(gpScreenTexture, NULL, gpScreen->pixels, gpScreen->pitch);
+         if (!SDL_UpdateTexture(gpScreenTexture, NULL, gpScreen->pixels, gpScreen->pitch)) {
+            SDL_DestroyTexture(gpScreenTexture);
+            gpScreenTexture = SDL_CreateTextureFromSurface(gpRenderer, gpScreen);
+            if (gpScreenTexture != nullptr) {
+               SDL_SetTextureScaleMode(gpScreenTexture, SDL_SCALEMODE_LINEAR);
+            }
+         }
       }
-      SDL_RenderClear(gpRenderer);
-      SDL_RenderTexture(gpRenderer, gpScreenTexture, NULL, NULL);
-      SDL_RenderPresent(gpRenderer);
+      if (gpScreenTexture != nullptr) {
+         SDL_RenderClear(gpRenderer);
+         SDL_RenderTexture(gpRenderer, gpScreenTexture, NULL, NULL);
+         SDL_RenderPresent(gpRenderer);
+      }
    }
 }
 
