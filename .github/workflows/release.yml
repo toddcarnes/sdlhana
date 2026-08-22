@@ -22,7 +22,7 @@ jobs:
           - os: windows-latest
             artifact_name: sdlhana-windows-x64.zip
           - os: macos-latest
-            artifact_name: sdlhana-macos-x64.tar.gz
+            artifact_name: sdlhana-macos-universal.tar.gz
           - os: ubuntu-latest
             artifact_name: sdlhana-linux-x64.tar.gz
 
@@ -57,7 +57,12 @@ jobs:
         echo "CC=gcc-14" >> $GITHUB_ENV
         echo "CXX=g++-14" >> $GITHUB_ENV
 
-    - name: Configure CMake
+    - name: Configure CMake (macOS Universal)
+      if: runner.os == 'macOS'
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
+
+    - name: Configure CMake (Non-macOS)
+      if: runner.os != 'macOS'
       run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
     - name: Build Executable
