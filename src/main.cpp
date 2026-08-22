@@ -127,6 +127,12 @@ int main(int argc, char *argv[])
 {
    (void)argc;
    (void)argv;
+
+   const char *base_path = SDL_GetBasePath();
+   if (base_path != nullptr) {
+      std::filesystem::current_path(base_path);
+   }
+
    LoadCfg(); // load the configuration file
 
    // Initialize SDL3 defaults, video and audio
