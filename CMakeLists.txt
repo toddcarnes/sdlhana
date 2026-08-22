@@ -13,6 +13,7 @@ include(FetchContent)
 set(SDL_SHARED ON CACHE BOOL "Enable SDL3 shared library" FORCE)
 set(SDL_STATIC OFF CACHE BOOL "Disable SDL3 static library" FORCE)
 set(SDL_TEST OFF CACHE BOOL "Disable SDL3 tests" FORCE)
+set(SDL_X11_XTEST OFF CACHE BOOL "Disable X11 XTest support" FORCE)
 set(SDL_JOYSTICK_GAMEINPUT OFF CACHE BOOL "Disable GameInput driver" FORCE)
 set(SDL_LIBC ON CACHE BOOL "Use standard C library" FORCE)
 
@@ -35,14 +36,17 @@ set(SDLMIXER_WAVPACK OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
     SDL3_mixer
     GIT_REPOSITORY https://github.com/libsdl-org/SDL_mixer.git
-    GIT_TAG        release-3.2.0
+    GIT_TAG        release-3.2.4
     GIT_SHALLOW    TRUE
 )
+
+set(SDLTTF_VENDORED ON CACHE BOOL "Use vendored dependencies for SDL3_ttf" FORCE)
+set(SDL3TTF_VENDORED ON CACHE BOOL "Use vendored dependencies for SDL3_ttf" FORCE)
 
 FetchContent_Declare(
     SDL3_ttf
     GIT_REPOSITORY https://github.com/libsdl-org/SDL_ttf.git
-    GIT_TAG        release-3.2.0
+    GIT_TAG        release-3.2.2
     GIT_SHALLOW    TRUE
 )
 
@@ -78,8 +82,8 @@ endif()
 # Target Include Directories
 target_include_directories(sdlhana PRIVATE
     src
-    ${SDL3_mixer_SOURCE_DIR}/include
-    ${SDL3_ttf_SOURCE_DIR}/include
+    ${sdl3_mixer_SOURCE_DIR}/include
+    ${sdl3_ttf_SOURCE_DIR}/include
     ${CMAKE_CURRENT_BINARY_DIR}/_deps/sdl3_mixer-src/include
     ${CMAKE_CURRENT_BINARY_DIR}/_deps/sdl3_ttf-src/include
 )

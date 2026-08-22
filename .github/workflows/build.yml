@@ -39,6 +39,8 @@ jobs:
           libxi-dev \
           libxdamage-dev \
           libxinerama-dev \
+          libxtst-dev \
+          libfreetype6-dev \
           libdbus-1-dev
 
     - name: Configure CMake
