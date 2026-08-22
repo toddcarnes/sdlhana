@@ -107,6 +107,7 @@ void CGeneral::UpdateScreen(int x, int y, int w, int h)
    if (gpRenderer != nullptr && gpScreen != nullptr) {
       if (gpScreenTexture == nullptr) {
          gpScreenTexture = SDL_CreateTextureFromSurface(gpRenderer, gpScreen);
+         SDL_SetTextureScaleMode(gpScreenTexture, SDL_SCALEMODE_LINEAR);
       } else {
          SDL_UpdateTexture(gpScreenTexture, NULL, gpScreen->pixels, gpScreen->pitch);
       }
@@ -190,7 +191,7 @@ SDL_Surface *CGeneral::RenderCard(const CCard &c, int w, int h)
    w--;
    h--;
 
-   SDL_SetSurfaceColorKey(s, true, SDL_MapSurfaceRGBA(s, 0, 0, 0, 0));
+   SDL_SetSurfaceColorKey(s, true, SDL_MapSurfaceRGBA(s, 255, 0, 255, 255));
    UTIL_FillRect(s, w, 1, 1, h - 1, 1, 1, 1);
    UTIL_FillRect(s, 1, h, w, 1, 1, 1, 1);
 

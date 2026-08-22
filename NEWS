@@ -1,5 +1,8 @@
 0.35 Released on August 21st, 2026.
  - Major codebase modernization to C++23, SDL3, SDL3_mixer, SDL3_ttf, and CMake 3.25+.
+ - Upgraded card graphics to high-resolution vector Hanafuda set with authentic traditional colors and red card backs.
+ - Configured native macOS App Bundle (SDLHana.app) packaging with automated .icns icon generation.
+ - Standardized application per-user storage path under "CarneSoft" organization namespace.
  - Added automated GitHub Actions release packaging for Windows, macOS, and Linux standalone archives.
  - Added per-OS CI status badges and documentation for Game Modes, Supported Languages, and GNU Savannah project history.
  - Added optional developer tools build flag (-DSDLHANA_BUILD_TOOLS=ON) and removed legacy Autotools Makefiles.
