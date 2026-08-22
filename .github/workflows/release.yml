@@ -70,14 +70,34 @@ jobs:
     - name: Package Bundle (macOS)
       if: runner.os == 'macOS'
       run: |
-        mkdir -p dist
-        find build -type f -name "sdlhana" -exec cp {} dist/ \;
-        cp -r src/data dist/
-        cp -r src/fonts dist/
-        cp -r src/images dist/
-        cp -r src/sound dist/
-        find build -name "*.dylib" -exec cp {} dist/ \; 2>/dev/null || true
-        tar -czvf ${{ matrix.artifact_name }} -C dist .
+        # Generate macOS icns icon set
+        mkdir -p icon.iconset
+        sips -z 16 16     src/images/cards.bmp --out icon.iconset/icon_16x16.png 2>/dev/null || true
+        sips -z 32 32     src/images/cards.bmp --out icon.iconset/icon_16x16@2x.png 2>/dev/null || true
+        sips -z 32 32     src/images/cards.bmp --out icon.iconset/icon_32x32.png 2>/dev/null || true
+        sips -z 64 64     src/images/cards.bmp --out icon.iconset/icon_32x32@2x.png 2>/dev/null || true
+        sips -z 128 128   src/images/cards.bmp --out icon.iconset/icon_128x128.png 2>/dev/null || true
+        sips -z 256 256   src/images/cards.bmp --out icon.iconset/icon_128x128@2x.png 2>/dev/null || true
+        sips -z 256 256   src/images/cards.bmp --out icon.iconset/icon_256x256.png 2>/dev/null || true
+        sips -z 512 512   src/images/cards.bmp --out icon.iconset/icon_256x256@2x.png 2>/dev/null || true
+        sips -z 512 512   src/images/cards.bmp --out icon.iconset/icon_512x512.png 2>/dev/null || true
+        iconutil -c icns icon.iconset -o build/sdlhana.app/Contents/Resources/sdlhana.icns 2>/dev/null || true
+
+        # Ensure Resources and MacOS directories contain all game assets and dynamic libraries
+        mkdir -p build/sdlhana.app/Contents/Resources
+        mkdir -p build/sdlhana.app/Contents/MacOS
+        cp -r src/data build/sdlhana.app/Contents/Resources/
+        cp -r src/fonts build/sdlhana.app/Contents/Resources/
+        cp -r src/images build/sdlhana.app/Contents/Resources/
+        cp -r src/sound build/sdlhana.app/Contents/Resources/
+        cp -r src/data build/sdlhana.app/Contents/MacOS/
+        cp -r src/fonts build/sdlhana.app/Contents/MacOS/
+        cp -r src/images build/sdlhana.app/Contents/MacOS/
+        cp -r src/sound build/sdlhana.app/Contents/MacOS/
+        find build -name "*.dylib" -exec cp {} build/sdlhana.app/Contents/MacOS/ \; 2>/dev/null || true
+
+        # Compress native sdlhana.app bundle
+        tar -czvf ${{ matrix.artifact_name }} -C build sdlhana.app
 
     - name: Package Bundle (Linux)
       if: runner.os == 'Linux'
