@@ -102,5 +102,7 @@ void SOUND_PlayWAV(SoundSample *audio)
    if (audio == nullptr || audio->audio == nullptr || !g_fAudioOpened || !g_pMixer) {
       return;
    }
-   MIX_PlayAudio(g_pMixer, audio->audio);
+   if (!MIX_PlayAudio(g_pMixer, audio->audio)) {
+      std::println(stderr, "WARNING: MIX_PlayAudio failed: {}", SDL_GetError());
+   }
 }

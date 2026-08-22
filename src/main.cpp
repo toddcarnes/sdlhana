@@ -149,6 +149,8 @@ int main(int argc, char *argv[])
    cfg.Set("OPTIONS", "FullScreen", "0");
    SDL_WindowFlags window_flags = SDL_WINDOW_RESIZABLE;
 
+   SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal,direct3d11,opengl");
+
    gpWindow = SDL_CreateWindow("SDLHana", 1024, 768, window_flags);
    if (gpWindow == nullptr) {
       std::println(stderr, "FATAL ERROR: Could not create SDL3 window: {}", SDL_GetError());
