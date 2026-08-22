@@ -1,4 +1,9 @@
-0.35 Released on August 20th, 2026.
+0.35 Released on August 21st, 2026.
  - Major codebase modernization to C++23, SDL3, SDL3_mixer, SDL3_ttf, and CMake 3.25+.
+ - Added automated GitHub Actions release packaging for Windows, macOS, and Linux standalone archives.
+ - Added per-OS CI status badges and documentation for Game Modes, Supported Languages, and GNU Savannah project history.
+ - Added optional developer tools build flag (-DSDLHANA_BUILD_TOOLS=ON) and removed legacy Autotools Makefiles.
+ - Integrated cross-platform application window icon and native Windows executable resource.
+ - Fixed game score initialization across sessions and isolated Korean-specific scoring rules.
 0.32 Released on March 2nd, 2006.
 0.31 Released on February 8th, 2006.

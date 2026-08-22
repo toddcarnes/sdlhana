@@ -1,59 +1,80 @@
+8/21/2026 Todd Carnes <toddcarnes@gmail.com>:
+
+* Release Automation: Created GitHub Actions release deployment workflow (.github/workflows/release.yml) to automatically package and attach self-contained game bundles (Windows .zip, macOS .tar.gz, Linux .tar.gz) on release tag publication.
+* Continuous Integration: Separated build CI into per-OS workflows (.github/workflows/build-windows.yml, build-macos.yml, build-linux.yml) with live status badges on README.md.
+* Application Icon: Appended src/sdlhana.rc to Windows executable target for native Windows Explorer icon embedding and implemented cross-platform SetAppWindowIcon() using SDL_SetWindowIcon() and sdlhana.xpm.
+* Game Engine Fixes: Reset m_iScore to 0 in InitGame() to prevent score leaking across game sessions, and isolated Korean-specific "Leave Three" scoring rules to GAMEMODE_KOREAN.
+* Developer Tools: Created tools/CMakeLists.txt with optional SDLHANA_BUILD_TOOLS CMake build flag for title2cl, removing legacy Autotools Makefiles and #ifdef WITH_CONFIG_H blocks.
+* Documentation: Updated README.md with Game Modes, Supported Languages, and GNU Savannah project attribution.
+
 8/20/2026 Todd Carnes <toddcarnes@gmail.com>:
- * Build System: Replaced legacy autotools/VC++6 .dsp scripts with modern CMake 3.25+ (CMakeLists.txt) supporting Windows 11 (Visual Studio 2026 MSVC), macOS (Clang), and Linux (GCC).
- * Graphics Engine: Migrated rendering pipeline from legacy software SDL_Surface CPU blitting to native hardware-accelerated SDL3 (SDL_Window*, SDL_Renderer*, SDL_Texture*). Added letterboxed 640x480 logical presentation canvas and coordinate mapping for windowed and fullscreen modes (SDL_RenderCoordinatesFromWindow).
- * Audio Engine: Refactored audio handling from low-level PCM audio stream conversion to native SDL3_mixer (MIX_Init, MIX_CreateMixerDevice, MIX_LoadAudio, MIX_PlayAudio).
- * Font Engine: Upgraded CFont into a hybrid font renderer supporting vector TrueType/OpenType fonts via SDL3_ttf with INI configuration (UseTTF=1, TTFFontPath=...) while preserving 100% fallback support for original 2005 compressed .fnt bitmap fonts (eng.fnt, fra.fnt, chs.fnt, jpn.fnt).
- * State & File System: Encapsulated loose global pointers into a unified Application context singleton. Modernized save/config handling to use SDL_GetPrefPath() and std::filesystem::path for cross-platform preference storage.
- * C++23 Modernization: Refactored raw memory management to std::unique_ptr and stack RAII, modernized C-string/printf formatting with std::println and <print>, and updated random number generation with <random> (std::mt19937).
- * Continuous Integration: Created GitHub Actions matrix workflow (.github/workflows/build.yml) automating build validation on Windows, macOS, and Linux runners.
+
+* Build System: Replaced legacy autotools/VC++6 .dsp scripts with modern CMake 3.25+ (CMakeLists.txt) supporting Windows 11 (Visual Studio 2026 MSVC), macOS (Clang), and Linux (GCC).
+* Graphics Engine: Migrated rendering pipeline from legacy software SDL_Surface CPU blitting to native hardware-accelerated SDL3 (SDL_Window*, SDL_Renderer*, SDL_Texture*). Added letterboxed 640x480 logical presentation canvas and coordinate mapping for windowed and fullscreen modes (SDL_RenderCoordinatesFromWindow).
+* Audio Engine: Refactored audio handling from low-level PCM audio stream conversion to native SDL3_mixer (MIX_Init, MIX_CreateMixerDevice, MIX_LoadAudio, MIX_PlayAudio).
+* Font Engine: Upgraded CFont into a hybrid font renderer supporting vector TrueType/OpenType fonts via SDL3_ttf with INI configuration (UseTTF=1, TTFFontPath=...) while preserving 100% fallback support for original 2005 compressed .fnt bitmap fonts (eng.fnt, fra.fnt, chs.fnt, jpn.fnt).
+* State & File System: Encapsulated loose global pointers into a unified Application context singleton. Modernized save/config handling to use SDL_GetPrefPath() and std::filesystem::path for cross-platform preference storage.
+* C++23 Modernization: Refactored raw memory management to std::unique_ptr and stack RAII, modernized C-string/printf formatting with std::println and <print>, and updated random number generation with <random> (std::mt19937).
+* Continuous Integration: Created GitHub Actions matrix workflow (.github/workflows/build.yml) automating build validation on Windows, macOS, and Linux runners.
 
 7/31/2009 Wei Mingzhi <whistler at openoffice.org>:
- * src/util.cpp (RandomLong, RandomFloat): Fixed x86_64 compatibility bug.
- * COPYING.draft: Removed old draft of GPLv3.
+
+* src/util.cpp (RandomLong, RandomFloat): Fixed x86_64 compatibility bug.
+* COPYING.draft: Removed old draft of GPLv3.
 
 12/25/2008 Wei Mingzhi <whistler at openofice.org>:
- * src/general.cpp: Fixed GCC 4.3 warning.
- * src/main.cpp (MakeFileName): Fixed GCC 4.3 warning.
- * src/data/titleschs.txt: Fixed an error in translation.
- * configure, Makefile.in: Regenerated.
+
+* src/general.cpp: Fixed GCC 4.3 warning.
+* src/main.cpp (MakeFileName): Fixed GCC 4.3 warning.
+* src/data/titleschs.txt: Fixed an error in translation.
+* configure, Makefile.in: Regenerated.
 
 7/23/2006 Wei Mingzhi <whistler at openoffice.org>:
- * src/sound.cpp: Added.
- * src/main.cpp (main): Don't use SDL_mixer.
- * src/game.cpp (CGame::Settings), src/general.cpp (CGeneral::LoadSound,
+
+* src/sound.cpp: Added.
+* src/main.cpp (main): Don't use SDL_mixer.
+* src/game.cpp (CGame::Settings), src/general.cpp (CGeneral::LoadSound,
    CGeneral::PlaySound, CGeneral::PlaySoundFile): Likewise.
- * configure.in: Removed -lSDL_mixer.
- * debian/control: Removed build depency of SDL_mixer.
- * README: Updated.
- * configure, Makefile.in: Regenerated.
+* configure.in: Removed -lSDL_mixer.
+* debian/control: Removed build depency of SDL_mixer.
+* README: Updated.
+* configure, Makefile.in: Regenerated.
 
 6/30/2006 Wei Mingzhi <whistler at openoffice.org>:
- * src/Makefile.am: Don't fix bindir to be ${prefix}/games.
- * configure, Makefile.in: Regenerated.
+
+* src/Makefile.am: Don't fix bindir to be ${prefix}/games.
+* configure, Makefile.in: Regenerated.
 
 5/14/2006 Wei Mingzhi <whistler at openoffice.org>:
- * game.cpp (CGame::CGame, CGame::PlayRound): Don't allow score to be
+
+* game.cpp (CGame::CGame, CGame::PlayRound): Don't allow score to be
    more than 99999 or less than -99999.
 
 4/28/2006 Wei Mingzhi <whistler at openoffice.org>:
- * data/titlesjpn.txt: Translated the word "French" into Japanese.
- * fonts/jpn.fnt: Regenerated.
+
+* data/titlesjpn.txt: Translated the word "French" into Japanese.
+* fonts/jpn.fnt: Regenerated.
 
 3/6/2006 Wei Mingzhi <whistler at openoffice.org>:
- * font.cpp, font.h (CFont::Render, CFont::FindChar): changed long to int
+
+* font.cpp, font.h (CFont::Render, CFont::FindChar): changed long to int
    to make it work under x86_64. Reported & fixed at the project page.
    (Still need more testing under x86_64.)
 
 3/2/2006 Wei Mingzhi <whistler at openoffice.org>:
- * SDLHana 0.32 released.
+
+* SDLHana 0.32 released.
 
 2/22/2006 Wei Mingzhi <whistler at openoffice.org>:
- * game.cpp (CGame::Settings): Fixed a bug which causes the game to exit when
+
+* game.cpp (CGame::Settings): Fixed a bug which causes the game to exit when
    trying to enable the sound.
 
 2/17/2006 Wei Mingzhi <whistler at openoffice.org>:
- * bot.cpp (CBot::WantToContinue): Changed logic.
- * README: Added installation instruction.
+
+* bot.cpp (CBot::WantToContinue): Changed logic.
+* README: Added installation instruction.
 
 2/8/2006 Wei Mingzhi <whistler at openoffice.org>:
- * SDLHana now uses GNU autotools.
+
+* SDLHana now uses GNU autotools.
