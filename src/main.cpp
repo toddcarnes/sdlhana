@@ -135,12 +135,6 @@ int main(int argc, char *argv[])
 
    LoadCfg(); // load the configuration file
 
-#ifdef __APPLE__
-   SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal,software");
-#else
-   SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d11,opengl,software");
-#endif
-
    // Initialize SDL3 defaults, video and audio
    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) { 
       std::println(stderr, "FATAL ERROR: Could not initialize SDL3: {}.", SDL_GetError());
@@ -158,6 +152,9 @@ int main(int argc, char *argv[])
    SetAppWindowIcon(gpWindow);
 
    gpRenderer = SDL_CreateRenderer(gpWindow, NULL);
+   if (gpRenderer == nullptr) {
+      gpRenderer = SDL_CreateRenderer(gpWindow, "software");
+   }
    if (gpRenderer == nullptr) {
       std::println(stderr, "FATAL ERROR: Could not create SDL3 renderer: {}", SDL_GetError());
       exit(1);
