@@ -119,11 +119,13 @@ jobs:
               install_name_tool -change "$dylib" "@executable_path/$dylib_name" "$other_dylib" 2>/dev/null || true
               install_name_tool -change "@rpath/$dylib_name" "@executable_path/$dylib_name" "$other_dylib" 2>/dev/null || true
             done
+            codesign --force --sign - "$dylib" 2>/dev/null || true
           fi
         done
 
-        # Re-sign the app bundle locally (ad-hoc signing) so macOS dyld and Gatekeeper accept modifications
-        codesign --force --deep --sign - build/sdlhana.app 2>/dev/null || true
+        # Sign main binary and bundle in bottom-up order so macOS dyld accepts all Mach-O headers
+        codesign --force --sign - build/sdlhana.app/Contents/MacOS/sdlhana 2>/dev/null || true
+        codesign --force --sign - build/sdlhana.app 2>/dev/null || true
 
         # Compress native sdlhana.app bundle
         tar -czvf ${{ matrix.artifact_name }} -C build sdlhana.app
