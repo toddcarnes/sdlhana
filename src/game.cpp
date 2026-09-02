@@ -576,49 +576,7 @@ void CGame::PlayRound()
    }
    m_iNumDeskCard = 8;
 
-   // Don't allow 3 or more same card or 4 pairs on the
-   // table! Instead of wasting time redealing, just
-   // do a small cheat here :)
-   bool allpairs = true;
-   for (i = 0; i < m_iNumDeskCard; i++) {
-      int count = 0, j;
-      for (j = 0; j < m_iNumDeskCard; j++) {
-         if (m_DeskCards[i] == m_DeskCards[j]) {
-            count++;
-         }
-      }
-      if (count != 2) {
-         allpairs = false;
-      }
-      if (count >= 3) {
-         int count2 = 999, k;
-         while (count2 >= 3) {
-            CCard::PutBackToPile(m_DeskCards[i]);
-            m_DeskCards[i] = CCard::GetRandomCard();
-            count2 = 0;
-            for (k = 0; k < m_iNumDeskCard; k++) {
-               if (m_DeskCards[i] == m_DeskCards[k]) {
-                  count2++;
-               }
-            }
-         }
-      }
-   }
-
-   if (allpairs) {
-      int index = RandomLong(0, m_iNumDeskCard - 1), k;
-      int count = 999;
-      while (count >= 2) {
-         CCard::PutBackToPile(m_DeskCards[index]);
-         m_DeskCards[index] = CCard::GetRandomCard();
-         count = 0;
-         for (k = 0; k < m_iNumDeskCard; k++) {
-            if (m_DeskCards[index] == m_DeskCards[k]) {
-               count++;
-            }
-         }
-      }
-   }
+   ValidateInitialDesk();
 
    if (m_iGameMode == GAMEMODE_BET) {
       m_iScore -= 1;
@@ -737,26 +695,19 @@ void CGame::PlayRound()
    return;
 }
 
-// FIXME: The dirtiest code here!!!
 void CGame::CardDiscarded(const CCard &c, CBasePlayer *current, int sx, int sy)
 {
    // draw one card from the desk
    CCard drawn = CCard::GetRandomCard();
 
    SDL_Surface *save1 = NULL, *save2 = NULL;
-   int x1, y1, x2, y2, getfour_month = -1;
+   int x1 = 0, y1 = 0, x2 = 0, y2 = 0, getfour_month = -1;
    bool leavethree = false;
 
-   // see if the discarded card can match any one on the desk
-   int index[3] = {-1, -1, -1}, count = 0, i, slot;
-   for (i = 0; i < m_iNumDeskCard; i++) {
-      if (c == m_DeskCards[i]) {
-         if (count >= 3) {
-            TerminateOnError("CGame::CardDiscarded(): count >= 3");
-         }
-         index[count++] = i;
-      }
-   }
+   int index[3] = {-1, -1, -1}, slot = -1;
+   int i;
+   int count = FindMatchingCards(c, index);
+   if (count >= 4) TerminateOnError("CGame::CardDiscarded(): count >= 3");
 
    if (count <= 0) {
       // No card matches the discarded one. Just throw the
@@ -802,10 +753,8 @@ void CGame::CardDiscarded(const CCard &c, CBasePlayer *current, int sx, int sy)
          }
          leavethree = true;
          slot = 999;
-      } else {
-         current->AddCapturedCard(c);
-         current->AddCapturedCard(m_DeskCards[slot]);
-         m_DeskCards[slot].Destroy();
+       } else {
+         CapturePair(current, c, slot);
       }
    } else if (GetGameMode() == GAMEMODE_KOREAN && count >= 3) {
       // Three cards match the discarded one. Pick all these three cards
@@ -828,14 +777,7 @@ void CGame::CardDiscarded(const CCard &c, CBasePlayer *current, int sx, int sy)
          UTIL_Delay(50);
       }
 
-      current->AddCapturedCard(c);
-      current->AddCapturedCard(m_DeskCards[index[0]]);
-      current->AddCapturedCard(m_DeskCards[index[1]]);
-      current->AddCapturedCard(m_DeskCards[index[2]]);
-
-      m_DeskCards[index[0]].Destroy();
-      m_DeskCards[index[1]].Destroy();
-      m_DeskCards[index[2]].Destroy();
+      CaptureTriple(current, c, index[0], index[1], index[2]);
 
       save1 = NULL;
       slot = 999;
@@ -844,18 +786,7 @@ void CGame::CardDiscarded(const CCard &c, CBasePlayer *current, int sx, int sy)
          GetOneCardFromOpponent(current);
       }
    } else if (count == 2) {
-      // Two cards match the discarded one
-      if (m_DeskCards[index[0]].GetType() == m_DeskCards[index[1]].GetType()) {
-         if (m_DeskCards[index[1]].GetValue() == 43 || m_DeskCards[index[1]].GetValue() == 45) {
-            // These two cards counts as 2 normal cards each in Korean game,
-            // so always pick these ones
-            slot = index[1];
-         } else {
-            slot = index[0];
-         }
-      } else {
-         slot = current->SelectCardOnDesk(m_DeskCards[index[0]].GetMonth(), c);
-      }
+      slot = ChooseSlotForPair(index[0], index[1], c, current);
 
       x1 = 140 + 48 * (slot / 2) + 10;
       y1 = 100 + 78 * (slot & 1) + 10;
@@ -864,16 +795,13 @@ void CGame::CardDiscarded(const CCard &c, CBasePlayer *current, int sx, int sy)
       gpGeneral->PlaySound(SOUND_PICKCARD);
       UTIL_Delay(200);
 
-      current->AddCapturedCard(c);
-      current->AddCapturedCard(m_DeskCards[slot]);
-      m_DeskCards[slot].Destroy();
+      CapturePair(current, c, slot);
 
       if (GetGameMode() == GAMEMODE_KOREAN) {
          getfour_month = c.GetMonth();
       }
    }
 
-   // Draw the drawn card
    // Draw the drawn card
    save2 = SDL_CreateSurface(48, 78, SDL_PIXELFORMAT_RGBA8888);
 
@@ -887,15 +815,8 @@ void CGame::CardDiscarded(const CCard &c, CBasePlayer *current, int sx, int sy)
    gpGeneral->DrawCard(drawn, 60, 105, 48, 78, true);
    UTIL_Delay(200);
 
-   count = 0;
-   for (i = 0; i < m_iNumDeskCard; i++) {
-      if (drawn == m_DeskCards[i]) {
-         if (count >= 3) {
-            TerminateOnError("CGame::CardDiscarded(): count >= 3");
-         }
-         index[count++] = i;
-      }
-   }
+   count = FindMatchingCards(drawn, index);
+   if (count >= 4) TerminateOnError("CGame::CardDiscarded(): count >= 3");
 
    if (count <= 0 || leavethree) {
       // No card matches the discarded one. Just throw the
@@ -1023,9 +944,7 @@ void CGame::CardDiscarded(const CCard &c, CBasePlayer *current, int sx, int sy)
          }
       }
 
-      current->AddCapturedCard(m_DeskCards[index[0]]);
-      current->AddCapturedCard(drawn);
-      m_DeskCards[index[0]].Destroy();
+      CapturePair(current, drawn, index[0]);
    } else if (GetGameMode() == GAMEMODE_KOREAN && count >= 3) {
       // Three cards match the discarded one. Pick all these three cards
       x2 = 140 + 48 * (index[0] / 2) + 10;
@@ -1074,31 +993,13 @@ void CGame::CardDiscarded(const CCard &c, CBasePlayer *current, int sx, int sy)
          UTIL_Delay(50);
       }
 
-      current->AddCapturedCard(drawn);
-      current->AddCapturedCard(m_DeskCards[index[0]]);
-      current->AddCapturedCard(m_DeskCards[index[1]]);
-      current->AddCapturedCard(m_DeskCards[index[2]]);
-
-      m_DeskCards[index[0]].Destroy();
-      m_DeskCards[index[1]].Destroy();
-      m_DeskCards[index[2]].Destroy();
+      CaptureTriple(current, drawn, index[0], index[1], index[2]);
 
       if (current->GetNumHandCard() > 1 && current->GetOpponent()->GetNumHandCard() > 0) {
          GetOneCardFromOpponent(current);
       }
    } else if (count == 2) {
-      // Two cards match the discarded one
-      if (m_DeskCards[index[0]].GetType() == m_DeskCards[index[1]].GetType()) {
-         if (m_DeskCards[index[1]].GetValue() == 43 || m_DeskCards[index[1]].GetValue() == 45) {
-            // These two cards counts as 2 normal cards each in Korean game,
-            // so always pick these ones
-            slot = index[1];
-         } else {
-            slot = index[0];
-         }
-      } else {
-         slot = current->SelectCardOnDesk(m_DeskCards[index[0]].GetMonth(), drawn);
-      }
+      slot = ChooseSlotForPair(index[0], index[1], drawn, current);
       x2 = 140 + 48 * (slot / 2) + 10;
       y2 = 100 + 78 * (slot & 1) + 10;
 
@@ -1106,9 +1007,7 @@ void CGame::CardDiscarded(const CCard &c, CBasePlayer *current, int sx, int sy)
       gpGeneral->PlaySound(SOUND_PICKCARD);
       UTIL_Delay(200);
 
-      current->AddCapturedCard(m_DeskCards[slot]);
-      current->AddCapturedCard(drawn);
-      m_DeskCards[slot].Destroy();
+      CapturePair(current, drawn, slot);
    }
 
    UTIL_Delay(200);
@@ -1676,5 +1575,82 @@ int CGame::FindFreeDeskCardSlot(int exclude)
 void CGame::RemoveDeskCard(int index)
 {
    m_DeskCards[index].Destroy();
+}
+
+int CGame::FindMatchingCards(const CCard &card, int indices[3]) const
+{
+   int count = 0;
+   for (int i = 0; i < m_iNumDeskCard; i++) {
+      if (card == m_DeskCards[i]) {
+         if (count < 3) indices[count] = i;
+         count++;
+      }
+   }
+   for (int i = count; i < 3; i++) indices[i] = -1;
+   return count;
+}
+
+int CGame::ChooseSlotForPair(int idx0, int idx1, const CCard &played, CBasePlayer *player) const
+{
+   if (m_DeskCards[idx0].GetType() == m_DeskCards[idx1].GetType()) {
+      if (m_DeskCards[idx1].GetValue() == 43 || m_DeskCards[idx1].GetValue() == 45) {
+         return idx1;
+      }
+      return idx0;
+   }
+   return player->SelectCardOnDesk(m_DeskCards[idx0].GetMonth(), played);
+}
+
+void CGame::CapturePair(CBasePlayer *player, const CCard &played, int deskIdx)
+{
+   player->AddCapturedCard(played);
+   player->AddCapturedCard(m_DeskCards[deskIdx]);
+   m_DeskCards[deskIdx].Destroy();
+}
+
+void CGame::CaptureTriple(CBasePlayer *player, const CCard &played, int idx0, int idx1, int idx2)
+{
+   player->AddCapturedCard(played);
+   player->AddCapturedCard(m_DeskCards[idx0]);
+   player->AddCapturedCard(m_DeskCards[idx1]);
+   player->AddCapturedCard(m_DeskCards[idx2]);
+   m_DeskCards[idx0].Destroy();
+   m_DeskCards[idx1].Destroy();
+   m_DeskCards[idx2].Destroy();
+}
+
+void CGame::ValidateInitialDesk()
+{
+   bool allpairs = true;
+   for (int i = 0; i < m_iNumDeskCard; i++) {
+      int count = 0;
+      for (int j = 0; j < m_iNumDeskCard; j++) {
+         if (m_DeskCards[i] == m_DeskCards[j]) count++;
+      }
+      if (count != 2) allpairs = false;
+      if (count >= 3) {
+         int count2 = 999;
+         while (count2 >= 3) {
+            CCard::PutBackToPile(m_DeskCards[i]);
+            m_DeskCards[i] = CCard::GetRandomCard();
+            count2 = 0;
+            for (int k = 0; k < m_iNumDeskCard; k++) {
+               if (m_DeskCards[i] == m_DeskCards[k]) count2++;
+            }
+         }
+      }
+   }
+   if (allpairs) {
+      int index = RandomLong(0, m_iNumDeskCard - 1);
+      int count = 999;
+      while (count >= 2) {
+         CCard::PutBackToPile(m_DeskCards[index]);
+         m_DeskCards[index] = CCard::GetRandomCard();
+         count = 0;
+         for (int k = 0; k < m_iNumDeskCard; k++) {
+            if (m_DeskCards[index] == m_DeskCards[k]) count++;
+         }
+      }
+   }
 }
 
