@@ -37,6 +37,7 @@
 #include <string_view>
 #include <random>
 #include <memory>
+#include <atomic>
 
 #if !defined(__cpp_lib_print)
 namespace std {
@@ -195,6 +196,7 @@ struct SoundSample {
 };
 
 // sound.cpp functions...
+extern std::atomic<bool> g_fAudioOpened; // main-thread flag, atomic for visibility
 int SOUND_OpenAudio(int freq, int format, int channels, int samples);
 void SOUND_FillAudio(void *udata, unsigned char *stream, int len);
 void SOUND_PlayWAV(SoundSample *audio);

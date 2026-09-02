@@ -21,9 +21,10 @@
 
 #include "main.h"
 #include <SDL3_mixer/SDL_mixer.h>
+#include <atomic>
 
 static MIX_Mixer *g_pMixer = nullptr;
-bool g_fAudioOpened = false;
+std::atomic<bool> g_fAudioOpened{false};
 
 void SOUND_FillAudio(void *udata, unsigned char *stream, int len)
 {

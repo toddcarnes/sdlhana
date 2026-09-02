@@ -461,13 +461,12 @@ void CGame::Settings()
                   g_fNoSound = true;
                } else {
                   g_fNoSound = false;
-                  extern bool g_fAudioOpened;
-                  if (!g_fAudioOpened) {
+                  if (!g_fAudioOpened.load()) {
                      if (SOUND_OpenAudio(22050, SDL_AUDIO_S16, 1, 1024)) {
                         std::println(stderr, "WARNING: Couldn't open audio: {}", SDL_GetError());
                         g_fNoSound = true;
                      } else {
-                        g_fAudioOpened = true;
+                        g_fAudioOpened.store(true);
                         gpGeneral->LoadSound();
                      }
                   } else {
