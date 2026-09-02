@@ -41,6 +41,7 @@ public:
    void            RunGame();
 
    void            InitGame();
+   void            RulesMenu();
    void            NewRound();
 
    void            PlayRound();
@@ -52,9 +53,12 @@ public:
    inline int      GetNumDeskCard()   const  { return m_iNumDeskCard; }
    inline CCard    GetDeskCard(int i) const  { assert(i >= 0 && i < m_iNumDeskCard); return m_DeskCards[i]; }
 
+   void            RedrawTable();
+
 private:
    int             m_iGameMode;
    int             m_iScore;
+   int             m_iCurrentRound;
 
    float           m_flAnimDuration;
 
@@ -64,9 +68,12 @@ private:
    int             m_iNumDeskCard;
 
    void            InitScreen();
+   void            DetermineFirstDealer();
    void            AnimDeal();
    SDL_Surface    *AnimCardMove(int sx, int sy, int dx, int dy, int w = 48, int h = 78, SDL_Surface *save = NULL, bool retsave = false, bool retcard = false);
    void            DrawScore();
+   void            DrawRoundInfo();
+   void            ShowMatchResults();
    void            DrawDeskCard();
    void            CardDiscarded(const CCard &s, CBasePlayer *current, int sx, int sy);
    void            GetOneCardFromOpponent(CBasePlayer *current);

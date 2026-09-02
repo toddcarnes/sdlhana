@@ -37,12 +37,31 @@ This project is a modern C++23 / SDL3 refactor and evolution of the original SDL
 
 ---
 
+## Game Rules & Documentation
+
+- **[Hanafuda Rules & How to Play Guide (`RULES.md`)](RULES.md)**: Detailed guide covering deck structure, *Mekuri* dealer selection, Japanese Koi-Koi Yaku combinations, Korean Go-Stop scoring/penalties, and Bet Mode.
+- **[Project ChangeLog (`ChangeLog`)](ChangeLog)**: Detailed record of all modern C++23/SDL3 refactoring updates, features, and fixes.
+
+---
+
 ## Key Features & Modernization
+
+### Authentic Game Mechanics & Rules
+
+- **In-Game Scrollable Rules Viewer**: Full offscreen canvas rules viewer displaying 100% of the text, month-by-month card breakdowns, Yaku combinations, and card sprite illustrations from `RULES.md` with interactive scrollbar dragging, mouse wheel, keyboard arrows, and viewport click navigation.
+- **Traditional *Mekuri* Dealer Selection**: First-round dealer selection (*Oya* / *Sun*) uses authentic random card draws, selecting the lowest month card (with card tier breaking ties).
+- **Winner-Becomes-Dealer Retention**: The winner of each round becomes dealer for the subsequent round (or current dealer retains deal on draws), restoring traditional Koi-Koi and Go-Stop rules.
+- **12-Round Match System**: Full 12-round match progression (Jan to Dec) with match victory screens and score tracking.
+- **Authentic Japanese Koi-Koi Rules**: Full Yaku combinations (Lights, Ribbons, Ino-Shika-Chou, Animals, Kasu, Sake Cup) with Koi-Koi call multipliers.
+- **Authentic Korean Go-Stop Rules**: 3-point threshold, Godori, Hongdan, Cheongdan, Chodan, Ssangpi double junks, initial triplets (*Heun-deul-im*), Go multipliers, and *Gwang-bak* / *Pi-bak* penalty multipliers.
+
+### Technical & Engine Modernization
 
 - **Modern C++23 Architecture**: Built with standard library features (`<print>`, `<format>`, `<filesystem>`, `std::optional`, `std::unique_ptr`).
 - **Hardware-Accelerated SDL3**: Modern rendering engine using `SDL_Renderer` and `SDL_Texture`, paired with `SDL3_mixer` for audio and `SDL3_ttf` for font rendering.
+- **Cross-Platform Auto-Font & Scaling Engine**: High-DPI resizable window scaling paired with dynamic system CJK vector font auto-detection across Windows, macOS, and Linux.
 - **CMake 3.25+ Build System**: Clean FetchContent integration that automatically resolves and builds dependencies across all operating systems.
-- **Cross-Platform Compatibility**: Tested and verified independently on **Windows 11 (MSVC)**, **macOS (Clang)**, and **Linux (GCC)**.
+- **Cross-Platform Compatibility**: Tested and verified on **Windows 11 (MSVC)**, **macOS (Clang)**, and **Linux (GCC)**.
 
 ---
 

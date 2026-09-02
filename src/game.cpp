@@ -47,116 +47,349 @@ CGame::~CGame()
 
 void CGame::MainMenu()
 {
-   int choice = -1;
+   while (true) {
+      gpGeneral->ClearScreen(true, false, true);
 
-start:
-   gpGeneral->ClearScreen(true, false, true);
+      auto mainbox = std::make_unique<CBox>(140, 200, 350, 260, 58, 110, 165);
+      auto bNewGame = std::make_unique<CButton>(1, 150, 210, 330, 50, 58, 110, 165);
+      auto bOption = std::make_unique<CButton>(2, 150, 270, 330, 50, 58, 110, 165);
+      auto bRules = std::make_unique<CButton>(3, 150, 330, 330, 50, 58, 110, 165);
+      auto bQuit = std::make_unique<CButton>(4, 150, 390, 330, 50, 58, 110, 165);
 
-   auto mainbox = std::make_unique<CBox>(140, 250, 350, 190, 58, 110, 165);
-   auto bNewGame = std::make_unique<CButton>(1, 150, 260, 330, 50, 58, 110, 165);
-   auto bOption = std::make_unique<CButton>(2, 150, 320, 330, 50, 58, 110, 165);
-   auto bQuit = std::make_unique<CButton>(3, 150, 380, 330, 50, 58, 110, 165);
+      gpGeneral->DrawTextInBox(msg("play"), 150, 210, 330, 50, 255, 255, 0, 26);
+      gpGeneral->DrawTextInBox(msg("settings"), 150, 270, 330, 50, 255, 255, 0, 26);
+      gpGeneral->DrawTextInBox(msg("btn_rules"), 150, 330, 330, 50, 255, 255, 0, 26);
+      gpGeneral->DrawTextInBox(msg("quit"), 150, 390, 330, 50, 255, 255, 0, 26);
 
-   gpGeneral->DrawText(msg("play"), 155, 268, 255, 255, 0, 32);
-   gpGeneral->DrawText(msg("settings"), 155, 328, 255, 255, 0, 32);
-   gpGeneral->DrawText(msg("quit"), 155, 388, 255, 255, 0, 32);
+      int choice = -1;
+      while (1) {
+         int k = gpGeneral->ReadKey();
+         if (k > 1000) {
+            choice = k - 1000;
+            break;
+         }
+      }
 
-   while (1) {
-      int k = gpGeneral->ReadKey();
-      if (k > 1000) {
-         choice = k - 1000;
-         break;
+      bNewGame.reset();
+      bOption.reset();
+      bRules.reset();
+      bQuit.reset();
+      mainbox.reset();
+
+      switch (choice) {
+         // single player game
+         case 1:
+            RunGame();
+            break;
+
+         // settings
+         case 2:
+            Settings();
+            break;
+
+         // rules & how to play
+         case 3:
+            RulesMenu();
+            break;
+
+         // quit game
+         case 4:
+            UserQuit();
+            return;
       }
    }
+}
 
-   bNewGame.reset();
-   bOption.reset();
-   bQuit.reset();
-   mainbox.reset();
+void CGame::RulesMenu()
+{
+   int scroll_y = 0;
+   int canvas_w = 540;
+   int canvas_h = 4200;
 
-   switch (choice) {
-      // single player game
-      case 1:
-         RunGame();
-         break;
+   SDL_Surface *canvas = SDL_CreateSurface(canvas_w, canvas_h, SDL_PIXELFORMAT_RGBA8888);
+   if (canvas == nullptr) return;
 
-      // settings
-      case 2:
-         Settings();
-         goto start;
+   SDL_FillSurfaceRect(canvas, NULL, SDL_MapSurfaceRGBA(canvas, 20, 32, 52, 255));
 
-      // quit game
-      case 3:
-         UserQuit();
-         break;
+   auto DrawCanvasText = [&](const char *txt, int x, int y, int w, int r, int g, int b, int size) -> int {
+      if (txt == nullptr) return y + 20;
+      SDL_Surface *s = gpGeneral->RenderTextWrapped(txt, r, g, b, size, w);
+      int rendered_h = 20;
+      if (s != nullptr) {
+         SDL_Rect dst = { x, y, s->w, s->h };
+         SDL_BlitSurface(s, NULL, canvas, &dst);
+         rendered_h = s->h;
+         SDL_DestroySurface(s);
+      }
+      return y + rendered_h + 8;
+   };
+
+   auto DrawCanvasCard = [&](int card_id, int x, int y, int w = 42, int h = 66) {
+      SDL_Surface *card_surf = gpGeneral->RenderCard(CCard(card_id), w, h);
+      if (card_surf != nullptr) {
+         SDL_Rect dst = { x, y, w, h };
+         SDL_BlitSurface(card_surf, NULL, canvas, &dst);
+         SDL_DestroySurface(card_surf);
+      }
+   };
+
+   int cy = 15;
+
+   // SECTION 1: DECK OVERVIEW & 12 MONTH SUITS
+   cy = DrawCanvasText("1. Hanafuda Deck & 12 Month Suits", 10, cy, 520, 255, 255, 0, 20);
+   cy = DrawCanvasText("A standard Hanafuda deck consists of 48 cards divided into 12 monthly suits representing flora and fauna, with 4 cards per month:", 10, cy, 520, 255, 255, 255, 14);
+
+   const char *month_names[12] = {
+      "January - Pine (松)", "February - Plum Blossom (梅)", "March - Cherry Blossom (桜)",
+      "April - Wisteria (藤)", "May - Iris (菖蒲)", "June - Peony (牡丹)",
+      "July - Bush Clover (萩)", "August - Pampas Grass (芒)", "September - Chrysanthemum (菊)",
+      "October - Maple (楓)", "November - Willow (柳)", "December - Paulownia (桐)"
+   };
+
+   const char *month_descs[12] = {
+      "Crane & Sun (Bright 20pt), Red Poetry Ribbon (5pt), 2 Plain Cards (1pt).",
+      "Bush Warbler (Animal 5pt), Red Poetry Ribbon (5pt), 2 Plain Cards (1pt).",
+      "Curtain (Bright 20pt), Red Poetry Ribbon (5pt), 2 Plain Cards (1pt).",
+      "Cuckoo (Animal 5pt), Red Grass Ribbon (5pt), 2 Plain Cards (1pt).",
+      "Eight-Plank Bridge (Animal 5pt), Red Grass Ribbon (5pt), 2 Plain Cards (1pt).",
+      "Butterflies (Animal 5pt), Blue Ribbon (5pt), 2 Plain Cards (1pt).",
+      "Boar (Animal 5pt), Red Grass Ribbon (5pt), 2 Plain Cards (1pt).",
+      "Full Moon (Bright 20pt), Geese (Animal 5pt), 2 Plain Cards (1pt).",
+      "Sake Cup (Animal/Plain), Blue Ribbon (5pt), 2 Plain Cards (1pt).",
+      "Deer (Animal 5pt), Blue Ribbon (5pt), 2 Plain Cards (1pt).",
+      "Rain Man (Bright 20pt), Swallow (5pt), Red Ribbon (5pt), Ssangpi Double Plain.",
+      "Phoenix (Bright 20pt), 2 Plain Cards, Ssangpi Double Plain."
+   };
+
+   for (int m = 0; m < 12; m++) {
+      cy = DrawCanvasText(month_names[m], 10, cy, 520, 0, 255, 255, 16);
+      int card_start = m * 4;
+      int card_y = cy;
+      for (int c = 0; c < 4; c++) {
+         DrawCanvasCard(card_start + c, 10 + c * 48, card_y, 42, 66);
+      }
+      int desc_end_y = DrawCanvasText(month_descs[m], 215, card_y, 310, 240, 255, 255, 13);
+      cy = (card_y + 66 > desc_end_y ? card_y + 66 : desc_end_y) + 18;
+   }
+
+   // SECTION 2: DEALER SELECTION & TURN FLOW
+   cy += 10;
+   cy = DrawCanvasText("2. First-Dealer Selection & Turn Flow", 10, cy, 520, 255, 255, 0, 20);
+   cy = DrawCanvasText("Before Round 1, both players draw a card from the deck (Mekuri). The player drawing the card from the earliest Month becomes the first dealer (Oya / Sun). The winner of each round becomes dealer for the next round!", 10, cy, 520, 255, 255, 255, 14);
+
+   // SECTION 3: JAPANESE KOI-KOI RULES & YAKU
+   cy += 10;
+   cy = DrawCanvasText("3. Japanese Koi-Koi Rules & Yaku Sets", 10, cy, 520, 255, 255, 0, 20);
+   cy = DrawCanvasText("Form combination sets (Yaku) to earn points. Calling Koi-Koi continues the round for higher points, but if opponent scores first, they win!", 10, cy, 520, 255, 255, 255, 14);
+
+   cy = DrawCanvasText("Lights (Gokou):", 10, cy, 520, 0, 255, 255, 15);
+   int card_y = cy;
+   DrawCanvasCard(0, 10, card_y);  // Crane
+   DrawCanvasCard(8, 55, card_y);  // Curtain
+   DrawCanvasCard(28, 100, card_y);// Moon
+   DrawCanvasCard(40, 145, card_y);// Rain Man
+   DrawCanvasCard(44, 190, card_y);// Phoenix
+   int desc_y = DrawCanvasText("Five Lights (10 pts), Four Lights (8 pts), Rain Four Lights (7 pts), Three Lights (5 pts).", 240, card_y, 285, 255, 255, 255, 13);
+   cy = (card_y + 66 > desc_y ? card_y + 66 : desc_y) + 18;
+
+   cy = DrawCanvasText("Ribbons (Akatan & Aotan):", 10, cy, 520, 0, 255, 255, 15);
+   card_y = cy;
+   DrawCanvasCard(1, 10, card_y);
+   DrawCanvasCard(5, 55, card_y);
+   DrawCanvasCard(9, 100, card_y);
+   DrawCanvasCard(21, 145, card_y);
+   DrawCanvasCard(33, 190, card_y);
+   DrawCanvasCard(37, 235, card_y);
+   desc_y = DrawCanvasText("Red Poetry Ribbons Akatan (5 pts), Blue Ribbons Aotan (5 pts), 5 Plain Ribbons (1 pt + 1 pt per extra).", 285, card_y, 240, 255, 255, 255, 13);
+   cy = (card_y + 66 > desc_y ? card_y + 66 : desc_y) + 18;
+
+   cy = DrawCanvasText("Ino-Shika-Chou (Boar, Deer, Butterflies):", 10, cy, 520, 0, 255, 255, 15);
+   card_y = cy;
+   DrawCanvasCard(24, 10, card_y);
+   DrawCanvasCard(36, 55, card_y);
+   DrawCanvasCard(20, 100, card_y);
+   desc_y = DrawCanvasText("Ino-Shika-Chou (5 pts + 1 pt per extra animal), 5 Animals (1 pt + 1 pt per extra animal).", 150, card_y, 375, 255, 255, 255, 13);
+   cy = (card_y + 66 > desc_y ? card_y + 66 : desc_y) + 18;
+
+   // SECTION 4: KOREAN GO-STOP RULES & PENALTIES
+   cy += 10;
+   cy = DrawCanvasText("4. Korean Go-Stop Rules & Penalties", 10, cy, 520, 255, 255, 0, 20);
+   cy = DrawCanvasText("In Go-Stop, players must reach at least 3 points before calling Go or Stop. Multipliers increase with Go calls, Gwang-bak (Light Penalty), or Pi-bak (Junk Penalty)!", 10, cy, 520, 255, 255, 255, 14);
+
+   cy = DrawCanvasText("Godori (5 Birds - 5 pts):", 10, cy, 520, 0, 255, 255, 15);
+   card_y = cy;
+   DrawCanvasCard(4, 10, card_y);
+   DrawCanvasCard(12, 55, card_y);
+   DrawCanvasCard(29, 100, card_y);
+   desc_y = DrawCanvasText("February Bush Warbler, April Cuckoo, and August Geese (5 pts).", 150, card_y, 375, 255, 255, 255, 13);
+   cy = (card_y + 66 > desc_y ? card_y + 66 : desc_y) + 18;
+
+   cy = DrawCanvasText("Ribbon Combinations (Hongdan, Cheongdan, Chodan):", 10, cy, 520, 0, 255, 255, 15);
+   card_y = cy;
+   DrawCanvasCard(13, 10, card_y);
+   DrawCanvasCard(17, 55, card_y);
+   DrawCanvasCard(25, 100, card_y);
+   desc_y = DrawCanvasText("Hongdan Red Poetry (3 pts), Cheongdan Blue (3 pts), Chodan Grass Ribbons (3 pts).", 150, card_y, 375, 255, 255, 255, 13);
+   cy = (card_y + 66 > desc_y ? card_y + 66 : desc_y) + 18;
+
+   cy = DrawCanvasText("Ssangpi (Double Junk) & Penalties:", 10, cy, 520, 0, 255, 255, 15);
+   card_y = cy;
+   DrawCanvasCard(43, 10, card_y);
+   DrawCanvasCard(47, 55, card_y);
+   DrawCanvasCard(32, 100, card_y);
+   desc_y = DrawCanvasText("November/December double junk and Sake Cup count as 2 pi. 3+ Go doubles score; Gwang-bak and Pi-bak double opponent losses!", 150, card_y, 375, 255, 255, 255, 13);
+   cy = (card_y + 66 > desc_y ? card_y + 66 : desc_y) + 18;
+
+   // SECTION 5: BET MODE & DOUBLE UP
+   cy += 10;
+   cy = DrawCanvasText("5. Bet Mode & Double Up", 10, cy, 520, 255, 255, 0, 20);
+   cy = DrawCanvasText("In Bet Mode, win hands and double up your score by guessing whether the next drawn card is Big (Months 7-12) or Small (Months 1-6)!", 10, cy, 520, 255, 255, 255, 14);
+   cy += 30;
+
+   int max_scroll = cy > 330 ? (cy - 330) : 0;
+
+   gpGeneral->ClearScreen(true, false, true);
+
+   auto mainbox = std::make_unique<CBox>(25, 15, 590, 450, 40, 55, 85, 255, true);
+   auto titlebox = std::make_unique<CBox>(25, 15, 590, 45, 0, 128, 128, 255, true);
+   auto viewportbox = std::make_unique<CBox>(35, 68, 545, 334, 20, 32, 52, 255, true);
+   auto btnBack = std::make_unique<CButton>(3, 415, 412, 190, 42, 165, 58, 58);
+
+   bool is_dragging_scroll = false;
+   bool redraw = true;
+   while (true) {
+      if (redraw) {
+         gpGeneral->DrawTextInBox(msg("rules_header"), 25, 15, 590, 45, 20, 32, 52, 22);
+
+         SDL_Rect clip_rect = { 35, 68, 545, 334 };
+         SDL_SetSurfaceClipRect(gpScreen, &clip_rect);
+
+         SDL_Rect src_rect = { 0, scroll_y, 540, 330 };
+         SDL_Rect dst_rect = { 38, 70, 540, 330 };
+         SDL_BlitSurface(canvas, &src_rect, gpScreen, &dst_rect);
+
+         SDL_SetSurfaceClipRect(gpScreen, NULL);
+
+         UTIL_FillRect(gpScreen, 588, 70, 12, 330, 15, 25, 40);
+         int thumb_h = 50;
+         int thumb_y = 70 + (max_scroll > 0 ? (scroll_y * (330 - thumb_h)) / max_scroll : 0);
+         UTIL_FillRect(gpScreen, 588, thumb_y, 12, thumb_h, 0, 200, 255);
+
+         gpGeneral->DrawTextInBox("Back to Menu", 415, 412, 190, 42, 255, 255, 255, 18);
+
+         gpGeneral->UpdateScreen();
+         redraw = false;
+      }
+
+      SDL_Event event;
+      if (SDL_WaitEvent(&event)) {
+         if (gpRenderer != nullptr) {
+            SDL_ConvertEventToRenderCoordinates(gpRenderer, &event);
+         }
+         if (event.type == SDL_EVENT_QUIT) {
+            SDL_DestroySurface(canvas);
+            return;
+         } else if (event.type == SDL_EVENT_KEY_DOWN) {
+            if (event.key.key == SDLK_UP) {
+               scroll_y = (scroll_y - 80 < 0) ? 0 : (scroll_y - 80);
+               redraw = true;
+            } else if (event.key.key == SDLK_DOWN) {
+               scroll_y = (scroll_y + 80 > max_scroll) ? max_scroll : (scroll_y + 80);
+               redraw = true;
+            } else if (event.key.key == SDLK_ESCAPE || event.key.key == SDLK_RETURN) {
+               SDL_DestroySurface(canvas);
+               return;
+            }
+         } else if (event.type == SDL_EVENT_MOUSE_WHEEL) {
+            if (event.wheel.y > 0.0f || event.wheel.y < 0.0f) {
+               int delta = (event.wheel.y > 0.0f) ? -80 : 80;
+               scroll_y = (scroll_y + delta < 0) ? 0 : ((scroll_y + delta > max_scroll) ? max_scroll : (scroll_y + delta));
+               redraw = true;
+            }
+         } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+            float mx = event.button.x;
+            float my = event.button.y;
+
+            if (mx >= 585 && mx <= 602 && my >= 70 && my <= 400) {
+               is_dragging_scroll = true;
+               float ratio = (my - 70.0f - 25.0f) / (330.0f - 50.0f);
+               scroll_y = (ratio < 0.0f) ? 0 : ((ratio > 1.0f) ? max_scroll : (int)(ratio * max_scroll));
+               redraw = true;
+            } else if (mx >= 35 && mx <= 584 && my >= 68 && my <= 402) {
+               if (my < 235) {
+                  scroll_y = (scroll_y - 80 < 0) ? 0 : (scroll_y - 80);
+               } else {
+                  scroll_y = (scroll_y + 80 > max_scroll) ? max_scroll : (scroll_y + 80);
+               }
+               redraw = true;
+            } else if (mx >= 415 && mx <= 605 && my >= 412 && my <= 454) {
+               SDL_DestroySurface(canvas);
+               return;
+            }
+         } else if (event.type == SDL_EVENT_MOUSE_MOTION) {
+            if (is_dragging_scroll) {
+               float my = event.motion.y;
+               float ratio = (my - 70.0f - 25.0f) / (330.0f - 50.0f);
+               scroll_y = (ratio < 0.0f) ? 0 : ((ratio > 1.0f) ? max_scroll : (int)(ratio * max_scroll));
+               redraw = true;
+            }
+         } else if (event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+            is_dragging_scroll = false;
+         } else if (event.type == SDL_EVENT_WINDOW_RESIZED || event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+            redraw = true;
+         }
+      }
    }
 }
 
 void CGame::Settings()
 {
-   gpGeneral->ClearScreen();
-   gpGeneral->DrawText(msg("fullscreen"), 20, 20, 255, 255, 0, 24);
-   gpGeneral->DrawText(msg("enablesound"), 20, 50, 255, 255, 0, 24);
-   gpGeneral->DrawText(msg("gamemode"), 20, 80, 255, 255, 0, 24);
-   gpGeneral->DrawText(msg("language"), 20, 110, 255, 255, 0, 24);
-   gpGeneral->DrawText(msg("animspeed"), 20, 140, 255, 255, 0, 24);
-
-   CButton fs(1, 230, 20, 150, 24, 0, 0, 0);
-   CButton snd(2, 230, 50, 150, 24, 0, 0, 0);
-   CButton gm(3, 230, 80, 150, 24, 0, 0, 0);
-   CButton l(4, 230, 110, 150, 24, 0, 0, 0);
-   CButton as(5, 230, 140, 150, 24, 0, 0, 0);
+   CButton fs(1, 280, 20, 150, 24, 0, 0, 0);
+   CButton snd(2, 280, 50, 150, 24, 0, 0, 0);
+   CButton gm(3, 280, 80, 150, 24, 0, 0, 0);
+   CButton l(4, 280, 110, 150, 24, 0, 0, 0);
+   CButton as(5, 280, 140, 150, 24, 0, 0, 0);
    CButton ok(6, 20, 180, 150, 34, 58, 110, 165);
 
-   gpGeneral->DrawText("OK", 25, 185, 255, 255, 255, 24);
-
-   int curgm = 0, curas = 3;
+   int curgm = atoi(cfg.Get("GAME", "GameMode", "0"));
+   int curas = 3;
 
    char lngs[256], *curlng;
    strcpy(lngs, cfg.Get("OPTIONS", "AllLanguage", "eng"));
    curlng = strtok(lngs, ",");
-   const char *strgm[3] = {msg("gamemode0"), msg("gamemode1"), msg("gamemode2")};
-   const char *stras[5] = {msg("veryslow"), msg("slow"), msg("middle"), msg("fast"), msg("veryfast")};
    int valueas[5] = {800, 500, 300, 180, 50};
 
-   cfg.Set("OPTIONS", "AnimSpeed", "180");
-
    while (1) {
-      if (gpScreen != nullptr) {
-         UTIL_FillRect(gpScreen, 230, 20, 410, 24, 30, 130, 100);
-      }
+      gpGeneral->ClearScreen();
+
+      gpGeneral->DrawText(msg("fullscreen"), 20, 20, 255, 255, 0, 24);
+      gpGeneral->DrawText(msg("enablesound"), 20, 50, 255, 255, 0, 24);
+      gpGeneral->DrawText(msg("gamemode"), 20, 80, 255, 255, 0, 24);
+      gpGeneral->DrawText(msg("language"), 20, 110, 255, 255, 0, 24);
+      gpGeneral->DrawText(msg("animspeed"), 20, 140, 255, 255, 0, 24);
+      gpGeneral->DrawTextInBox("OK", 20, 180, 150, 34, 255, 255, 255, 20);
+
+      const char *strgm[3] = {msg("gamemode0"), msg("gamemode1"), msg("gamemode2")};
+      const char *stras[5] = {msg("veryslow"), msg("slow"), msg("middle"), msg("fast"), msg("veryfast")};
+
       if (atoi(cfg.Get("OPTIONS", "FullScreen", "0"))) {
-         gpGeneral->DrawText(msg("Enabled"), 230, 20, 255, 255, 255, 24);
+         gpGeneral->DrawText(msg("Enabled"), 280, 20, 255, 255, 255, 24);
       } else {
-         gpGeneral->DrawText(msg("Disabled"), 230, 20, 255, 255, 255, 24);
+         gpGeneral->DrawText(msg("Disabled"), 280, 20, 255, 255, 255, 24);
       }
 
-      if (gpScreen != nullptr) {
-         UTIL_FillRect(gpScreen, 230, 50, 410, 24, 30, 130, 100);
-      }
       if (!atoi(cfg.Get("OPTIONS", "NoSound", "0"))) {
-         gpGeneral->DrawText(msg("Enabled"), 230, 50, 255, 255, 255, 24);
+         gpGeneral->DrawText(msg("Enabled"), 280, 50, 255, 255, 255, 24);
       } else {
-         gpGeneral->DrawText(msg("Disabled"), 230, 50, 255, 255, 255, 24);
+         gpGeneral->DrawText(msg("Disabled"), 280, 50, 255, 255, 255, 24);
       }
 
-      if (gpScreen != nullptr) {
-         UTIL_FillRect(gpScreen, 230, 80, 410, 24, 30, 130, 100);
-      }
-      gpGeneral->DrawText(strgm[atoi(cfg.Get("GAME", "GameMode", "0"))], 230, 80, 255, 255, 255, 24);
-      gpGeneral->UpdateScreen(230, 80, 640 - 230, 24);
+      gpGeneral->DrawText(strgm[curgm], 280, 80, 255, 255, 255, 24);
+      gpGeneral->DrawText(msg(cfg.Get("OPTIONS", "Language", "eng")), 280, 110, 255, 255, 255, 24);
+      gpGeneral->DrawText(stras[curas], 280, 140, 255, 255, 255, 24);
 
-      if (gpScreen != nullptr) {
-         UTIL_FillRect(gpScreen, 230, 110, 410, 24, 30, 130, 100);
-      }
-      gpGeneral->DrawText(msg(cfg.Get("OPTIONS", "Language", "eng")), 230, 110, 255, 255, 255, 24);
-      gpGeneral->UpdateScreen(230, 110, 640 - 230, 24);
+      gpGeneral->UpdateScreen(0, 0, 640, 480);
 
-      if (gpScreen != nullptr) {
-         UTIL_FillRect(gpScreen, 230, 140, 410, 24, 30, 130, 100);
-      }
-      gpGeneral->DrawText(stras[curas], 230, 140, 255, 255, 255, 24);
-      gpGeneral->UpdateScreen(230, 140, 640 - 230, 24);
       int k = gpGeneral->ReadKey();
       if (k > 1000) {
          switch (k - 1000) {
@@ -177,15 +410,15 @@ void CGame::Settings()
                break;
 
             case 3:
+               if (++curgm >= 3) {
+                  curgm = 0;
+               }
                cfg.Set("GAME", "GameMode", va("%d", curgm));
                m_iGameMode = curgm;
                if (m_iGameMode == GAMEMODE_BET) {
-                  CBasePlayer::m_iMaxHandCards = 6; // only 6 cards in bet mode
+                  CBasePlayer::m_iMaxHandCards = 6;
                } else {
                   CBasePlayer::m_iMaxHandCards = 8;
-               }
-               if (++curgm >= 3) {
-                  curgm = 0;
                }
                break;
 
@@ -196,6 +429,8 @@ void CGame::Settings()
                   strcpy(lngs, cfg.Get("OPTIONS", "AllLanguage", "eng"));
                   curlng = strtok(lngs, ",");
                }
+               InitTextMessage();
+               gpGeneral->LoadFonts();
                break;
 
             case 5:
@@ -252,44 +487,80 @@ void CGame::RunGame()
 
    InitGame();
 
-   while (1) {
+   while (m_iCurrentRound <= 12) {
       NewRound();
       PlayRound();
       // save the score
       cfg.Set("GAME", "Score", va("%d", m_iScore));
+      m_iCurrentRound++;
    }
+
+   ShowMatchResults();
+}
+
+void CGame::DetermineFirstDealer()
+{
+   if (GetGameMode() == GAMEMODE_BET) {
+      m_pPlayers[1]->SetAsDealer();
+      return;
+   }
+
+   CCard c1 = CCard::GetRandomCard();
+   CCard c2 = CCard::GetRandomCard();
+   while (c1 == c2) {
+      c2 = CCard::GetRandomCard();
+   }
+
+   int m1 = c1.GetMonth() + 1;
+   int m2 = c2.GetMonth() + 1;
+
+   bool player_first = false;
+   if (m1 < m2) {
+      player_first = true;
+   } else if (m1 > m2) {
+      player_first = false;
+   } else {
+      player_first = (c1.GetValue() >= c2.GetValue());
+   }
+
+   if (player_first) {
+      m_pPlayers[0]->SetAsDealer();
+   } else {
+      m_pPlayers[1]->SetAsDealer();
+   }
+
+   gpGeneral->ClearScreen(false, false, false);
+   CCard pile(255);
+   for (int i = 0; i < 5; i++) {
+      gpGeneral->DrawCard(pile, 50 + i * 2, 95 + i * 2, 48, 78, true);
+   }
+   DrawScore();
+
+   gpGeneral->DrawCard(c1, 240, 160, 48, 78, true);
+   gpGeneral->DrawCard(c2, 350, 160, 48, 78, true);
+
+   CBox box(20, 260, 595, 50, 40, 55, 85);
+   const char *notice = player_first ?
+      va(msg("dealer_cut_you"), m1, m2) :
+      va(msg("dealer_cut_com"), m1, m2);
+
+   gpGeneral->DrawTextInBox(notice, 20, 260, 595, 50, 255, 255, 255, 18);
+   UTIL_Delay(3500);
 }
 
 void CGame::InitGame()
 {
    m_iScore = 0;
+   m_iCurrentRound = 1;
    cfg.Set("GAME", "Score", "0");
 
-   if (GetGameMode() != GAMEMODE_BET) {
-      // set random player as the dealer
-      m_pPlayers[RandomLong(0, 1)]->SetAsDealer();
-   } else {
-      m_pPlayers[1]->SetAsDealer();
-   }
-
-   // Play a nice animation :P
-   gpGeneral->ClearScreen(true, true, false);
-
-   for (int i = 0; i < 48; i++) {
-      CCard c(i);
-      gpGeneral->DrawCard(c, RandomLong(0, 640 - 48), RandomLong(0, 480 - 78),
-         48, 78, true);
-      UTIL_Delay(5);
-   }
+   DetermineFirstDealer();
 }
 
 void CGame::NewRound()
 {
    CCard::NewRound();
    m_iNumDeskCard = 0;
-   if (m_iGameMode != GAMEMODE_BET) {
-      CBasePlayer::GetDealer()->GetOpponent()->SetAsDealer();
-   }
 
    m_pPlayers[0]->NewRound();
    m_pPlayers[1]->NewRound();
@@ -415,18 +686,19 @@ void CGame::PlayRound()
       }
 
       if (GetGameMode() == GAMEMODE_KOREAN && current->m_iNumLeaveThree >= 3) {
-         CBox box(20, 300, 595, 33, 40, 55, 85);
+         gpGeneral->ClearPromptArea();
+         CBox box(20, 260, 595, 50, 40, 55, 85);
          if (current->IsBot()) {
-            gpGeneral->DrawText(msg("comget5pts"), 30, 300, 255, 255, 24);
+            gpGeneral->DrawTextInBox(msg("comget5pts"), 20, 260, 595, 50, 255, 255, 255, 18);
             m_iScore -= 3;
             gpGeneral->PlaySound(SOUND_LOSE);
          } else {
-            gpGeneral->DrawText(msg("youget5pts"), 30, 300, 255, 255, 24);
+            gpGeneral->DrawTextInBox(msg("youget5pts"), 20, 260, 595, 50, 255, 255, 255, 18);
             m_iScore += 3;
             gpGeneral->PlaySound(SOUND_WIN);
          }
          DrawScore();
-         UTIL_Delay(2000);
+         UTIL_Delay(3500);
          break;
       }
 
@@ -455,6 +727,10 @@ void CGame::PlayRound()
          }
 
          m_iScore += winner->m_Result.score;
+      }
+
+      if (GetGameMode() != GAMEMODE_BET) {
+         winner->SetAsDealer();
       }
    }
 
@@ -718,16 +994,17 @@ void CGame::CardDiscarded(const CCard &c, CBasePlayer *current, int sx, int sy)
          current->m_iNumLeaveThree++;
          if (current->GetNumHandCard() >= 8) {
             // This happens in first round. Get 3 points from opponent
-            CBox box(20, 300, 595, 33, 40, 55, 85);
+            gpGeneral->ClearPromptArea();
+            CBox box(20, 260, 595, 50, 40, 55, 85);
             gpGeneral->PlaySound(SOUND_HINT);
             if (current->IsBot()) {
-               gpGeneral->DrawText(msg("comget3pts"), 30, 300, 255, 255, 24);
+               gpGeneral->DrawTextInBox(msg("comget3pts"), 20, 260, 595, 50, 255, 255, 255, 18);
                m_iScore -= 3;
             } else {
-               gpGeneral->DrawText(msg("youget3pts"), 30, 300, 255, 255, 24);
+               gpGeneral->DrawTextInBox(msg("youget3pts"), 20, 260, 595, 50, 255, 255, 255, 18);
                m_iScore += 3;
             }
-            UTIL_Delay(2000);
+            UTIL_Delay(3500);
             DrawScore();
          }
       }
@@ -990,7 +1267,7 @@ void CGame::InitScreen()
    CCard c;
 
    // clear the screen
-   gpGeneral->ClearScreen(true, true, false);
+   gpGeneral->ClearScreen(false, false, false);
 
    // draw the card pile
    c = 255;
@@ -998,6 +1275,21 @@ void CGame::InitScreen()
       gpGeneral->DrawCard(c, 50 + i * 2, 95 + i * 2, 48, 78, true);
    }
 
+   DrawScore();
+}
+
+void CGame::RedrawTable()
+{
+   InitScreen();
+   if (m_pPlayers[0] != nullptr) {
+      m_pPlayers[0]->DrawHand();
+      m_pPlayers[0]->DrawCaptured();
+   }
+   if (m_pPlayers[1] != nullptr) {
+      m_pPlayers[1]->DrawHand();
+      m_pPlayers[1]->DrawCaptured();
+   }
+   DrawDeskCard();
    DrawScore();
 }
 
@@ -1070,6 +1362,7 @@ void CGame::AnimDeal()
                gpGeneral->UpdateScreen(dstrect3.x, dstrect3.y,
                   dstrect3.w, dstrect3.h);
 
+               SDL_Delay(5);
                now = SDL_GetTicks();
                prev_dstrect3 = dstrect3;
             } while (now < first + (Uint64)m_flAnimDuration);
@@ -1095,11 +1388,12 @@ void CGame::AnimDeal()
       SDL_DestroySurface(save);
    }
 
-   CBox box(20, 300, 595, 33, 40, 55, 85);
+   gpGeneral->ClearPromptArea();
+   CBox box(20, 260, 595, 50, 40, 55, 85);
    gpGeneral->PlaySound(SOUND_HINT);
-   gpGeneral->DrawText((CBasePlayer::GetDealer() == m_pPlayers[1].get()) ?
-      msg("comdealer") : msg("youdealer"), 30, 300, 255, 255, 24);
-   UTIL_Delay(2000);
+   gpGeneral->DrawTextInBox((CBasePlayer::GetDealer() == m_pPlayers[1].get()) ?
+      msg("comdealer") : msg("youdealer"), 20, 260, 595, 50, 255, 255, 255, 18);
+   UTIL_Delay(3500);
 }
 
 SDL_Surface *CGame::AnimCardMove(int sx, int sy, int dx, int dy,
@@ -1114,7 +1408,8 @@ SDL_Surface *CGame::AnimCardMove(int sx, int sy, int dx, int dy,
 
    if (save == NULL) {
       save = SDL_CreateSurface(w, h, gpScreen->format);
-      UTIL_FillRect(save, 0, 0, w, h, 30, 130, 100);
+      SDL_Rect r = { sx, sy, w, h };
+      SDL_BlitSurface(gpScreen, &r, save, NULL);
    }
 
    dstrect.x = sx;
@@ -1147,11 +1442,9 @@ SDL_Surface *CGame::AnimCardMove(int sx, int sy, int dx, int dy,
       }
 
       SDL_BlitSurface(card, NULL, gpScreen, &dstrect3);
-      gpGeneral->UpdateScreen(prev_dstrect3.x, prev_dstrect3.y,
-         prev_dstrect3.w, prev_dstrect3.h);
-      gpGeneral->UpdateScreen(dstrect3.x, dstrect3.y,
-         dstrect3.w, dstrect3.h);
+      gpGeneral->UpdateScreen();
 
+      SDL_Delay(5);
       now = SDL_GetTicks();
       prev_dstrect3 = dstrect3;
    } while (now < first + (Uint64)m_flAnimDuration);
@@ -1184,12 +1477,58 @@ SDL_Surface *CGame::AnimCardMove(int sx, int sy, int dx, int dy,
 void CGame::DrawScore()
 {
    if (gpScreen != nullptr) {
-      UTIL_FillRect(gpScreen, 25, 190, 110, 70, 30, 130, 100);
+      UTIL_FillRect(gpScreen, 10, 190, 120, 55, 30, 130, 100);
    }
-   CBox s(25, 190, 110, 70, 0, 175, 0, 160, true);
-   gpGeneral->DrawTextBrush("SCORE", 30, 190, 255, 255, 0, 32);
-   gpGeneral->DrawTextBrush(va("%6d", m_iScore), 30, 220);
-   gpGeneral->UpdateScreen(25, 190, 110, 70);
+   CBox s(10, 190, 120, 55, 0, 175, 0, 160, true);
+   gpGeneral->DrawTextBrush(va("SCORE  %d", m_iScore), 15, 195, 255, 255, 0, 16);
+   gpGeneral->DrawTextBrush(va("RD %d/12", m_iCurrentRound > 12 ? 12 : m_iCurrentRound), 15, 220, 0, 255, 255, 16);
+   gpGeneral->UpdateScreen(10, 190, 120, 55);
+}
+
+void CGame::ShowMatchResults()
+{
+   gpGeneral->ClearScreen();
+
+   CBox mainbox(40, 120, 560, 240, 40, 55, 85);
+   CBox titlebox(40, 120, 560, 50, 0, 128, 128);
+
+   std::string header;
+   int r, g, b;
+
+   if (m_iScore > 0) {
+      header = msg("match_victory");
+      r = 0; g = 255; b = 0;
+      gpGeneral->PlaySound(SOUND_WIN);
+   } else if (m_iScore < 0) {
+      header = msg("match_defeat");
+      r = 255; g = 50; b = 50;
+      gpGeneral->PlaySound(SOUND_LOSE);
+   } else {
+      header = msg("match_draw");
+      r = 255; g = 255; b = 0;
+   }
+
+   gpGeneral->DrawText(header.c_str(), 180, 128, r, g, b, 36);
+   gpGeneral->DrawText(va(msg("final_score_fmt"), m_iScore), 140, 190, 255, 255, 255, 26);
+   
+   if (m_iScore > 0) {
+      gpGeneral->DrawText(msg("congrats_win"), 60, 250, 255, 255, 0, 22);
+   } else if (m_iScore < 0) {
+      gpGeneral->DrawText(msg("better_luck_lose"), 60, 250, 255, 150, 150, 22);
+   } else {
+      gpGeneral->DrawText(msg("tie_game"), 180, 250, 255, 255, 0, 22);
+   }
+
+   CButton okbtn(1, 240, 300, 160, 40, 58, 110, 165);
+   gpGeneral->DrawText("OK", 305, 308, 255, 255, 255, 24);
+   gpGeneral->UpdateScreen();
+
+   while (1) {
+      int k = gpGeneral->ReadKey();
+      if (k > 0) {
+         break;
+      }
+   }
 }
 
 void CGame::DrawDeskCard()
@@ -1223,14 +1562,14 @@ void CGame::DrawDeskCard()
 
 bool CGame::DoubleUp(CBasePlayer *player)
 {
-   auto mainbox = std::make_unique<CBox>(20, 290, 595, 70, 80, 55, 85);
-   auto yesbtn = std::make_unique<CButton>(1, 30, 325, 100, 30, 128, 128, 128);
-   auto nobtn = std::make_unique<CButton>(2, 145, 325, 100, 30, 128, 128, 128);
+   auto mainbox = std::make_unique<CBox>(20, 250, 595, 100, 40, 55, 85);
+   auto yesbtn = std::make_unique<CButton>(1, 40, 300, 140, 38, 58, 110, 165);
+   auto nobtn = std::make_unique<CButton>(2, 200, 300, 140, 38, 165, 58, 58);
    bool ret = true;
 
-   gpGeneral->DrawText(msg("doubleupyesorno"), 30, 290, 255, 255, 0, 32);
-   gpGeneral->DrawText(msg("yes"), 35, 325, 255, 0, 255, 30);
-   gpGeneral->DrawText(msg("no"), 150, 325, 0, 255, 255, 30);
+   gpGeneral->DrawTextInBox(msg("doubleupyesorno"), 20, 255, 595, 35, 255, 255, 0, 20);
+   gpGeneral->DrawTextInBox(msg("yes"), 40, 300, 140, 38, 255, 255, 255, 20);
+   gpGeneral->DrawTextInBox(msg("no"), 200, 300, 140, 38, 255, 255, 255, 20);
 
    while (1) {
       int k = gpGeneral->ReadKey();
@@ -1262,13 +1601,13 @@ bool CGame::DoubleUp(CBasePlayer *player)
 
    c = RandomLong(0, 47);
 
-   mainbox = std::make_unique<CBox>(20, 290, 595, 70, 80, 55, 85);
-   yesbtn = std::make_unique<CButton>(1, 30, 325, 100, 30, 128, 128, 128);
-   nobtn = std::make_unique<CButton>(2, 145, 325, 100, 30, 128, 128, 128);
+   mainbox = std::make_unique<CBox>(20, 250, 595, 100, 40, 55, 85);
+   yesbtn = std::make_unique<CButton>(1, 40, 300, 140, 38, 58, 110, 165);
+   nobtn = std::make_unique<CButton>(2, 200, 300, 140, 38, 165, 58, 58);
 
-   gpGeneral->DrawText(msg("bigorsmall"), 30, 290, 255, 255, 0, 32);
-   gpGeneral->DrawText(msg("big"), 35, 325, 255, 0, 255, 30);
-   gpGeneral->DrawText(msg("small"), 150, 325, 0, 255, 255, 30);
+   gpGeneral->DrawTextInBox(msg("bigorsmall"), 20, 255, 595, 35, 255, 255, 0, 20);
+   gpGeneral->DrawTextInBox(msg("big"), 40, 300, 140, 38, 255, 255, 255, 20);
+   gpGeneral->DrawTextInBox(msg("small"), 200, 300, 140, 38, 255, 255, 255, 20);
 
    CBox s(25, 190, 110, 70, 0, 175, 0, 160);
    gpGeneral->DrawTextBrush("WIN", 30, 190, 255, 255, 0, 32);

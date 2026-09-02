@@ -48,9 +48,20 @@ int SOUND_OpenAudio(int freq, int format, int channels, int samples)
       return -1;
    }
 
-   g_pMixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, NULL);
+   SDL_AudioSpec spec;
+   SDL_zero(spec);
+   spec.freq = (freq > 0) ? freq : 44100;
+   spec.format = (format != 0) ? (SDL_AudioFormat)format : SDL_AUDIO_S16;
+   spec.channels = (channels > 0) ? channels : 2;
+
+   g_pMixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec);
+   if (!g_pMixer) {
+      g_pMixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, NULL);
+   }
+
    if (!g_pMixer) {
       std::println(stderr, "WARNING: Couldn't create SDL3_mixer device: {}", SDL_GetError());
+      MIX_Quit();
       return -1;
    }
 
@@ -91,5 +102,7 @@ void SOUND_PlayWAV(SoundSample *audio)
    if (audio == nullptr || audio->audio == nullptr || !g_fAudioOpened || !g_pMixer) {
       return;
    }
-   MIX_PlayAudio(g_pMixer, audio->audio);
+   if (!MIX_PlayAudio(g_pMixer, audio->audio)) {
+      std::println(stderr, "WARNING: MIX_PlayAudio failed: {}", SDL_GetError());
+   }
 }

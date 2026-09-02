@@ -1,10 +1,14 @@
 cmake_minimum_required(VERSION 3.25)
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "" FORCE)
-project(sdlhana VERSION 0.35 LANGUAGES C CXX)
+project(sdlhana VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+if(APPLE)
+    set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Build architectures for macOS" FORCE)
+endif()
 
 # Fetch Dependencies via FetchContent
 include(FetchContent)
@@ -80,9 +84,12 @@ elseif(APPLE)
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_BUNDLE_NAME "SDLHana"
         MACOSX_BUNDLE_GUI_IDENTIFIER "com.carnesoft.sdlhana"
-        MACOSX_BUNDLE_SHORT_VERSION_STRING "0.35"
-        MACOSX_BUNDLE_BUNDLE_VERSION "0.35"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
+        MACOSX_BUNDLE_BUNDLE_VERSION "1.0.0"
         MACOSX_BUNDLE_ICON_FILE "sdlhana.icns"
+        MACOSX_RPATH TRUE
+        BUILD_WITH_INSTALL_RPATH TRUE
+        INSTALL_RPATH "@executable_path;@loader_path"
     )
 else()
     add_executable(sdlhana ${SDLHANA_SOURCES})

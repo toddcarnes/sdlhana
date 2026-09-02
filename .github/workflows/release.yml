@@ -22,7 +22,7 @@ jobs:
           - os: windows-latest
             artifact_name: sdlhana-windows-x64.zip
           - os: macos-latest
-            artifact_name: sdlhana-macos-x64.tar.gz
+            artifact_name: sdlhana-macos-universal.tar.gz
           - os: ubuntu-latest
             artifact_name: sdlhana-linux-x64.tar.gz
 
@@ -57,7 +57,12 @@ jobs:
         echo "CC=gcc-14" >> $GITHUB_ENV
         echo "CXX=g++-14" >> $GITHUB_ENV
 
-    - name: Configure CMake
+    - name: Configure CMake (macOS Universal)
+      if: runner.os == 'macOS'
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
+
+    - name: Configure CMake (Non-macOS)
+      if: runner.os != 'macOS'
       run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
     - name: Build Executable
@@ -97,6 +102,30 @@ jobs:
         cp -r src/images build/sdlhana.app/Contents/MacOS/
         cp -r src/sound build/sdlhana.app/Contents/MacOS/
         find build -name "*.dylib" -exec cp {} build/sdlhana.app/Contents/MacOS/ \; 2>/dev/null || true
+
+        # Fix dynamic library load paths and rpaths for self-contained macOS App Bundle
+        install_name_tool -add_rpath "@executable_path" build/sdlhana.app/Contents/MacOS/sdlhana 2>/dev/null || true
+        install_name_tool -add_rpath "@loader_path" build/sdlhana.app/Contents/MacOS/sdlhana 2>/dev/null || true
+
+        for dylib in build/sdlhana.app/Contents/MacOS/*.dylib; do
+          if [ -f "$dylib" ]; then
+            dylib_name=$(basename "$dylib")
+            install_name_tool -id "@executable_path/$dylib_name" "$dylib" 2>/dev/null || true
+            install_name_tool -add_rpath "@executable_path" "$dylib" 2>/dev/null || true
+            install_name_tool -add_rpath "@loader_path" "$dylib" 2>/dev/null || true
+            install_name_tool -change "$dylib" "@executable_path/$dylib_name" build/sdlhana.app/Contents/MacOS/sdlhana 2>/dev/null || true
+            install_name_tool -change "@rpath/$dylib_name" "@executable_path/$dylib_name" build/sdlhana.app/Contents/MacOS/sdlhana 2>/dev/null || true
+            for other_dylib in build/sdlhana.app/Contents/MacOS/*.dylib; do
+              install_name_tool -change "$dylib" "@executable_path/$dylib_name" "$other_dylib" 2>/dev/null || true
+              install_name_tool -change "@rpath/$dylib_name" "@executable_path/$dylib_name" "$other_dylib" 2>/dev/null || true
+            done
+            codesign --force --sign - "$dylib" 2>/dev/null || true
+          fi
+        done
+
+        # Sign main binary and bundle in bottom-up order so macOS dyld accepts all Mach-O headers
+        codesign --force --sign - build/sdlhana.app/Contents/MacOS/sdlhana 2>/dev/null || true
+        codesign --force --sign - build/sdlhana.app 2>/dev/null || true
 
         # Compress native sdlhana.app bundle
         tar -czvf ${{ matrix.artifact_name }} -C build sdlhana.app

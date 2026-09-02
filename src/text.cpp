@@ -10,8 +10,7 @@
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+// portions of the code.
 //
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
@@ -20,104 +19,94 @@
 //
 
 #include "main.h"
+#include <unordered_map>
+#include <fstream>
+#include <string>
+#include <string_view>
 
-typedef struct textmessage_s
-{
-   char *name;
-   char *message;
-} textmessage_t;
-
-#define  MAX_MESSAGES     512
-
-static int gMessageTableCount = 0;
-static textmessage_t gMessageTable[MAX_MESSAGES];
+static std::unordered_map<std::string, std::string> gMessageTable;
 
 void FreeTextMessage()
 {
-   for (int i = 0; i < gMessageTableCount; i++) {
-      if (gMessageTable[i].name != NULL) {
-         free(gMessageTable[i].name);
-      }
-      gMessageTable[i].name = NULL;
-
-      if (gMessageTable[i].message != NULL) {
-         free(gMessageTable[i].message);
-      }
-      gMessageTable[i].message = NULL;
-   }
-
-   gMessageTableCount = 0;
+   gMessageTable.clear();
 }
 
 void InitTextMessage()
 {
-   FILE *fp = fopen(va("%stitles%s.txt", DATA_DIR, cfg.Get("OPTIONS", "Language", "eng")), "r");
-   if (fp == NULL) {
+   FreeTextMessage();
+
+   std::string filename = std::format("{}titles{}.txt", DATA_DIR, cfg.Get("OPTIONS", "Language", "eng"));
+   std::ifstream file(filename);
+
+   if (!file.is_open()) {
       std::println(stderr, "WARNING: cannot load titles{}.txt!", cfg.Get("OPTIONS", "Language", ""));
       return;
    }
 
-   char buf[256], buf1[256], msgbuf[1024];
+   std::string line;
+   std::string current_name;
+   std::string current_msg;
    enum { NAME, TEXT } state = NAME;
    int linenumber = 0;
 
-   FreeTextMessage();
-
-   while (fgets(buf, 256, fp) != NULL) {
+   while (std::getline(file, line)) {
       linenumber++;
-      strncpy(buf1, buf, 256);
-      trim(buf);
+      std::string raw_line = line + "\n";
+      
+      // Trim line for state parsing
+      std::string trimmed = line;
+      trim(trimmed.data());
+      // adjust trimmed length
+      size_t first = trimmed.find_first_not_of(" \t\r\n");
+      if (first == std::string::npos) {
+         trimmed.clear();
+      } else {
+         size_t last = trimmed.find_last_not_of(" \t\r\n");
+         trimmed = trimmed.substr(first, (last - first + 1));
+      }
 
-      if (buf[0] == '\0' || buf[0] == '#' || buf[0] == '/')
+      if (trimmed.empty() || trimmed[0] == '#' || trimmed[0] == '/') {
          continue; // skip empty or comment lines
+      }
 
       switch (state) {
          case NAME:
-            if (strcmp(buf, "}") == 0) {
-               fclose(fp);
+            if (trimmed == "}") {
                TerminateOnError("Unexpected \"}\" found in titles.txt, line %d", linenumber);
-            } else if (strcmp(buf, "{") == 0) {
+            } else if (trimmed == "{") {
                state = TEXT;
-               msgbuf[0] = '\0';
+               current_msg.clear();
             } else {
-               gMessageTable[gMessageTableCount].name = strdup(buf);
+               current_name = trimmed;
             }
             break;
 
          case TEXT:
-            if (strcmp(buf, "{") == 0) {
-               fclose(fp);
+            if (trimmed == "{") {
                TerminateOnError("Unexpected \"{\" found in titles.txt, line %d", linenumber);
-            } else if (strcmp(buf, "}") == 0) {
-               char *p = msgbuf;
-               p += strlen(p) - 1;
-               while (*p == '\n' || *p == '\r') {
-                  *p-- = '\0'; // remove trailing linefeeds
+            } else if (trimmed == "}") {
+               // Remove trailing newlines/carriage returns
+               while (!current_msg.empty() && (current_msg.back() == '\n' || current_msg.back() == '\r')) {
+                  current_msg.pop_back();
                }
+               gMessageTable[current_name] = current_msg;
                state = NAME;
-               gMessageTable[gMessageTableCount].message = strdup(msgbuf);
-               gMessageTableCount++;
-               if (gMessageTableCount >= MAX_MESSAGES) {
-                  std::println(stderr, "WARNING: TOO MANY MESSAGES IN TITLES.TXT, MAX IS {}", MAX_MESSAGES);
-                  goto end;
-               }
             } else {
-               strncat(msgbuf, buf1, 1024 - 1 - strlen(msgbuf));
+               current_msg += raw_line;
             }
             break;
       }
    }
-
-end:
-   fclose(fp);
 }
 
 const char *msg(const char *name)
 {
-   for (int i = 0; i < gMessageTableCount; i++) {
-      if (strcmp(gMessageTable[i].name, name) == 0)
-         return gMessageTable[i].message;
+   if (name == nullptr) {
+      return "";
+   }
+   auto it = gMessageTable.find(name);
+   if (it != gMessageTable.end()) {
+      return it->second.c_str();
    }
    return name;
 }
-

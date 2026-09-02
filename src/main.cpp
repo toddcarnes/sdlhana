@@ -127,6 +127,12 @@ int main(int argc, char *argv[])
 {
    (void)argc;
    (void)argv;
+
+   const char *base_path = SDL_GetBasePath();
+   if (base_path != nullptr) {
+      std::filesystem::current_path(base_path);
+   }
+
    LoadCfg(); // load the configuration file
 
    // Initialize SDL3 defaults, video and audio
@@ -135,10 +141,10 @@ int main(int argc, char *argv[])
       exit(1);
    }
 
-   bool fullscreen = (atoi(cfg.Get("OPTIONS", "FullScreen", "0")) > 0);
-   SDL_WindowFlags window_flags = fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
+   cfg.Set("OPTIONS", "FullScreen", "0");
+   SDL_WindowFlags window_flags = SDL_WINDOW_RESIZABLE;
 
-   gpWindow = SDL_CreateWindow("SDLHana", 640, 480, window_flags);
+   gpWindow = SDL_CreateWindow("SDLHana", 1024, 768, window_flags);
    if (gpWindow == nullptr) {
       std::println(stderr, "FATAL ERROR: Could not create SDL3 window: {}", SDL_GetError());
       exit(1);
@@ -147,11 +153,14 @@ int main(int argc, char *argv[])
 
    gpRenderer = SDL_CreateRenderer(gpWindow, NULL);
    if (gpRenderer == nullptr) {
+      gpRenderer = SDL_CreateRenderer(gpWindow, "software");
+   }
+   if (gpRenderer == nullptr) {
       std::println(stderr, "FATAL ERROR: Could not create SDL3 renderer: {}", SDL_GetError());
       exit(1);
    }
 
-   SDL_SetRenderLogicalPresentation(gpRenderer, 640, 480, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+   SDL_SetRenderLogicalPresentation(gpRenderer, 640, 480, SDL_LOGICAL_PRESENTATION_STRETCH);
 
    gpScreen = SDL_CreateSurface(640, 480, SDL_PIXELFORMAT_XRGB8888);
    if (gpScreen == nullptr) {

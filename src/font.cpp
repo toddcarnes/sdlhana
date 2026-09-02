@@ -47,15 +47,40 @@ int CFont::Load(const char *filename)
       FreeAllTheStuff();
    }
 
-   int useTTF = atoi(cfg.Get("OPTIONS", "UseTTF", "0"));
+   int useTTF = atoi(cfg.Get("OPTIONS", "UseTTF", "1"));
    const char *ttfPath = cfg.Get("OPTIONS", "TTFFontPath", "");
 
-   if (useTTF && ttfPath != nullptr && strlen(ttfPath) > 0) {
-      m_pTTFFont = TTF_OpenFont(ttfPath, 32.0f);
+   if (useTTF) {
+      if (ttfPath != nullptr && strlen(ttfPath) > 0) {
+         m_pTTFFont = TTF_OpenFont(ttfPath, 32.0f);
+      }
+      if (m_pTTFFont == nullptr) {
+         // Auto-detect cross-platform system CJK & vector fonts
+         static const char *sysFonts[] = {
+            "C:\\Windows\\Fonts\\msyh.ttc",       // Windows Microsoft YaHei
+            "C:\\Windows\\Fonts\\msjh.ttc",       // Windows Microsoft JhengHei
+            "C:\\Windows\\Fonts\\meiryo.ttc",     // Windows Meiryo
+            "C:\\Windows\\Fonts\\arial.ttf",      // Windows Arial
+            "C:\\Windows\\Fonts\\segoeui.ttf",    // Windows Segoe UI
+            "/System/Library/Fonts/PingFang.ttc", // macOS PingFang
+            "/System/Library/Fonts/STHeiti Light.ttc",
+            "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+            "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+         };
+         for (const char *path : sysFonts) {
+            if (std::filesystem::exists(path)) {
+               m_pTTFFont = TTF_OpenFont(path, 32.0f);
+               if (m_pTTFFont != nullptr) {
+                  return 0;
+               }
+            }
+         }
+      }
       if (m_pTTFFont != nullptr) {
          return 0;
       }
-      std::println(stderr, "WARNING: Could not open TTF font {}, falling back to bitmap font", ttfPath);
    }
 
    FILE *fp = fopen(filename, "rb");
@@ -88,6 +113,19 @@ int CFont::Load(const char *filename)
    return 0;
 }
 
+SDL_Surface *CFont::RenderWrapped(const char *sz, int r, int g, int b, int size, int wrap_width)
+{
+   if (m_pTTFFont != nullptr) {
+      TTF_SetFontSize(m_pTTFFont, (float)size);
+      SDL_Color color = { (Uint8)r, (Uint8)g, (Uint8)b, 255 };
+      SDL_Surface *surface = TTF_RenderText_Blended_Wrapped(m_pTTFFont, sz, 0, color, wrap_width);
+      if (surface != nullptr) {
+         return surface;
+      }
+   }
+   return Render(sz, r, g, b, size);
+}
+
 SDL_Surface *CFont::Render(const char *sz, int r, int g, int b, int size, bool shadow)
 {
    if (m_pTTFFont != nullptr) {
@@ -104,8 +142,17 @@ SDL_Surface *CFont::Render(const char *sz, int r, int g, int b, int size, bool s
    SDL_Surface *s = NULL;
 
    while (*p) {
-      if (*p < 0) {
+      if (((unsigned char)*p & 0x80) == 0) {
+         p++;
+         length++;
+      } else if (((unsigned char)*p & 0xE0) == 0xC0) {
+         p += 2;
+         length += 2;
+      } else if (((unsigned char)*p & 0xF0) == 0xE0) {
          p += 3;
+         length += 2;
+      } else if (((unsigned char)*p & 0xF8) == 0xF0) {
+         p += 4;
          length += 2;
       } else {
          p++;

@@ -1,5 +1,14 @@
+1.0.0 Released on August 22nd, 2026.
+ - Added In-Game Scrollable Rules Canvas Viewer displaying 100% of Hanafuda deck rules, Yaku combinations, and card sprite illustrations from RULES.md across a 545px viewport.
+ - Implemented interactive scrollbar thumb dragging, high-precision mouse wheel scrolling, keyboard arrow navigation, and viewport click-scrolling.
+ - Implemented authentic Hanafuda dealer selection (Mekuri card cut animation) selecting the lowest month card draw as first-round dealer.
+ - Implemented winner-retains-dealer round progression and 12-round Hanafuda match victory condition.
+ - Enhanced UI text rendering with 2D horizontal/vertical centering and dark navy high-contrast title typography.
+ - Updated repository documentation (RULES.md, ChangeLog, README.md).
+
 0.35 Released on August 21st, 2026.
  - Major codebase modernization to C++23, SDL3, SDL3_mixer, SDL3_ttf, and CMake 3.25+.
+ - Added 12-round match victory condition (January through December) with HUD round tracking and final match win/loss screen.
  - Upgraded card graphics to high-resolution vector Hanafuda set with authentic traditional colors and red card backs.
  - Configured native macOS App Bundle (SDLHana.app) packaging with automated .icns icon generation.
  - Standardized application per-user storage path under "CarneSoft" organization namespace.

@@ -13,6 +13,9 @@ CTestTestfile.cmake
 compile_commands.json
 install_manifest.txt
 
+# Scratch scripts & temporary data
+scratch/
+
 # Visual Studio & MSVC artifacts
 .vs/
 *.user
