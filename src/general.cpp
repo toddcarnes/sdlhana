@@ -305,7 +305,10 @@ void CGeneral::LoadFonts()
 {
    TTF_Init();
    m_fntBrush.Load(FONTS_DIR "brush.fnt");
-   m_fnt.Load(va("%s%s.fnt", FONTS_DIR, cfg.Get("OPTIONS", "Language", "eng")));
+   {
+      std::string langFont = std::format("{}{}.fnt", FONTS_DIR, cfg.Get("OPTIONS", "Language", "eng"));
+      m_fnt.Load(langFont.c_str());
+   }
 }
 
 void CGeneral::LoadImages()
@@ -337,7 +340,8 @@ void CGeneral::LoadSound()
 
    for (i = 0; i < NUM_SOUND; i++) {
       assert(*soundfile[i]);
-      m_snd[i] = LoadSoundFile(va("%s%s.wav", SOUND_DIR, soundfile[i]));
+      std::string sndPath = std::format("{}{}.wav", SOUND_DIR, soundfile[i]);
+      m_snd[i] = LoadSoundFile(sndPath.c_str());
    }
 }
 

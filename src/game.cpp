@@ -20,6 +20,8 @@
 //
 
 #include "main.h"
+#include <vector>
+#include <sstream>
 
 CGame::CGame()
 {
@@ -354,9 +356,23 @@ void CGame::Settings()
    int curgm = atoi(cfg.Get("GAME", "GameMode", "0"));
    int curas = 3;
 
-   char lngs[256], *curlng;
-   strcpy(lngs, cfg.Get("OPTIONS", "AllLanguage", "eng"));
-   curlng = strtok(lngs, ",");
+   std::string allLangsStr = cfg.Get("OPTIONS", "AllLanguage", "eng");
+   std::vector<std::string> langs;
+   {
+      std::stringstream ss(allLangsStr);
+      std::string tok;
+      while (std::getline(ss, tok, ',')) {
+         if (!tok.empty()) langs.push_back(tok);
+      }
+      if (langs.empty()) langs.push_back("eng");
+   }
+   size_t langIdx = 0;
+   {
+      std::string curLang = cfg.Get("OPTIONS", "Language", "eng");
+      for (size_t i = 0; i < langs.size(); i++) {
+         if (langs[i] == curLang) { langIdx = i; break; }
+      }
+   }
    int valueas[5] = {800, 500, 300, 180, 50};
 
    while (1) {
@@ -413,7 +429,7 @@ void CGame::Settings()
                if (++curgm >= 3) {
                   curgm = 0;
                }
-               cfg.Set("GAME", "GameMode", va("%d", curgm));
+               cfg.Set("GAME", "GameMode", std::to_string(curgm).c_str());
                m_iGameMode = curgm;
                if (m_iGameMode == GAMEMODE_BET) {
                   CBasePlayer::m_iMaxHandCards = 6;
@@ -423,12 +439,8 @@ void CGame::Settings()
                break;
 
             case 4:
-               cfg.Set("OPTIONS", "Language", curlng);
-               curlng = strtok(NULL, ",");
-               if (curlng == NULL) {
-                  strcpy(lngs, cfg.Get("OPTIONS", "AllLanguage", "eng"));
-                  curlng = strtok(lngs, ",");
-               }
+               langIdx = (langIdx + 1) % langs.size();
+               cfg.Set("OPTIONS", "Language", langs[langIdx].c_str());
                InitTextMessage();
                gpGeneral->LoadFonts();
                break;
@@ -437,7 +449,7 @@ void CGame::Settings()
                if (++curas >= 5) {
                   curas = 0;
                }
-               cfg.Set("OPTIONS", "AnimSpeed", va("%d", valueas[curas]));
+               cfg.Set("OPTIONS", "AnimSpeed", std::to_string(valueas[curas]).c_str());
                m_flAnimDuration = (float)valueas[curas];
                break;
 
@@ -491,7 +503,7 @@ void CGame::RunGame()
       NewRound();
       PlayRound();
       // save the score
-      cfg.Set("GAME", "Score", va("%d", m_iScore));
+      cfg.Set("GAME", "Score", std::to_string(m_iScore).c_str());
       m_iCurrentRound++;
    }
 
@@ -1379,8 +1391,14 @@ void CGame::DrawScore()
       UTIL_FillRect(gpScreen, 10, 190, 120, 55, 30, 130, 100);
    }
    CBox s(10, 190, 120, 55, 0, 175, 0, 160, true);
-   gpGeneral->DrawTextBrush(va("SCORE  %d", m_iScore), 15, 195, 255, 255, 0, 16);
-   gpGeneral->DrawTextBrush(va("RD %d/12", m_iCurrentRound > 12 ? 12 : m_iCurrentRound), 15, 220, 0, 255, 255, 16);
+   {
+      std::string scoreTxt = std::format("SCORE  {}", m_iScore);
+      gpGeneral->DrawTextBrush(scoreTxt.c_str(), 15, 195, 255, 255, 0, 16);
+   }
+   {
+      std::string rdTxt = std::format("RD {}/12", m_iCurrentRound > 12 ? 12 : m_iCurrentRound);
+      gpGeneral->DrawTextBrush(rdTxt.c_str(), 15, 220, 0, 255, 255, 16);
+   }
    gpGeneral->UpdateScreen(10, 190, 120, 55);
 }
 
