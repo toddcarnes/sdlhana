@@ -366,44 +366,37 @@ void CBasePlayer::DrawCurResult()
    cur_result.animals = ((m_PrevResult.animals == cur_result.animals) ? 0 : cur_result.animals);
    cur_result.cards = ((m_PrevResult.cards == cur_result.cards) ? 0 : cur_result.cards);
 
-#define DRAW_BOX_TEXT(text)                               \
-   {                                                      \
-      CBox box(20, 260, 595, 50, 155, 40, 185);           \
-      gpGeneral->PlaySound(SOUND_HINT);                   \
-      gpGeneral->DrawTextInBox(text, 20, 260, 595, 50, 255, 255, 255, 18); \
-      UTIL_Delay(3500);                                   \
-      if (gpGame) gpGame->RedrawTable();                  \
-   }
-
-#define CLEAR_EFFECT                                      \
-   {                                                      \
-      int i;                                              \
-      for (i = 0; i < m_iNumCapturedCard; i++) {          \
-         m_CapturedCard[i].m_iRenderEffect = 0;           \
-      }                                                   \
-   }
-
-#define DRAW_RESULT(r, cards, s)                               \
-   {                                                           \
-      if (cur_result.r > 0) {                                  \
-         int i, j;                                             \
-         for (i = 0; i < m_iNumCapturedCard; i++) {            \
-            j = 0;                                             \
-            while (cards[j] != 255) {                          \
-               if (m_CapturedCard[i].GetValue() == cards[j]) { \
-                  m_CapturedCard[i].m_iRenderEffect |= EF_BOX; \
-                  break;                                       \
-               }                                               \
-               j++;                                            \
-            }                                                  \
-         }                                                     \
-         DrawCaptured();                                       \
-         DRAW_BOX_TEXT(va("%s [%d %s]", msg(#r), m_Result.r * s,      \
-            ((s * m_Result.r <= 1) ? msg("point") : msg("points")))); \
-         CLEAR_EFFECT;                                         \
-         DrawCaptured();                                       \
-      }                                                        \
-   }
+   auto draw_box_text = [&](const char *text) {
+      CBox box(20, 260, 595, 50, 155, 40, 185);
+      gpGeneral->PlaySound(SOUND_HINT);
+      gpGeneral->DrawTextInBox(text, 20, 260, 595, 50, 255, 255, 255, 18);
+      UTIL_Delay(3500);
+      if (gpGame) gpGame->RedrawTable();
+   };
+   auto clear_effect = [&]() {
+      for (int i = 0; i < m_iNumCapturedCard; i++) {
+         m_CapturedCard[i].m_iRenderEffect = 0;
+      }
+   };
+   auto draw_result = [&](const char *key, unsigned char *cards, int s, int curVal, int resVal) {
+      if (curVal <= 0) return;
+      for (int i = 0; i < m_iNumCapturedCard; i++) {
+         int j = 0;
+         while (cards[j] != 255) {
+            if (m_CapturedCard[i].GetValue() == cards[j]) {
+               m_CapturedCard[i].m_iRenderEffect |= EF_BOX;
+               break;
+            }
+            j++;
+         }
+      }
+      DrawCaptured();
+      std::string txt = std::format("{} [{} {}]", msg(key), resVal * s,
+         ((s * resVal <= 1) ? msg("point") : msg("points")));
+      draw_box_text(txt.c_str());
+      clear_effect();
+      DrawCaptured();
+   };
 
    unsigned char r_lights[] = {0, 8, 28, 40, 44, 255};
    unsigned char r_red_ribbons[] = {1, 5, 9, 255};
@@ -420,32 +413,32 @@ void CBasePlayer::DrawCurResult()
    unsigned char r_fake[] = {255};
 
    if (gpGame->GetGameMode() == GAMEMODE_KOREAN) {
-      DRAW_RESULT(five_lights, r_lights, 15);
-      DRAW_RESULT(four_lights, r_lights, 4);
-      DRAW_RESULT(rain_four_lights, r_lights, 4);
-      DRAW_RESULT(three_lights, r_lights, 3);
-      DRAW_RESULT(rain_three_lights, r_lights, 2);
-      DRAW_RESULT(red_ribbons, r_red_ribbons, 3);
-      DRAW_RESULT(blue_ribbons, r_blue_ribbons, 3);
-      DRAW_RESULT(normal_ribbons, r_normal_ribbons, 3);
-      DRAW_RESULT(ribbons, r_ribbons, 1);
-      DRAW_RESULT(five_birds, r_birds, 5);
-      DRAW_RESULT(animals, r_animals, 1);
-      DRAW_RESULT(cards, r_cards, 1);
+      draw_result("five_lights", r_lights, 15, cur_result.five_lights, m_Result.five_lights);
+      draw_result("four_lights", r_lights, 4, cur_result.four_lights, m_Result.four_lights);
+      draw_result("rain_four_lights", r_lights, 4, cur_result.rain_four_lights, m_Result.rain_four_lights);
+      draw_result("three_lights", r_lights, 3, cur_result.three_lights, m_Result.three_lights);
+      draw_result("rain_three_lights", r_lights, 2, cur_result.rain_three_lights, m_Result.rain_three_lights);
+      draw_result("red_ribbons", r_red_ribbons, 3, cur_result.red_ribbons, m_Result.red_ribbons);
+      draw_result("blue_ribbons", r_blue_ribbons, 3, cur_result.blue_ribbons, m_Result.blue_ribbons);
+      draw_result("normal_ribbons", r_normal_ribbons, 3, cur_result.normal_ribbons, m_Result.normal_ribbons);
+      draw_result("ribbons", r_ribbons, 1, cur_result.ribbons, m_Result.ribbons);
+      draw_result("five_birds", r_birds, 5, cur_result.five_birds, m_Result.five_birds);
+      draw_result("animals", r_animals, 1, cur_result.animals, m_Result.animals);
+      draw_result("cards", r_cards, 1, cur_result.cards, m_Result.cards);
    } else {
-      DRAW_RESULT(five_lights, r_lights, 15);
-      DRAW_RESULT(four_lights, r_lights, 10);
-      DRAW_RESULT(rain_four_lights, r_lights, 8);
-      DRAW_RESULT(three_lights, r_lights, 6);
-      DRAW_RESULT(red_ribbons, r_red_ribbons, 6);
-      DRAW_RESULT(blue_ribbons, r_blue_ribbons, 6);
-      DRAW_RESULT(ribbons, r_ribbons, 1);
-      DRAW_RESULT(boar_deer_butterfly, r_bdb, 5);
-      DRAW_RESULT(animals, r_animals, 1);
-      DRAW_RESULT(flower_meets_sakecup, r_fms, 3);
-      DRAW_RESULT(moon_meets_sakecup, r_mms, 3);
-      DRAW_RESULT(cards, r_cards, 1);
-      DRAW_RESULT(dealer, r_fake, 6);
+      draw_result("five_lights", r_lights, 15, cur_result.five_lights, m_Result.five_lights);
+      draw_result("four_lights", r_lights, 10, cur_result.four_lights, m_Result.four_lights);
+      draw_result("rain_four_lights", r_lights, 8, cur_result.rain_four_lights, m_Result.rain_four_lights);
+      draw_result("three_lights", r_lights, 6, cur_result.three_lights, m_Result.three_lights);
+      draw_result("red_ribbons", r_red_ribbons, 6, cur_result.red_ribbons, m_Result.red_ribbons);
+      draw_result("blue_ribbons", r_blue_ribbons, 6, cur_result.blue_ribbons, m_Result.blue_ribbons);
+      draw_result("ribbons", r_ribbons, 1, cur_result.ribbons, m_Result.ribbons);
+      draw_result("boar_deer_butterfly", r_bdb, 5, cur_result.boar_deer_butterfly, m_Result.boar_deer_butterfly);
+      draw_result("animals", r_animals, 1, cur_result.animals, m_Result.animals);
+      draw_result("flower_meets_sakecup", r_fms, 3, cur_result.flower_meets_sakecup, m_Result.flower_meets_sakecup);
+      draw_result("moon_meets_sakecup", r_mms, 3, cur_result.moon_meets_sakecup, m_Result.moon_meets_sakecup);
+      draw_result("cards", r_cards, 1, cur_result.cards, m_Result.cards);
+      draw_result("dealer", r_fake, 6, cur_result.dealer, m_Result.dealer);
    }
 }
 
@@ -457,53 +450,52 @@ void CBasePlayer::DrawAllResult()
 
    y += 10;
 
-#define DRAW_RESULT_A(r, s)                                              \
-   {                                                                     \
-      if (m_Result.r > 0) {                                              \
-         gpGeneral->DrawText(msg(#r), 30, y, 255, 255, 0, 24);           \
-         gpGeneral->DrawText(va("%d %s", s * m_Result.r,                 \
-            ((s * m_Result.r <= 1) ? msg("point") : msg("points"))),     \
-            300, y, 255, 255, 255, 24);                                  \
-         gpGeneral->PlaySound(SOUND_HINT);                               \
-         UTIL_Delay(1000);                                               \
-         y += 26;                                                        \
-      }                                                                  \
-   }
+   auto draw_result_a = [&](const char *key, int s, int val) {
+      if (val <= 0) return;
+      gpGeneral->DrawText(msg(key), 30, y, 255, 255, 0, 24);
+      std::string pts = std::format("{} {}", s * val, ((s * val <= 1) ? msg("point") : msg("points")));
+      gpGeneral->DrawText(pts.c_str(), 300, y, 255, 255, 255, 24);
+      gpGeneral->PlaySound(SOUND_HINT);
+      UTIL_Delay(1000);
+      y += 26;
+   };
 
    if (gpGame->GetGameMode() == GAMEMODE_KOREAN) {
-      DRAW_RESULT_A(five_lights, 15);
-      DRAW_RESULT_A(four_lights, 4);
-      DRAW_RESULT_A(rain_four_lights, 4);
-      DRAW_RESULT_A(three_lights, 3);
-      DRAW_RESULT_A(rain_three_lights, 2);
-      DRAW_RESULT_A(red_ribbons, 3);
-      DRAW_RESULT_A(blue_ribbons, 3);
-      DRAW_RESULT_A(normal_ribbons, 3);
-      DRAW_RESULT_A(ribbons, 1);
-      DRAW_RESULT_A(five_birds, 5);
-      DRAW_RESULT_A(animals, 1);
-      DRAW_RESULT_A(cards, 1);
+      draw_result_a("five_lights", 15, m_Result.five_lights);
+      draw_result_a("four_lights", 4, m_Result.four_lights);
+      draw_result_a("rain_four_lights", 4, m_Result.rain_four_lights);
+      draw_result_a("three_lights", 3, m_Result.three_lights);
+      draw_result_a("rain_three_lights", 2, m_Result.rain_three_lights);
+      draw_result_a("red_ribbons", 3, m_Result.red_ribbons);
+      draw_result_a("blue_ribbons", 3, m_Result.blue_ribbons);
+      draw_result_a("normal_ribbons", 3, m_Result.normal_ribbons);
+      draw_result_a("ribbons", 1, m_Result.ribbons);
+      draw_result_a("five_birds", 5, m_Result.five_birds);
+      draw_result_a("animals", 1, m_Result.animals);
+      draw_result_a("cards", 1, m_Result.cards);
    } else {
-      DRAW_RESULT_A(five_lights, 15);
-      DRAW_RESULT_A(four_lights, 10);
-      DRAW_RESULT_A(rain_four_lights, 8);
-      DRAW_RESULT_A(three_lights, 6);
-      DRAW_RESULT_A(red_ribbons, 6);
-      DRAW_RESULT_A(blue_ribbons, 6);
-      DRAW_RESULT_A(ribbons, 1);
-      DRAW_RESULT_A(boar_deer_butterfly, 5);
-      DRAW_RESULT_A(animals, 1);
-      DRAW_RESULT_A(flower_meets_sakecup, 3);
-      DRAW_RESULT_A(moon_meets_sakecup, 3);
-      DRAW_RESULT_A(cards, 1);
-      DRAW_RESULT_A(dealer, 6);
+      draw_result_a("five_lights", 15, m_Result.five_lights);
+      draw_result_a("four_lights", 10, m_Result.four_lights);
+      draw_result_a("rain_four_lights", 8, m_Result.rain_four_lights);
+      draw_result_a("three_lights", 6, m_Result.three_lights);
+      draw_result_a("red_ribbons", 6, m_Result.red_ribbons);
+      draw_result_a("blue_ribbons", 6, m_Result.blue_ribbons);
+      draw_result_a("ribbons", 1, m_Result.ribbons);
+      draw_result_a("boar_deer_butterfly", 5, m_Result.boar_deer_butterfly);
+      draw_result_a("animals", 1, m_Result.animals);
+      draw_result_a("flower_meets_sakecup", 3, m_Result.flower_meets_sakecup);
+      draw_result_a("moon_meets_sakecup", 3, m_Result.moon_meets_sakecup);
+      draw_result_a("cards", 1, m_Result.cards);
+      draw_result_a("dealer", 6, m_Result.dealer);
    }
 
    y = (IsBot() ? 330 : 240);
 
-   gpGeneral->DrawText(va("%s %d %s", msg("total"), m_Result.score,
-      ((m_Result.score <= 1) ? msg("point") : msg("points"))),
-      30, y, 255, 255, 255, 24);
+   {
+      std::string total = std::format("{} {} {}", msg("total"), m_Result.score,
+         ((m_Result.score <= 1) ? msg("point") : msg("points")));
+      gpGeneral->DrawText(total.c_str(), 30, y, 255, 255, 255, 24);
+   }
 
    y += 26;
    gpGeneral->DrawText(IsBot() ? msg("computerwin") : msg("youwin"),

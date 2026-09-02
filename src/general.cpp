@@ -92,38 +92,32 @@ int CGeneral::ReadKey()
    }
 }
 
-static void BlitSurfaceToRenderer(SDL_Surface *surface, const SDL_Rect *dstrect)
-{
-   if (surface == nullptr || gpRenderer == nullptr) return;
-   SDL_Texture *tex = SDL_CreateTextureFromSurface(gpRenderer, surface);
-   if (tex != nullptr) {
-      SDL_FRect frect;
-      frect.x = dstrect ? (float)dstrect->x : 0.0f;
-      frect.y = dstrect ? (float)dstrect->y : 0.0f;
-      frect.w = dstrect ? (float)dstrect->w : (float)surface->w;
-      frect.h = dstrect ? (float)dstrect->h : (float)surface->h;
-      SDL_RenderTexture(gpRenderer, tex, NULL, &frect);
-      SDL_DestroyTexture(tex);
-   }
-}
-
 void CGeneral::UpdateScreen(int x, int y, int w, int h)
 {
-   (void)x; (void)y; (void)w; (void)h;
-   if (gpRenderer != nullptr && gpScreen != nullptr) {
+   if (gpRenderer == nullptr || gpScreen == nullptr) return;
+
+   if (gpScreenTexture == nullptr) {
+      gpScreenTexture = SDL_CreateTexture(gpRenderer, SDL_PIXELFORMAT_XRGB8888,
+         SDL_TEXTUREACCESS_STREAMING, gpScreen->w, gpScreen->h);
       if (gpScreenTexture == nullptr) {
          gpScreenTexture = SDL_CreateTextureFromSurface(gpRenderer, gpScreen);
-         if (gpScreenTexture != nullptr) {
-            SDL_SetTextureScaleMode(gpScreenTexture, SDL_SCALEMODE_LINEAR);
-         }
       }
       if (gpScreenTexture != nullptr) {
+         SDL_SetTextureScaleMode(gpScreenTexture, SDL_SCALEMODE_LINEAR);
          SDL_UpdateTexture(gpScreenTexture, NULL, gpScreen->pixels, gpScreen->pitch);
          SDL_RenderClear(gpRenderer);
          SDL_RenderTexture(gpRenderer, gpScreenTexture, NULL, NULL);
          SDL_RenderPresent(gpRenderer);
       }
+      return;
    }
+
+   (void)x; (void)y; (void)w; (void)h;
+   SDL_UpdateTexture(gpScreenTexture, NULL, gpScreen->pixels, gpScreen->pitch);
+
+   SDL_RenderClear(gpRenderer);
+   SDL_RenderTexture(gpRenderer, gpScreenTexture, NULL, NULL);
+   SDL_RenderPresent(gpRenderer);
 }
 
 void CGeneral::ClearScreen(bool fadein, bool fadeout, bool bg)
@@ -311,7 +305,10 @@ void CGeneral::LoadFonts()
 {
    TTF_Init();
    m_fntBrush.Load(FONTS_DIR "brush.fnt");
-   m_fnt.Load(va("%s%s.fnt", FONTS_DIR, cfg.Get("OPTIONS", "Language", "eng")));
+   {
+      std::string langFont = std::format("{}{}.fnt", FONTS_DIR, cfg.Get("OPTIONS", "Language", "eng"));
+      m_fnt.Load(langFont.c_str());
+   }
 }
 
 void CGeneral::LoadImages()
@@ -343,7 +340,8 @@ void CGeneral::LoadSound()
 
    for (i = 0; i < NUM_SOUND; i++) {
       assert(*soundfile[i]);
-      m_snd[i] = LoadSoundFile(va("%s%s.wav", SOUND_DIR, soundfile[i]));
+      std::string sndPath = std::format("{}{}.wav", SOUND_DIR, soundfile[i]);
+      m_snd[i] = LoadSoundFile(sndPath.c_str());
    }
 }
 

@@ -81,6 +81,13 @@ private:
 
    int             FindFreeDeskCardSlot(int exclude = -1);
    void            RemoveDeskCard(int index);
+
+   // Refactored helpers for CardDiscarded and desk validation (review #2)
+   int             FindMatchingCards(const CCard &card, int indices[3]) const;
+   int             ChooseSlotForPair(int idx0, int idx1, const CCard &played, CBasePlayer *player) const;
+   void            CapturePair(CBasePlayer *player, const CCard &played, int deskIdx);
+   void            CaptureTriple(CBasePlayer *player, const CCard &played, int idx0, int idx1, int idx2);
+   void            ValidateInitialDesk();
 };
 
 #include <memory>

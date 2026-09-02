@@ -37,6 +37,7 @@
 #include <string_view>
 #include <random>
 #include <memory>
+#include <atomic>
 
 #if !defined(__cpp_lib_print)
 namespace std {
@@ -113,6 +114,22 @@ public:
    std::unique_ptr<CGame>    game;
 };
 
+inline Application& App() { return Application::GetInstance(); }
+inline SDL_Window*& Window() { return App().window; }
+inline SDL_Renderer*& Renderer() { return App().renderer; }
+inline SDL_Surface*& Screen() { return App().screen; }
+inline SDL_Texture*& ScreenTexture() { return App().screenTexture; }
+inline bool& NoSound() { return App().noSound; }
+inline CIniFile& Config() { return App().config; }
+inline std::unique_ptr<CGeneral>& General() { return App().general; }
+inline std::unique_ptr<CGame>& Game() { return App().game; }
+
+// Recommended for new code: pass dependencies explicitly or via AppContext:
+//   struct AppContext { SDL_Window* window; SDL_Renderer* renderer; SDL_Surface* screen; CGeneral* general; CGame* game; CIniFile* config; };
+// Keeps leaf functions testable and avoids hidden macro coupling.
+
+// Deprecated macro aliases — prefer inline accessors above for type safety
+// and testability. Kept for incremental migration.
 #define g_App (Application::GetInstance())
 #define gpWindow (Application::GetInstance().window)
 #define gpRenderer (Application::GetInstance().renderer)
@@ -179,6 +196,7 @@ struct SoundSample {
 };
 
 // sound.cpp functions...
+extern std::atomic<bool> g_fAudioOpened; // main-thread flag, atomic for visibility
 int SOUND_OpenAudio(int freq, int format, int channels, int samples);
 void SOUND_FillAudio(void *udata, unsigned char *stream, int len);
 void SOUND_PlayWAV(SoundSample *audio);

@@ -1141,10 +1141,11 @@ void UTIL_Delay(int duration)
 
 void UTIL_ToggleFullScreen()
 {
-   if (gpWindow != nullptr) {
-      Uint32 flags = SDL_GetWindowFlags(gpWindow);
+   SDL_Window *win = Window();
+   if (win != nullptr) {
+      Uint32 flags = SDL_GetWindowFlags(win);
       bool is_fullscreen = (flags & SDL_WINDOW_FULLSCREEN) != 0;
-      SDL_SetWindowFullscreen(gpWindow, !is_fullscreen);
+      SDL_SetWindowFullscreen(win, !is_fullscreen);
    }
 }
 
