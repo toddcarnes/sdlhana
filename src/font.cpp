@@ -180,10 +180,10 @@ SDL_Surface *CFont::Render(const char *sz, int r, int g, int b, int size, bool s
 
       int bb = 1;
       if ((unsigned char)*p & 0x80) {
-         // This is an multi-byte character
-         // FIXME: four-or-more-byte sequences not supported
+         // This is a multi-byte UTF-8 character
          if (((unsigned char)*p & 0xE0) == 0xC0) {
             // Two-byte sequence.
+            if ((p[1] & 0xC0) != 0x80) { p++; continue; }
             code.c[0] = *p++;
             code.c[1] = *p++;
             code.c[2] = '\0';
@@ -191,13 +191,25 @@ SDL_Surface *CFont::Render(const char *sz, int r, int g, int b, int size, bool s
             bb = 2;
          } else if (((unsigned char)*p & 0xF0) == 0xE0) {
             // Three-byte sequence.
+            if ((p[1] & 0xC0) != 0x80 || (p[2] & 0xC0) != 0x80) { p++; continue; }
             code.c[0] = *p++;
             code.c[1] = *p++;
             code.c[2] = *p++;
             code.c[3] = '\0';
             bb = 3;
+         } else if (((unsigned char)*p & 0xF8) == 0xF0) {
+            // Four-byte sequence (U+10000..U+10FFFF, e.g., emoji). Bitmap .fnt rarely contains these;
+            // handle gracefully: advance and attempt glyph lookup (likely missing) without crashing.
+            if ((p[1] & 0xC0) != 0x80 || (p[2] & 0xC0) != 0x80 || (p[3] & 0xC0) != 0x80) { p++; continue; }
+            code.c[0] = *p++;
+            code.c[1] = *p++;
+            code.c[2] = *p++;
+            code.c[3] = *p++;
+            bb = 4;
          } else {
-            TerminateOnError("CFont::Render(): four-or-more-byte sequence not supported");
+            // Invalid UTF-8 lead byte, skip
+            p++;
+            continue;
          }
       } else {
          // This is a normal ASCII character
@@ -243,7 +255,7 @@ SDL_Surface *CFont::Render(const char *sz, int r, int g, int b, int size, bool s
          SDL_DestroySurface(char_surface);
       }
 
-      cur += ((bb == 3) ? size : size / 2);
+      cur += ((bb >= 3) ? size : size / 2);
    }
 
    return s;
