@@ -64,6 +64,39 @@ public:
    bool      WantToContinue();
    int       SelectCardOnDesk(int month, const CCard &drawn);
 
+   struct Config {
+      // Hand evaluation (AnalyzeHand)
+      int lightWeight = 34;          // base points per light (rain halves)
+      int rainPenalty = 17;          // deduction if rain light captured
+      int sakecupBase = 60;          // base for has_sakecup
+      int sakecupMoonBonus = 40;     // bonus for moon+sakecup
+      int sakecupFlowerBonus = 40;   // bonus for flower+sakecup
+      int cardWeight = 10;           // per plain card
+      int animalWeight = 20;         // per animal
+      int ribbonWeight = 20;         // per ribbon
+      // Move selection (SelectCard / SelectCardOnDesk)
+      int goalBonus = 80;            // bonus for pursuing current goal yaku
+      int deskTypeWeight = 15;       // weight of desk card type
+      int handTypeWeight = 10;       // weight of hand card type
+      int winThreshold = 100;        // hand% >100 means immediate win
+      int immediateWinBonus = 500;   // extra score if picking wins now
+      // Discard heuristics
+      int baseDiscardScore = 5000;   // starting discard score
+      int typeDiscardPenalty = 30;   // penalty per card type
+      int safeBonus = 300;           // bonus if card is safe
+      int dangerousPenalty = 150;    // penalty * dangerous level
+      int monthInHandBonus = 50;     // per same-month in hand
+      int monthCapturedBonus = 60;   // per same-month captured
+      // Koikoi decision
+      int koikoiBase = 50;           // initial WantToContinue score
+      int koikoiRandomMax = 300;     // RandomLong(1,300) < score means continue
+      // Thresholds
+      int opponentThreatThreshold = 60; // opponent HAND_MAX >=60 means threat
+      int sakecupThreatThreshold = 30;  // opponent sakecup >=30 means threat
+   };
+   static Config& GetConfig();
+   static void LoadConfig();
+
 private:
    void      AnalyzeMoves();
    void      AnalyzeHand(int *hand = NULL, int *opnhand = NULL);

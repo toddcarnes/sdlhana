@@ -21,8 +21,46 @@
 
 #include "main.h"
 
+static CBot::Config s_botConfig;
+static bool s_botConfigLoaded = false;
+
+CBot::Config& CBot::GetConfig() { return s_botConfig; }
+
+void CBot::LoadConfig()
+{
+   if (s_botConfigLoaded) return;
+   auto getInt = [&](const char *key, int def) {
+      return atoi(cfg.Get("BOT", key, std::to_string(def).c_str()));
+   };
+   s_botConfig.lightWeight        = getInt("LightWeight", 34);
+   s_botConfig.rainPenalty        = getInt("RainPenalty", 17);
+   s_botConfig.sakecupBase        = getInt("SakecupBase", 60);
+   s_botConfig.sakecupMoonBonus   = getInt("SakecupMoonBonus", 40);
+   s_botConfig.sakecupFlowerBonus = getInt("SakecupFlowerBonus", 40);
+   s_botConfig.cardWeight         = getInt("CardWeight", 10);
+   s_botConfig.animalWeight       = getInt("AnimalWeight", 20);
+   s_botConfig.ribbonWeight       = getInt("RibbonWeight", 20);
+   s_botConfig.goalBonus          = getInt("GoalBonus", 80);
+   s_botConfig.deskTypeWeight     = getInt("DeskTypeWeight", 15);
+   s_botConfig.handTypeWeight     = getInt("HandTypeWeight", 10);
+   s_botConfig.winThreshold       = getInt("WinThreshold", 100);
+   s_botConfig.immediateWinBonus  = getInt("ImmediateWinBonus", 500);
+   s_botConfig.baseDiscardScore   = getInt("BaseDiscardScore", 5000);
+   s_botConfig.typeDiscardPenalty = getInt("TypeDiscardPenalty", 30);
+   s_botConfig.safeBonus          = getInt("SafeBonus", 300);
+   s_botConfig.dangerousPenalty   = getInt("DangerousPenalty", 150);
+   s_botConfig.monthInHandBonus   = getInt("MonthInHandBonus", 50);
+   s_botConfig.monthCapturedBonus = getInt("MonthCapturedBonus", 60);
+   s_botConfig.koikoiBase         = getInt("KoikoiBase", 50);
+   s_botConfig.koikoiRandomMax    = getInt("KoikoiRandomMax", 300);
+   s_botConfig.opponentThreatThreshold = getInt("OpponentThreatThreshold", 60);
+   s_botConfig.sakecupThreatThreshold  = getInt("SakecupThreatThreshold", 30);
+   s_botConfigLoaded = true;
+}
+
 CBot::CBot()
 {
+   LoadConfig();
 }
 
 CBot::~CBot()
@@ -56,7 +94,7 @@ int CBot::SelectCard()
    assert(index != -1);
 
    // check if we can make a winning hand immediately
-   if (prev > 100) {
+   if (prev > s_botConfig.winThreshold) {
       m_iWantedMove = index;
       return m_PossibleMoves[index].handindex;
    }
@@ -70,12 +108,12 @@ int CBot::SelectCard()
       for (j = handtype; j < HAND_COUNT; j++) {
          int score = 0;
          if (j == goal || goal == -1) {
-            score += 80;
+            score += s_botConfig.goalBonus;
          }
-         score += gpGame->GetDeskCard(m_PossibleMoves[i].deskindex).GetType() * 15;
-         score += m_HandCards[m_PossibleMoves[i].handindex].GetType() * 10;
+         score += gpGame->GetDeskCard(m_PossibleMoves[i].deskindex).GetType() * s_botConfig.deskTypeWeight;
+         score += m_HandCards[m_PossibleMoves[i].handindex].GetType() * s_botConfig.handTypeWeight;
          score += m_PossibleMoves[i].hand[j] - m_rgHandPercent[j];
-         if (m_rgOpnHandPercent[HAND_MAX] >= 60 || m_rgOpnHandPercent[HAND_SAKECUP] > 0) {
+         if (m_rgOpnHandPercent[HAND_MAX] >= s_botConfig.opponentThreatThreshold || m_rgOpnHandPercent[HAND_SAKECUP] > 0) {
             // Opponent is about to win. Try to stop him.
             score += (m_rgOpnHandPercent[HAND_MAX] - m_PossibleMoves[i].opnhand[HAND_MAX]) * 2;
             score += CardIsDangerous(gpGame->GetDeskCard(m_PossibleMoves[i].deskindex)) * m_rgOpnHandPercent[HAND_MAX] / 2;
@@ -102,11 +140,11 @@ int CBot::DiscardCard()
    for (i = 0; i < m_iNumHandCard; i++) {
       CCard c = m_HandCards[i];
 
-      int score = 5000 - c.GetType() * 30;
-      score += (CardIsSafe(c) ? 300 : 0);
-      score -= CardIsDangerous(c) * 150;
-      score += NumMonthInHand(c.GetMonth()) * 50;
-      score += NumMonthCaptured(c.GetMonth()) * 60;
+      int score = s_botConfig.baseDiscardScore - c.GetType() * s_botConfig.typeDiscardPenalty;
+      score += (CardIsSafe(c) ? s_botConfig.safeBonus : 0);
+      score -= CardIsDangerous(c) * s_botConfig.dangerousPenalty;
+      score += NumMonthInHand(c.GetMonth()) * s_botConfig.monthInHandBonus;
+      score += NumMonthCaptured(c.GetMonth()) * s_botConfig.monthCapturedBonus;
 
       if (score > max) {
          index = i;
@@ -128,7 +166,7 @@ bool CBot::WantToContinue()
    AnalyzeHand();
    AnalyzeMoves();
 
-   int i, j, score = 50;
+   int i, j, score = s_botConfig.koikoiBase;
 
    for (i = HAND_MAXNUM + 1; i < HAND_COUNT; i++) {
       score += (m_rgHandPercent[i] - m_rgOpnHandPercent[i]) * i / 80;
@@ -136,7 +174,7 @@ bool CBot::WantToContinue()
 
    for (i = 0; i < m_iNumPossibleMove; i++) {
       for (j = HAND_MAXNUM + 1; j < HAND_COUNT; j++) {
-         if (m_PossibleMoves[i].hand[j] > m_rgHandPercent[j] && m_PossibleMoves[i].hand[j] >= 100) {
+         if (m_PossibleMoves[i].hand[j] > m_rgHandPercent[j] && m_PossibleMoves[i].hand[j] >= s_botConfig.winThreshold) {
             score += (m_PossibleMoves[i].hand[j] - m_rgHandPercent[j]) * (j - HAND_MAXNUM) / 2;
          }
          score += (m_PossibleMoves[i].hand[j] - m_rgHandPercent[j]) * (j - HAND_MAXNUM) / 15;
@@ -179,7 +217,7 @@ bool CBot::WantToContinue()
       }
    }
 
-   return (RandomLong(1, 300) < score);
+   return (RandomLong(1, s_botConfig.koikoiRandomMax) < score);
 }
 
 int CBot::SelectCardOnDesk(int month, const CCard &drawn)
@@ -213,14 +251,14 @@ int CBot::SelectCardOnDesk(int month, const CCard &drawn)
       for (int j = handtype; j < HAND_COUNT; j++) {
          int score = 0;
          if (j == goal || goal == -1) {
-            score += 80;
+            score += s_botConfig.goalBonus;
          }
-         score += gpGame->GetDeskCard(index[i]).GetType() * 15;
+         score += gpGame->GetDeskCard(index[i]).GetType() * s_botConfig.deskTypeWeight;
          score += hand[i][j] - m_rgHandPercent[j];
-         if (hand[i][j] - m_rgHandPercent[j] > 0 && hand[i][j] >= 100) {
-            score += 500; // picking this card will result in immediate winning hand
+         if (hand[i][j] - m_rgHandPercent[j] > 0 && hand[i][j] >= s_botConfig.winThreshold) {
+            score += s_botConfig.immediateWinBonus; // picking this card will result in immediate winning hand
          }
-         if (m_rgOpnHandPercent[HAND_MAX] >= 60 || m_rgOpnHandPercent[HAND_SAKECUP] > 0) {
+         if (m_rgOpnHandPercent[HAND_MAX] >= s_botConfig.opponentThreatThreshold || m_rgOpnHandPercent[HAND_SAKECUP] > 0) {
             // Opponent is about to win. Try to stop him.
             score += (m_rgOpnHandPercent[HAND_MAX] - opnhand[i][HAND_MAX]) * 2;
             score += CardIsDangerous(gpGame->GetDeskCard(index[i])) * m_rgOpnHandPercent[HAND_MAX] / 2;
@@ -334,22 +372,22 @@ void CBot::AnalyzeHand(int *hand, int *opnhand)
       }
    }
 
-   hand[HAND_CARDS] = num_cards * 10;
-   hand[HAND_ANIMALS] = num_animals * 20;
-   hand[HAND_RIBBONS] = num_ribbons * 20;
-   hand[HAND_LIGHTS] = num_lights * 34 - (has_rain ? 17 : 0);
-   hand[HAND_RED_RIBBONS] = num_red * 34;
-   hand[HAND_BLUE_RIBBONS] = num_blue * 34;
+   hand[HAND_CARDS] = num_cards * s_botConfig.cardWeight;
+   hand[HAND_ANIMALS] = num_animals * s_botConfig.animalWeight;
+   hand[HAND_RIBBONS] = num_ribbons * s_botConfig.ribbonWeight;
+   hand[HAND_LIGHTS] = num_lights * s_botConfig.lightWeight - (has_rain ? s_botConfig.rainPenalty : 0);
+   hand[HAND_RED_RIBBONS] = num_red * s_botConfig.lightWeight;
+   hand[HAND_BLUE_RIBBONS] = num_blue * s_botConfig.lightWeight;
    if (gpGame->GetGameMode() == GAMEMODE_KOREAN) {
-      hand[HAND_NORMAL_RIBBONS] = num_grass * 34;
-      hand[HAND_BIRD] = num_birds * 34;
+      hand[HAND_NORMAL_RIBBONS] = num_grass * s_botConfig.lightWeight;
+      hand[HAND_BIRD] = num_birds * s_botConfig.lightWeight;
       hand[HAND_BOAR] = -1;
       hand[HAND_SAKECUP] = -1;
    } else {
-      hand[HAND_BOAR] = num_boar * 34;
+      hand[HAND_BOAR] = num_boar * s_botConfig.lightWeight;
       if (gpGame->GetGameMode() != GAMEMODE_BET) {
-         hand[HAND_SAKECUP] = (has_sakecup ? 60 : 0) +
-            (has_moon ? 40 : 0) + (has_flower ? 40 : 0);
+         hand[HAND_SAKECUP] = (has_sakecup ? s_botConfig.sakecupBase : 0) +
+            (has_moon ? s_botConfig.sakecupMoonBonus : 0) + (has_flower ? s_botConfig.sakecupFlowerBonus : 0);
       } else {
          hand[HAND_SAKECUP] = -1;
       }
@@ -415,22 +453,22 @@ void CBot::AnalyzeHand(int *hand, int *opnhand)
       }
    }
 
-   opnhand[HAND_CARDS] = num_cards * 10;
-   opnhand[HAND_ANIMALS] = num_animals * 20;
-   opnhand[HAND_RIBBONS] = num_ribbons * 20;
-   opnhand[HAND_LIGHTS] = num_lights * 34 - (has_rain ? 17 : 0);
-   opnhand[HAND_RED_RIBBONS] = num_red * 34;
-   opnhand[HAND_BLUE_RIBBONS] = num_blue * 34;
+   opnhand[HAND_CARDS] = num_cards * s_botConfig.cardWeight;
+   opnhand[HAND_ANIMALS] = num_animals * s_botConfig.animalWeight;
+   opnhand[HAND_RIBBONS] = num_ribbons * s_botConfig.ribbonWeight;
+   opnhand[HAND_LIGHTS] = num_lights * s_botConfig.lightWeight - (has_rain ? s_botConfig.rainPenalty : 0);
+   opnhand[HAND_RED_RIBBONS] = num_red * s_botConfig.lightWeight;
+   opnhand[HAND_BLUE_RIBBONS] = num_blue * s_botConfig.lightWeight;
    if (gpGame->GetGameMode() == GAMEMODE_KOREAN) {
-      opnhand[HAND_NORMAL_RIBBONS] = num_grass * 34;
-      opnhand[HAND_BIRD] = num_birds * 34;
+      opnhand[HAND_NORMAL_RIBBONS] = num_grass * s_botConfig.lightWeight;
+      opnhand[HAND_BIRD] = num_birds * s_botConfig.lightWeight;
       opnhand[HAND_BOAR] = -1;
       opnhand[HAND_SAKECUP] = -1;
    } else {
-      opnhand[HAND_BOAR] = num_boar * 34;
+      opnhand[HAND_BOAR] = num_boar * s_botConfig.lightWeight;
       if (gpGame->GetGameMode() != GAMEMODE_BET) {
-         opnhand[HAND_SAKECUP] = (has_sakecup ? 60 : 0) +
-            (has_moon ? 40 : 0) + (has_flower ? 40 : 0);
+         opnhand[HAND_SAKECUP] = (has_sakecup ? s_botConfig.sakecupBase : 0) +
+            (has_moon ? s_botConfig.sakecupMoonBonus : 0) + (has_flower ? s_botConfig.sakecupFlowerBonus : 0);
       } else {
          opnhand[HAND_SAKECUP] = -1;
       }
@@ -729,7 +767,7 @@ int CBot::CardIsDangerous(const CCard &c)
    CCard c1;
 
    for (i = HAND_COUNT - 1; i > HAND_MAXNUM; i--) {
-      if (m_rgOpnHandPercent[i] >= ((i == HAND_SAKECUP) ? 30 : 60)) {
+      if (m_rgOpnHandPercent[i] >= ((i == HAND_SAKECUP) ? s_botConfig.sakecupThreatThreshold : s_botConfig.opponentThreatThreshold)) {
          switch (i) {
             case HAND_CARDS:
                return HAND_CARDS;
