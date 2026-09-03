@@ -56,6 +56,26 @@ std::vector<std::string> DiscoverLanguages()
    return langs;
 }
 
+static std::string printfToFormat(std::string s)
+{
+   std::string out;
+   out.reserve(s.size());
+   for (size_t i = 0; i < s.size(); ) {
+      if (s[i] == '%' && i + 1 < s.size()) {
+         if (s[i+1] == '%') { out += '%'; i += 2; continue; }
+         size_t j = i + 1;
+         while (j < s.size() && std::isdigit((unsigned char)s[j])) j++;
+         if (j < s.size() && (s[j] == 'd' || s[j] == 's')) {
+            out += "{}";
+            i = j + 1;
+            continue;
+         }
+      }
+      out += s[i++];
+   }
+   return out;
+}
+
 void FreeTextMessage()
 {
    gMessageTable.clear();
@@ -74,7 +94,7 @@ void InitTextMessage()
          nlohmann::json j;
          jf >> j;
          for (auto &[k, v] : j.items()) {
-            if (v.is_string()) gMessageTable[k] = v.get<std::string>();
+            if (v.is_string()) gMessageTable[k] = printfToFormat(v.get<std::string>());
          }
          // Populate available langs for autodiscovery (cached)
          g_availableLangs = DiscoverLanguages();
@@ -131,7 +151,7 @@ void InitTextMessage()
                while (!current_msg.empty() && (current_msg.back() == '\n' || current_msg.back() == '\r')) {
                   current_msg.pop_back();
                }
-               gMessageTable[current_name] = current_msg;
+               gMessageTable[current_name] = printfToFormat(current_msg);
                state = NAME;
             } else {
                current_msg += raw_line;

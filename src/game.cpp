@@ -552,8 +552,8 @@ void CGame::DetermineFirstDealer()
 
    CBox box(20, 260, 595, 50, 40, 55, 85);
    std::string notice = player_first ?
-      va_str(msg("dealer_cut_you"), m1, m2) :
-      va_str(msg("dealer_cut_com"), m1, m2);
+      std::vformat(msg("dealer_cut_you"), std::make_format_args(m1, m2)) :
+      std::vformat(msg("dealer_cut_com"), std::make_format_args(m1, m2));
 
    gpGeneral->DrawTextInBox(notice.c_str(), 20, 260, 595, 50, 255, 255, 255, 18);
    UTIL_Delay(3500);
@@ -1079,7 +1079,7 @@ void CGame::ShowMatchResults()
 
    gpGeneral->DrawText(header.c_str(), 180, 128, r, g, b, 36);
    {
-      std::string scoreText = va_str(msg("final_score_fmt"), m_iScore);
+      std::string scoreText = std::vformat(msg("final_score_fmt"), std::make_format_args(m_iScore));
       gpGeneral->DrawText(scoreText.c_str(), 140, 190, 255, 255, 255, 26);
    }
    
