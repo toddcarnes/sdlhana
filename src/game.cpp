@@ -108,10 +108,10 @@ void CGame::RulesMenu()
    int canvas_w = 540;
    int canvas_h = 4200;
 
-   SDL_Surface *canvas = SDL_CreateSurface(canvas_w, canvas_h, SDL_PIXELFORMAT_RGBA8888);
-   if (canvas == nullptr) return;
+   SurfacePtr canvas(SDL_CreateSurface(canvas_w, canvas_h, SDL_PIXELFORMAT_RGBA8888), SDL_DestroySurface);
+   if (!canvas) return;
 
-   SDL_FillSurfaceRect(canvas, NULL, SDL_MapSurfaceRGBA(canvas, 20, 32, 52, 255));
+   SDL_FillSurfaceRect(canvas.get(), NULL, SDL_MapSurfaceRGBA(canvas.get(), 20, 32, 52, 255));
 
    auto DrawCanvasText = [&](const char *txt, int x, int y, int w, int r, int g, int b, int size) -> int {
       if (txt == nullptr) return y + 20;
@@ -119,7 +119,7 @@ void CGame::RulesMenu()
       int rendered_h = 20;
       if (s != nullptr) {
          SDL_Rect dst = { x, y, s->w, s->h };
-         SDL_BlitSurface(s, NULL, canvas, &dst);
+         SDL_BlitSurface(s, NULL, canvas.get(), &dst);
          rendered_h = s->h;
          SDL_DestroySurface(s);
       }
@@ -130,7 +130,7 @@ void CGame::RulesMenu()
       SDL_Surface *card_surf = gpGeneral->RenderCard(CCard(card_id), w, h);
       if (card_surf != nullptr) {
          SDL_Rect dst = { x, y, w, h };
-         SDL_BlitSurface(card_surf, NULL, canvas, &dst);
+         SDL_BlitSurface(card_surf, NULL, canvas.get(), &dst);
          SDL_DestroySurface(card_surf);
       }
    };
@@ -268,7 +268,7 @@ void CGame::RulesMenu()
 
          SDL_Rect src_rect = { 0, scroll_y, 540, 330 };
          SDL_Rect dst_rect = { 38, 70, 540, 330 };
-         SDL_BlitSurface(canvas, &src_rect, gpScreen, &dst_rect);
+         SDL_BlitSurface(canvas.get(), &src_rect, gpScreen, &dst_rect);
 
          SDL_SetSurfaceClipRect(gpScreen, NULL);
 
@@ -289,7 +289,7 @@ void CGame::RulesMenu()
             SDL_ConvertEventToRenderCoordinates(gpRenderer, &event);
          }
          if (event.type == SDL_EVENT_QUIT) {
-            SDL_DestroySurface(canvas);
+            
             return;
          } else if (event.type == SDL_EVENT_KEY_DOWN) {
             if (event.key.key == SDLK_UP) {
@@ -299,7 +299,7 @@ void CGame::RulesMenu()
                scroll_y = (scroll_y + 80 > max_scroll) ? max_scroll : (scroll_y + 80);
                redraw = true;
             } else if (event.key.key == SDLK_ESCAPE || event.key.key == SDLK_RETURN) {
-               SDL_DestroySurface(canvas);
+               
                return;
             }
          } else if (event.type == SDL_EVENT_MOUSE_WHEEL) {
@@ -325,7 +325,7 @@ void CGame::RulesMenu()
                }
                redraw = true;
             } else if (mx >= 415 && mx <= 605 && my >= 412 && my <= 454) {
-               SDL_DestroySurface(canvas);
+               
                return;
             }
          } else if (event.type == SDL_EVENT_MOUSE_MOTION) {

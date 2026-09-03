@@ -483,13 +483,13 @@ CBox::CBox(int x, int y, int w, int h, int r, int g, int b, int a, bool keep)
    m_SavedRect.h = h;
 
    if (!keep && gpScreen != nullptr) {
-      m_pSavedArea = SDL_CreateSurface(w, h, gpScreen->format);
-      if (m_pSavedArea != nullptr) {
+      m_pSavedArea.reset(SDL_CreateSurface(w, h, gpScreen->format));
+      if (m_pSavedArea) {
          SDL_Rect srcrect = {x, y, w, h};
-         SDL_BlitSurface(gpScreen, &srcrect, m_pSavedArea, NULL);
+         SDL_BlitSurface(gpScreen, &srcrect, m_pSavedArea.get(), NULL);
       }
    } else {
-      m_pSavedArea = nullptr;
+      m_pSavedArea.reset();
    }
 
    if (gpScreen != nullptr) {
@@ -508,10 +508,8 @@ CBox::~CBox()
       return;
    }
 
-   if (m_pSavedArea != nullptr && gpScreen != nullptr) {
-      SDL_BlitSurface(m_pSavedArea, NULL, gpScreen, &m_SavedRect);
-      SDL_DestroySurface(m_pSavedArea);
-      m_pSavedArea = nullptr;
+   if (m_pSavedArea && gpScreen != nullptr) {
+      SDL_BlitSurface(m_pSavedArea.get(), NULL, gpScreen, &m_SavedRect);
    }
 
    if (gpGeneral) {
