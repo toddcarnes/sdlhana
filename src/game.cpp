@@ -245,11 +245,17 @@ void CGame::RulesMenu()
 
    cy = DrawCanvasText("Ribbon Combinations (Hongdan, Cheongdan, Chodan):", 10, cy, 520, 0, 255, 255, 15);
    card_y = cy;
-   DrawCanvasCard(13, 10, card_y);
-   DrawCanvasCard(17, 55, card_y);
-   DrawCanvasCard(25, 100, card_y);
-   desc_y = DrawCanvasText("Hongdan Red Poetry (3 pts), Cheongdan Blue (3 pts), Chodan Grass Ribbons (3 pts).", 150, card_y, 375, 255, 255, 255, 13);
-   cy = (card_y + 66 > desc_y ? card_y + 66 : desc_y) + 18;
+   DrawCanvasCard(1, 10, card_y, 35, 55);
+   DrawCanvasCard(5, 48, card_y, 35, 55);
+   DrawCanvasCard(9, 86, card_y, 35, 55);
+   DrawCanvasCard(21, 124, card_y, 35, 55);
+   DrawCanvasCard(33, 162, card_y, 35, 55);
+   DrawCanvasCard(37, 200, card_y, 35, 55);
+   DrawCanvasCard(13, 238, card_y, 35, 55);
+   DrawCanvasCard(17, 276, card_y, 35, 55);
+   DrawCanvasCard(25, 314, card_y, 35, 55);
+   desc_y = DrawCanvasText("Hongdan Red (1,5,9) 3 pts, Cheongdan Blue (21,33,37) 3 pts, Chodan Grass (13,17,25) 3 pts.", 355, card_y, 170, 255, 255, 255, 13);
+   cy = (card_y + 55 > desc_y ? card_y + 55 : desc_y) + 18;
 
    cy = DrawCanvasText("Ssangpi (Double Junk) & Penalties:", 10, cy, 520, 0, 255, 255, 15);
    card_y = cy;

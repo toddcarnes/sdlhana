@@ -212,14 +212,20 @@ In **Go-Stop**, players must reach a minimum threshold of **3 points** before ca
 
 ### Korean Ribbon Sets
 <p align="center">
-  <img src="assets/cards_trad/13_Hanafuda%20April%20Tanzaku%20Alt.svg.png" width="80" alt="Apr Grass">
-  <img src="assets/cards_trad/17_Hanafuda%20May%20Tanzaku%20Alt.svg.png" width="80" alt="May Grass">
-  <img src="assets/cards_trad/25_Hanafuda%20July%20Tanzaku%20Alt.svg.png" width="80" alt="Jul Grass">
+  <img src="assets/cards_trad/01_Hanafuda%20January%20Tanzaku%20Alt.svg.png" width="60" alt="Jan Red">
+  <img src="assets/cards_trad/05_Hanafuda%20February%20Tanzaku%20Alt.svg.png" width="60" alt="Feb Red">
+  <img src="assets/cards_trad/09_Hanafuda%20March%20Tanzaku%20Alt.svg.png" width="60" alt="Mar Red">
+  <img src="assets/cards_trad/21_Hanafuda%20June%20Tanzaku%20Alt.svg.png" width="60" alt="Jun Blue">
+  <img src="assets/cards_trad/33_Hanafuda%20September%20Tanzaku%20Alt.svg.png" width="60" alt="Sep Blue">
+  <img src="assets/cards_trad/37_Hanafuda%20October%20Tanzaku%20Alt.svg.png" width="60" alt="Oct Blue">
+  <img src="assets/cards_trad/13_Hanafuda%20April%20Tanzaku%20Alt.svg.png" width="60" alt="Apr Grass">
+  <img src="assets/cards_trad/17_Hanafuda%20May%20Tanzaku%20Alt.svg.png" width="60" alt="May Grass">
+  <img src="assets/cards_trad/25_Hanafuda%20July%20Tanzaku%20Alt.svg.png" width="60" alt="Jul Grass">
 </p>
 
-- **Hongdan (홍단)** — 3 Points: 3 Red Poetry Ribbons (Jan, Feb, Mar).
-- **Cheongdan (청단)** — 3 Points: 3 Blue Ribbons (Jun, Sep, Oct).
-- **Chodan (초단)** — 3 Points: 3 Plain Grass Ribbons (Apr, May, Jul).
+- **Hongdan (홍단)** — 3 Points: 3 Red Poetry Ribbons (Jan 1, Feb 5, Mar 9).
+- **Cheongdan (청단)** — 3 Points: 3 Blue Ribbons (Jun 21, Sep 33, Oct 37).
+- **Chodan (초단)** — 3 Points: 3 Plain Grass Ribbons (Apr 13, May 17, Jul 25).
 
 ### Multipliers & Penalties (*Bak*)
 - **Go Multipliers**: Calling 1 Go (+1 pt), 2 Go (+2 pts), 3 Go (2x total score), 4 Go (4x total score), 5 Go (8x total score).
