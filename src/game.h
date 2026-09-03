@@ -67,6 +67,15 @@ private:
    CCard           m_DeskCards[24];
    int             m_iNumDeskCard;
 
+   // Encapsulated global dealer state (was CBasePlayer::m_pDealer / m_iMaxHandCards)
+   CBasePlayer*    m_pDealer = nullptr;
+   int             m_iMaxHandCards = 8;
+public:
+   CBasePlayer*    GetDealer() const { return m_pDealer; }
+   void            SetDealer(CBasePlayer* p) { m_pDealer = p; CBasePlayer::m_pDealer = p; }
+   int             GetMaxHandCards() const { return m_iMaxHandCards; }
+   void            SetMaxHandCards(int n) { m_iMaxHandCards = n; CBasePlayer::m_iMaxHandCards = n; }
+private:
    void            InitScreen();
    void            DetermineFirstDealer();
    void            AnimDeal();

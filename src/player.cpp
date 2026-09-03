@@ -24,6 +24,24 @@
 CBasePlayer *CBasePlayer::m_pDealer = NULL;
 int CBasePlayer::m_iMaxHandCards = 8;
 
+bool CBasePlayer::IsDealer() const
+{
+   if (gpGame) return this == gpGame->GetDealer();
+   return this == m_pDealer;
+}
+
+void CBasePlayer::SetAsDealer()
+{
+   m_pDealer = this;
+   if (gpGame) gpGame->SetDealer(this);
+}
+
+CBasePlayer *CBasePlayer::GetDealer()
+{
+   if (gpGame && gpGame->GetDealer()) return gpGame->GetDealer();
+   return m_pDealer;
+}
+
 CBasePlayer::CBasePlayer()
 {
 }
@@ -35,12 +53,13 @@ CBasePlayer::~CBasePlayer()
 void CBasePlayer::NewRound()
 {
    int i;
+   int maxHand = gpGame ? gpGame->GetMaxHandCards() : m_iMaxHandCards;
 
-   for (i = 0; i < m_iMaxHandCards; i++) {
+   for (i = 0; i < maxHand; i++) {
       m_HandCards[i] = CCard::GetRandomCard();
    }
 
-   m_iNumHandCard = m_iMaxHandCards;
+   m_iNumHandCard = maxHand;
    m_iNumCapturedCard = 0;
    m_iNumContinue = 0;
    m_iNumLeaveThree = 0;

@@ -27,7 +27,7 @@ CGame::CGame()
 {
    m_iGameMode = atoi(cfg.Get("GAME", "GameMode", "0"));
    if (m_iGameMode == GAMEMODE_BET) {
-      CBasePlayer::m_iMaxHandCards = 6; // only 6 cards in bet mode
+      SetMaxHandCards(6); // only 6 cards in bet mode
    }
 
    m_iScore = atoi(cfg.Get("GAME", "Score", "0"));
@@ -432,9 +432,9 @@ void CGame::Settings()
                cfg.Set("GAME", "GameMode", std::to_string(curgm).c_str());
                m_iGameMode = curgm;
                if (m_iGameMode == GAMEMODE_BET) {
-                  CBasePlayer::m_iMaxHandCards = 6;
+                  SetMaxHandCards(6);
                } else {
-                  CBasePlayer::m_iMaxHandCards = 8;
+                  SetMaxHandCards(8);
                }
                break;
 
