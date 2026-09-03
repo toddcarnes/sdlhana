@@ -254,7 +254,7 @@ void CGame::RulesMenu()
    DrawCanvasCard(13, 238, card_y, 35, 55);
    DrawCanvasCard(17, 276, card_y, 35, 55);
    DrawCanvasCard(25, 314, card_y, 35, 55);
-   desc_y = DrawCanvasText("Hongdan Red (1,5,9) 3 pts, Cheongdan Blue (21,33,37) 3 pts, Chodan Grass (13,17,25) 3 pts.", 355, card_y, 170, 255, 255, 255, 13);
+   desc_y = DrawCanvasText("Hongdan Red Poetry (1,5,9) 3 pts, Cheongdan Blue (21,33,37) 3 pts, Chodan Grass (13,17,25) 3 pts.", 355, card_y, 170, 255, 255, 255, 13);
    cy = (card_y + 55 > desc_y ? card_y + 55 : desc_y) + 18;
 
    cy = DrawCanvasText("Ssangpi (Double Junk) & Penalties:", 10, cy, 520, 0, 255, 255, 15);
