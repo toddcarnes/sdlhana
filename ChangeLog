@@ -1,3 +1,14 @@
+9/03/2026 Todd Carnes <toddcarnes@gmail.com> (SDLHana 1.0.2 released):
+ * Post-1.0.1 Review Fixes (8 items, feature/post-1.0.1-fixes → main, plus 2 bugfixes):
+   - Game: split CardDiscarded into HandleDiscardPhase/HandleDrawnPhase/FixupOverlappedSlot/AnimatePendingCaptures (<150 L orchestrator) (src/game.cpp/h).
+   - Fix: victory OK FlushEvents and Mekuri month off-by-one 13→12 (src/game.cpp:525).
+   - Legacy: va→va_str/std::format, SurfacePtr for CBox/RulesMenu, dealer globals into CGame (src/util.cpp, src/main.h, src/general.cpp/h, src/player.cpp/h).
+   - INI: Load/Save to std::ifstream/getline/trim_copy, thread_local UTIL_StrGetLine (src/ini.cpp, src/util.cpp).
+   - Config: layout namespace (kScreenW/H, kCardW/H) and Bot goal bonuses (src/main.h, src/bot.h/cpp, src/data/sdlhana.ini).
+   - Error: [[noreturn]] TerminateOnError, g_pMixer/g_rng docs, printf→println (src/util.cpp, src/sound.cpp, src/ini.cpp).
+   - Test: scratch/test_font_utf8.cpp 4-byte UTF-8 verification (gitignored).
+ * Version bump to 1.0.2 across CMakeLists.txt, NEWS, and macOS bundle metadata.
+
 9/02/2026 Todd Carnes <toddcarnes@gmail.com> (SDLHana 1.0.1 released):
  * Code Review Fixes (7 items, feature/code-review-fixes → main):
    - Rendering: reuse persistent streaming SDL_Texture in CGeneral::UpdateScreen, eliminate per-frame create/destroy, fix VMware corruption (src/general.cpp, src/main.cpp).
