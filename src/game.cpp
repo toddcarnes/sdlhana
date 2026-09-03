@@ -551,11 +551,11 @@ void CGame::DetermineFirstDealer()
    gpGeneral->DrawCard(c2, 350, 160, 48, 78, true);
 
    CBox box(20, 260, 595, 50, 40, 55, 85);
-   const char *notice = player_first ?
-      va(msg("dealer_cut_you"), m1, m2) :
-      va(msg("dealer_cut_com"), m1, m2);
+   std::string notice = player_first ?
+      va_str(msg("dealer_cut_you"), m1, m2) :
+      va_str(msg("dealer_cut_com"), m1, m2);
 
-   gpGeneral->DrawTextInBox(notice, 20, 260, 595, 50, 255, 255, 255, 18);
+   gpGeneral->DrawTextInBox(notice.c_str(), 20, 260, 595, 50, 255, 255, 255, 18);
    UTIL_Delay(3500);
 }
 
@@ -1078,7 +1078,10 @@ void CGame::ShowMatchResults()
    }
 
    gpGeneral->DrawText(header.c_str(), 180, 128, r, g, b, 36);
-   gpGeneral->DrawText(va(msg("final_score_fmt"), m_iScore), 140, 190, 255, 255, 255, 26);
+   {
+      std::string scoreText = va_str(msg("final_score_fmt"), m_iScore);
+      gpGeneral->DrawText(scoreText.c_str(), 140, 190, 255, 255, 255, 26);
+   }
    
    if (m_iScore > 0) {
       gpGeneral->DrawText(msg("congrats_win"), 60, 250, 255, 255, 0, 22);
@@ -1185,7 +1188,10 @@ bool CGame::DoubleUp(CBasePlayer *player)
 
    CBox s(25, 190, 110, 70, 0, 175, 0, 160);
    gpGeneral->DrawTextBrush("WIN", 30, 190, 255, 255, 0, 32);
-   gpGeneral->DrawTextBrush(va("%6d", player->m_Result.score), 30, 220);
+   {
+      std::string scoreStr = std::format("{:6d}", player->m_Result.score);
+      gpGeneral->DrawTextBrush(scoreStr.c_str(), 30, 220);
+   }
    gpGeneral->UpdateScreen(25, 190, 110, 70);
 
    bool isbig = true;

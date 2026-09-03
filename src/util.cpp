@@ -48,6 +48,7 @@ void trim(char *str)
 
 // Does a varargs printf into a thread-local buffer, so we don't need to have
 // varargs versions of all text functions.
+[[deprecated("use va_str or std::format")]]
 char *va(const char *format, ...)
 {
    static thread_local char string[1024];
@@ -58,6 +59,21 @@ char *va(const char *format, ...)
    va_end(argptr);
 
    return string;
+}
+
+std::string va_str(const char *format, ...)
+{
+   va_list argptr;
+   va_start(argptr, format);
+   int len = vsnprintf(nullptr, 0, format, argptr);
+   va_end(argptr);
+   if (len < 0) return {};
+   std::string s(len + 1, '\0');
+   va_start(argptr, format);
+   vsnprintf(s.data(), s.size(), format, argptr);
+   va_end(argptr);
+   s.resize(len);
+   return s;
 }
 
 static std::mt19937 g_rng{std::random_device{}()};

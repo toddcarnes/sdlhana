@@ -146,7 +146,9 @@ std::filesystem::path GetUserConfigPath();
 
 // util.cpp functions...
 void trim(char *str);
+[[deprecated("use va_str or std::format")]]
 char *va(const char *format, ...);
+std::string va_str(const char *format, ...);
 int RandomLong(int from, int to);
 float RandomFloat(float from, float to);
 int log2(int val);
