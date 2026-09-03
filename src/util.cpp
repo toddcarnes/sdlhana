@@ -24,6 +24,8 @@
 // Portions of this file are based on SGU Library by Stephane Magnenat
 
 #include "main.h"
+#include <algorithm>
+#include <cctype>
 
 void trim(char *str)
 {
@@ -46,8 +48,17 @@ void trim(char *str)
       *(dest--) = '\0';
 }
 
+inline std::string trim_str(std::string s)
+{
+   auto notSpace = [](unsigned char c) { return !std::isspace(c); };
+   s.erase(s.begin(), std::find_if(s.begin(), s.end(), notSpace));
+   s.erase(std::find_if(s.rbegin(), s.rend(), notSpace).base(), s.end());
+   return s;
+}
+
 // Does a varargs printf into a thread-local buffer, so we don't need to have
 // varargs versions of all text functions.
+[[deprecated("use va_str or std::format")]]
 char *va(const char *format, ...)
 {
    static thread_local char string[1024];
@@ -60,6 +71,22 @@ char *va(const char *format, ...)
    return string;
 }
 
+std::string va_str(const char *format, ...)
+{
+   va_list argptr;
+   va_start(argptr, format);
+   int len = vsnprintf(nullptr, 0, format, argptr);
+   va_end(argptr);
+   if (len < 0) return {};
+   std::string s(len + 1, '\0');
+   va_start(argptr, format);
+   vsnprintf(s.data(), s.size(), format, argptr);
+   va_end(argptr);
+   s.resize(len);
+   return s;
+}
+
+// Single-threaded game: not thread-safe, no mutex needed (all RandomLong/Float calls from main thread)
 static std::mt19937 g_rng{std::random_device{}()};
 
 // This function returns a random integer number between (and including) the starting and
@@ -98,7 +125,7 @@ int log2(int val)
 // This function terminates the game because of an error and
 // prints the message string pointed to by fmt both in the
 // console and in a messagebox.
-void TerminateOnError(const char *fmt, ...)
+[[noreturn]] void TerminateOnError(const char *fmt, ...)
 {
    va_list argptr;
    char string[1024];
@@ -121,7 +148,7 @@ void TerminateOnError(const char *fmt, ...)
 char *UTIL_StrGetLine(const char *buf, int width, int &length)
 {
    int w = 0, i, index = 0;
-   static char str[256];
+   static thread_local char str[256];
 
    str[0] = '\0';
    length = 0;

@@ -85,16 +85,16 @@ public:
    inline CCard         GetCapturedCard(int i)const { assert(i >= 0 && i < m_iNumCapturedCard); return m_CapturedCard[i]; }
    bool                 HasCaptured(const CCard &c) const;
 
-   inline bool          IsDealer()     const   { return (this == m_pDealer); }
-   inline void          SetAsDealer()          { m_pDealer = this; }
+   bool               IsDealer() const;
+   void               SetAsDealer();
 
    inline void          ShiftResult()          { m_PrevResult = m_Result; }
    inline int           GetPrevScore() const   { return m_PrevResult.score; }
 
-   static CBasePlayer  *m_pDealer;
-   static int           m_iMaxHandCards;
+   static CBasePlayer  *m_pDealer; // deprecated: use Game()->GetDealer()
+   static int           m_iMaxHandCards; // deprecated: use Game()->GetMaxHandCards()
 
-   static CBasePlayer  *GetDealer()            { return m_pDealer; }
+   static CBasePlayer  *GetDealer();
 
    int                  m_iNumContinue;
    int                  m_iNumLeaveThree;

@@ -93,6 +93,9 @@ public:
       // Thresholds
       int opponentThreatThreshold = 60; // opponent HAND_MAX >=60 means threat
       int sakecupThreatThreshold = 30;  // opponent sakecup >=30 means threat
+      // Goal analysis
+      int goalHandBonus = 10;      // generic hand card goal increment
+      int goalDeskBonus = 5;       // generic desk card goal increment
    };
    static Config& GetConfig();
    static void LoadConfig();

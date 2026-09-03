@@ -39,6 +39,12 @@ enum
 
 #include "font.h"
 #include "card.h"
+#include <memory>
+
+using SurfacePtr = std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)>;
+inline SurfacePtr MakeSurface(int w, int h, SDL_PixelFormat fmt) {
+   return SurfacePtr(SDL_CreateSurface(w, h, fmt), SDL_DestroySurface);
+}
 
 class CGeneral
 {
@@ -92,9 +98,9 @@ public:
    virtual ~CBox();
 
 protected:
-   SDL_Surface  *m_pSavedArea;  // save the area behind this box
-   SDL_Rect      m_SavedRect;
-   bool          m_fFakeBox;
+   SurfacePtr    m_pSavedArea{nullptr, SDL_DestroySurface};  // save the area behind this box
+   SDL_Rect      m_SavedRect{};
+   bool          m_fFakeBox = false;
 };
 
 #define MAX_BUTTONS 256
@@ -113,8 +119,6 @@ public:
 private:
    int m_iId;
 };
-
-#include <memory>
 
 #endif
 

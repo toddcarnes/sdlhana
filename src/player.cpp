@@ -24,6 +24,24 @@
 CBasePlayer *CBasePlayer::m_pDealer = NULL;
 int CBasePlayer::m_iMaxHandCards = 8;
 
+bool CBasePlayer::IsDealer() const
+{
+   if (gpGame) return this == gpGame->GetDealer();
+   return this == m_pDealer;
+}
+
+void CBasePlayer::SetAsDealer()
+{
+   m_pDealer = this;
+   if (gpGame) gpGame->SetDealer(this);
+}
+
+CBasePlayer *CBasePlayer::GetDealer()
+{
+   if (gpGame && gpGame->GetDealer()) return gpGame->GetDealer();
+   return m_pDealer;
+}
+
 CBasePlayer::CBasePlayer()
 {
 }
@@ -35,12 +53,13 @@ CBasePlayer::~CBasePlayer()
 void CBasePlayer::NewRound()
 {
    int i;
+   int maxHand = gpGame ? gpGame->GetMaxHandCards() : m_iMaxHandCards;
 
-   for (i = 0; i < m_iMaxHandCards; i++) {
+   for (i = 0; i < maxHand; i++) {
       m_HandCards[i] = CCard::GetRandomCard();
    }
 
-   m_iNumHandCard = m_iMaxHandCards;
+   m_iNumHandCard = maxHand;
    m_iNumCapturedCard = 0;
    m_iNumContinue = 0;
    m_iNumLeaveThree = 0;
@@ -398,18 +417,19 @@ void CBasePlayer::DrawCurResult()
       DrawCaptured();
    };
 
-   unsigned char r_lights[] = {0, 8, 28, 40, 44, 255};
-   unsigned char r_red_ribbons[] = {1, 5, 9, 255};
-   unsigned char r_blue_ribbons[] = {21, 33, 37, 255};
-   unsigned char r_normal_ribbons[] = {13, 17, 25, 255};
-   unsigned char r_ribbons[] = {13, 17, 25, 42, 1, 5, 9, 21, 33, 37, 255};
-   unsigned char r_bdb[] = {20, 24, 36, 255};
-   unsigned char r_birds[] = {4, 12, 29, 255};
-   unsigned char r_animals[] = {4, 12, 16, 20, 24, 29, 32, 36, 41, 255};
-   unsigned char r_fms[] = {32, 8, 255};
-   unsigned char r_mms[] = {32, 28, 255};
+   // Yaku card ID sets (255 terminator) — IDs: 0 Crane Jan, 8 Curtain Mar, 28 Moon Aug, 40 Rain Nov, 44 Phoenix Dec, etc.
+   unsigned char r_lights[] = {0, 8, 28, 40, 44, 255}; // 5 Lights
+   unsigned char r_red_ribbons[] = {1, 5, 9, 255}; // Akatan
+   unsigned char r_blue_ribbons[] = {21, 33, 37, 255}; // Aotan
+   unsigned char r_normal_ribbons[] = {13, 17, 25, 255}; // Tanzaku
+   unsigned char r_ribbons[] = {13, 17, 25, 42, 1, 5, 9, 21, 33, 37, 255}; // any 5 ribbons
+   unsigned char r_bdb[] = {20, 24, 36, 255}; // Boar-Deer-Butterfly
+   unsigned char r_birds[] = {4, 12, 29, 255}; // 5 Birds (Godori)
+   unsigned char r_animals[] = {4, 12, 16, 20, 24, 29, 32, 36, 41, 255}; // 5 animals
+   unsigned char r_fms[] = {32, 8, 255}; // Flower+Sakecup
+   unsigned char r_mms[] = {32, 28, 255}; // Moon+Sakecup
    unsigned char r_cards[] = {2, 3, 6, 7, 10, 11, 14, 15, 18, 19, 22, 23,
-      26, 27, 30, 31, 32, 34, 35, 38, 39, 43, 45, 46, 47, 255};
+      26, 27, 30, 31, 32, 34, 35, 38, 39, 43, 45, 46, 47, 255}; // 10 plain
    unsigned char r_fake[] = {255};
 
    if (gpGame->GetGameMode() == GAMEMODE_KOREAN) {
