@@ -1,3 +1,14 @@
+9/02/2026 Todd Carnes <toddcarnes@gmail.com> (SDLHana 1.0.1 released):
+ * Code Review Fixes (7 items, feature/code-review-fixes → main):
+   - Rendering: reuse persistent streaming SDL_Texture in CGeneral::UpdateScreen, eliminate per-frame create/destroy, fix VMware corruption (src/general.cpp, src/main.cpp).
+   - Game Logic: extract CGame::FindMatchingCards, ChooseSlotForPair, CapturePair/Triple, ValidateInitialDesk; deduplicate CardDiscarded and PlayRound (src/game.cpp/h).
+   - Legacy: replace strtok/char[256] with vector/getline, va() fixed formats with std::format/to_string, #define DRAW_* macros with lambdas (src/game.cpp, src/general.cpp, src/player.cpp).
+   - AI: externalize 22 heuristics to CBot::Config with INI [BOT] tuning (src/bot.cpp/h, src/data/sdlhana.ini).
+   - Core: add inline App()/Window()/Renderer()/Screen() accessors, deprecate global macros, demonstrate AppContext (src/main.h, src/util.cpp).
+   - Audio: make g_fAudioOpened std::atomic<bool> for thread visibility (src/sound.cpp, src/main.h, src/game.cpp).
+   - Font: handle 4-byte UTF-8 (emoji/CJK ext) gracefully in bitmap fallback without TerminateOnError (src/font.cpp).
+ * Version bump to 1.0.1 across CMakeLists.txt, NEWS, and macOS bundle metadata.
+
 8/22/2026 Todd Carnes <toddcarnes@gmail.com> (SDLHana 1.0.0 released):
  * macOS Universal 2 Binary Support: Configured CMAKE_OSX_ARCHITECTURES="x86_64;arm64" across CMakeLists.txt and GitHub Actions workflows, producing native Universal 2 App Bundles (SDLHana.app) compatible with both Intel (x86_64) and Apple Silicon (arm64) Macs.
  * In-Game Scrollable Rules Viewer: Replaced legacy 4-page rules screen with a smooth offscreen canvas rules viewer (RulesMenu()) displaying 100% of the text, month-by-month card breakdowns, Yaku combinations, and card sprite illustrations from RULES.md across a maximized 545px viewport.

@@ -1,3 +1,12 @@
+1.0.1 Released on September 2nd, 2026.
+ - Performance: reuse persistent streaming SDL_Texture in CGeneral::UpdateScreen, eliminating per-frame create/destroy and fixing VMware GPU corruption.
+ - Refactor: extract CGame helpers (FindMatchingCards, ChooseSlotForPair, CapturePair/Triple, ValidateInitialDesk) and reduce CardDiscarded duplication; fix uninitialized warnings.
+ - Modernize: replace strtok/char buffers with std::vector/std::getline, va() fixed formats with std::format/to_string, and #define code-gen macros with lambdas.
+ - AI: externalize 22 bot heuristics to CBot::Config with INI [BOT] tuning and named documentation.
+ - Core: add inline App()/Window()/Renderer()/Screen() accessors and AppContext guidance, deprecate global macros.
+ - Audio: make g_fAudioOpened std::atomic<bool> for thread visibility.
+ - Font: handle 4-byte UTF-8 (emoji/CJK ext) gracefully in bitmap fallback without TerminateOnError.
+
 1.0.0 Released on August 22nd, 2026.
  - Added In-Game Scrollable Rules Canvas Viewer displaying 100% of Hanafuda deck rules, Yaku combinations, and card sprite illustrations from RULES.md across a 545px viewport.
  - Implemented interactive scrollbar thumb dragging, high-precision mouse wheel scrolling, keyboard arrow navigation, and viewport click-scrolling.
