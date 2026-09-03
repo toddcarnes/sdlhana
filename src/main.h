@@ -130,22 +130,6 @@ inline CIniFile& Config() { return App().config; }
 inline std::unique_ptr<CGeneral>& General() { return App().general; }
 inline std::unique_ptr<CGame>& Game() { return App().game; }
 
-// Recommended for new code: pass dependencies explicitly or via AppContext:
-//   struct AppContext { SDL_Window* window; SDL_Renderer* renderer; SDL_Surface* screen; CGeneral* general; CGame* game; CIniFile* config; };
-// Keeps leaf functions testable and avoids hidden macro coupling.
-
-// Deprecated macro aliases — prefer inline accessors above for type safety
-// and testability. Kept for incremental migration.
-#define g_App (Application::GetInstance())
-#define gpWindow (Application::GetInstance().window)
-#define gpRenderer (Application::GetInstance().renderer)
-#define gpScreen (Application::GetInstance().screen)
-#define gpScreenTexture (Application::GetInstance().screenTexture)
-#define g_fNoSound (Application::GetInstance().noSound)
-#define cfg (Application::GetInstance().config)
-#define gpGeneral (Application::GetInstance().general)
-#define gpGame (Application::GetInstance().game)
-
 // main.cpp functions...
 void UserQuit();
 std::filesystem::path GetUserConfigPath();

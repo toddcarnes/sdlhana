@@ -90,8 +90,8 @@ std::filesystem::path GetUserConfigPath()
 void LoadCfg()
 {
    std::filesystem::path user_cfg = GetUserConfigPath();
-   if (cfg.Load(user_cfg.string().c_str()) != 0) {
-      cfg.Load(DATA_DIR "sdlhana.ini"); // load default config file if user config does not exist
+   if (Config().Load(user_cfg.string().c_str()) != 0) {
+      Config().Load(DATA_DIR "sdlhana.ini"); // load default config file if user config does not exist
    }
 }
 
@@ -101,7 +101,7 @@ void SaveCfg()
    if (user_cfg.has_parent_path()) {
       std::filesystem::create_directories(user_cfg.parent_path());
    }
-   cfg.Save(user_cfg.string().c_str());
+   Config().Save(user_cfg.string().c_str());
 }
 
 static bool SDLCALL EventFilter(void *userdata, SDL_Event *event)
@@ -143,51 +143,51 @@ int main(int argc, char *argv[])
       exit(1);
    }
 
-   cfg.Set("OPTIONS", "FullScreen", "0");
+   Config().Set("OPTIONS", "FullScreen", "0");
    SDL_WindowFlags window_flags = SDL_WINDOW_RESIZABLE;
 
-   gpWindow = SDL_CreateWindow("SDLHana", 1024, 768, window_flags);
-   if (gpWindow == nullptr) {
+   Window() = SDL_CreateWindow("SDLHana", 1024, 768, window_flags);
+   if (Window() == nullptr) {
       std::println(stderr, "FATAL ERROR: Could not create SDL3 window: {}", SDL_GetError());
       exit(1);
    }
-   SetAppWindowIcon(gpWindow);
+   SetAppWindowIcon(Window());
 
-   gpRenderer = SDL_CreateRenderer(gpWindow, NULL);
-   if (gpRenderer == nullptr) {
-      gpRenderer = SDL_CreateRenderer(gpWindow, "software");
+   Renderer() = SDL_CreateRenderer(Window(), NULL);
+   if (Renderer() == nullptr) {
+      Renderer() = SDL_CreateRenderer(Window(), "software");
    }
-   if (gpRenderer == nullptr) {
+   if (Renderer() == nullptr) {
       std::println(stderr, "FATAL ERROR: Could not create SDL3 renderer: {}", SDL_GetError());
       exit(1);
    }
 
-   SDL_SetRenderLogicalPresentation(gpRenderer, layout::kScreenW, layout::kScreenH, SDL_LOGICAL_PRESENTATION_STRETCH);
+   SDL_SetRenderLogicalPresentation(Renderer(), layout::kScreenW, layout::kScreenH, SDL_LOGICAL_PRESENTATION_STRETCH);
 
-   gpScreen = SDL_CreateSurface(layout::kScreenW, layout::kScreenH, SDL_PIXELFORMAT_XRGB8888);
-   if (gpScreen == nullptr) {
+   Screen() = SDL_CreateSurface(layout::kScreenW, layout::kScreenH, SDL_PIXELFORMAT_XRGB8888);
+   if (Screen() == nullptr) {
       std::println(stderr, "FATAL ERROR: Could not create main screen surface: {}", SDL_GetError());
       exit(1);
    }
-   gpScreenTexture = nullptr;
+   ScreenTexture() = nullptr;
 
-   g_fNoSound = (atoi(cfg.Get("OPTIONS", "NoSound", "0")) > 0);
+   NoSound() = (atoi(Config().Get("OPTIONS", "NoSound", "0")) > 0);
 
    // Open the audio device
-   if (!g_fNoSound) {
+   if (!NoSound()) {
       if (SOUND_OpenAudio(22050, SDL_AUDIO_S16, 1, 1024)) {
          std::println(stderr, "WARNING: Couldn't open audio: {}", SDL_GetError());
-         g_fNoSound = true;
+         NoSound() = true;
       }
    }
 
    InitTextMessage();
 
-   gpGeneral = std::make_unique<CGeneral>();
-   gpGame = std::make_unique<CGame>();
+   General() = std::make_unique<CGeneral>();
+   Game() = std::make_unique<CGame>();
 
    SDL_SetEventFilter(EventFilter, NULL);
-   gpGame->MainMenu();
+   Game()->MainMenu();
 
    UserQuit();
 
@@ -196,27 +196,27 @@ int main(int argc, char *argv[])
 
 void UserQuit()
 {
-   gpGame.reset();
-   gpGeneral.reset();
+   Game().reset();
+   General().reset();
 
-   if (gpScreenTexture != nullptr) {
-      SDL_DestroyTexture(gpScreenTexture);
-      gpScreenTexture = nullptr;
+   if (ScreenTexture() != nullptr) {
+      SDL_DestroyTexture(ScreenTexture());
+      ScreenTexture() = nullptr;
    }
 
-   if (gpScreen != nullptr) {
-      SDL_DestroySurface(gpScreen);
-      gpScreen = nullptr;
+   if (Screen() != nullptr) {
+      SDL_DestroySurface(Screen());
+      Screen() = nullptr;
    }
 
-   if (gpRenderer != nullptr) {
-      SDL_DestroyRenderer(gpRenderer);
-      gpRenderer = nullptr;
+   if (Renderer() != nullptr) {
+      SDL_DestroyRenderer(Renderer());
+      Renderer() = nullptr;
    }
 
-   if (gpWindow != nullptr) {
-      SDL_DestroyWindow(gpWindow);
-      gpWindow = nullptr;
+   if (Window() != nullptr) {
+      SDL_DestroyWindow(Window());
+      Window() = nullptr;
    }
 
    SDL_Quit();

@@ -53,8 +53,8 @@ void CGeneral::ScreenFade(int duration, SDL_Surface *s)
 {
    (void)duration;
    (void)s;
-   if (gpRenderer != nullptr) {
-      SDL_RenderPresent(gpRenderer);
+   if (Renderer() != nullptr) {
+      SDL_RenderPresent(Renderer());
    }
 }
 
@@ -64,8 +64,8 @@ int CGeneral::ReadKey()
 
    while (1) {
       if (SDL_WaitEvent(&event)) {
-         if (gpRenderer != nullptr) {
-            SDL_ConvertEventToRenderCoordinates(gpRenderer, &event);
+         if (Renderer() != nullptr) {
+            SDL_ConvertEventToRenderCoordinates(Renderer(), &event);
          }
          if (event.type == SDL_EVENT_KEY_DOWN) {
             return (int)event.key.key;
@@ -94,64 +94,64 @@ int CGeneral::ReadKey()
 
 void CGeneral::UpdateScreen(int x, int y, int w, int h)
 {
-   if (gpRenderer == nullptr || gpScreen == nullptr) return;
+   if (Renderer() == nullptr || Screen() == nullptr) return;
 
-   if (gpScreenTexture == nullptr) {
-      gpScreenTexture = SDL_CreateTexture(gpRenderer, SDL_PIXELFORMAT_XRGB8888,
-         SDL_TEXTUREACCESS_STREAMING, gpScreen->w, gpScreen->h);
-      if (gpScreenTexture == nullptr) {
-         gpScreenTexture = SDL_CreateTextureFromSurface(gpRenderer, gpScreen);
+   if (ScreenTexture() == nullptr) {
+      ScreenTexture() = SDL_CreateTexture(Renderer(), SDL_PIXELFORMAT_XRGB8888,
+         SDL_TEXTUREACCESS_STREAMING, Screen()->w, Screen()->h);
+      if (ScreenTexture() == nullptr) {
+         ScreenTexture() = SDL_CreateTextureFromSurface(Renderer(), Screen());
       }
-      if (gpScreenTexture != nullptr) {
-         SDL_SetTextureScaleMode(gpScreenTexture, SDL_SCALEMODE_LINEAR);
-         SDL_UpdateTexture(gpScreenTexture, NULL, gpScreen->pixels, gpScreen->pitch);
-         SDL_RenderClear(gpRenderer);
-         SDL_RenderTexture(gpRenderer, gpScreenTexture, NULL, NULL);
-         SDL_RenderPresent(gpRenderer);
+      if (ScreenTexture() != nullptr) {
+         SDL_SetTextureScaleMode(ScreenTexture(), SDL_SCALEMODE_LINEAR);
+         SDL_UpdateTexture(ScreenTexture(), NULL, Screen()->pixels, Screen()->pitch);
+         SDL_RenderClear(Renderer());
+         SDL_RenderTexture(Renderer(), ScreenTexture(), NULL, NULL);
+         SDL_RenderPresent(Renderer());
       }
       return;
    }
 
    (void)x; (void)y; (void)w; (void)h;
-   SDL_UpdateTexture(gpScreenTexture, NULL, gpScreen->pixels, gpScreen->pitch);
+   SDL_UpdateTexture(ScreenTexture(), NULL, Screen()->pixels, Screen()->pitch);
 
-   SDL_RenderClear(gpRenderer);
-   SDL_RenderTexture(gpRenderer, gpScreenTexture, NULL, NULL);
-   SDL_RenderPresent(gpRenderer);
+   SDL_RenderClear(Renderer());
+   SDL_RenderTexture(Renderer(), ScreenTexture(), NULL, NULL);
+   SDL_RenderPresent(Renderer());
 }
 
 void CGeneral::ClearScreen(bool fadein, bool fadeout, bool bg)
 {
    (void)fadein; (void)fadeout;
-   if (gpScreen == nullptr) return;
+   if (Screen() == nullptr) return;
 
    if (bg && m_imgBack != nullptr) {
-      int w = gpScreen->w;
+      int w = Screen()->w;
       while (w > 0) {
-         int h = gpScreen->h;
+         int h = Screen()->h;
          while (h > 0) {
             SDL_Rect dstrect;
-            dstrect.x = gpScreen->w - w;
-            dstrect.y = gpScreen->h - h;
+            dstrect.x = Screen()->w - w;
+            dstrect.y = Screen()->h - h;
             dstrect.w = m_imgBack->w;
             dstrect.h = m_imgBack->h;
-            SDL_BlitSurface(m_imgBack, NULL, gpScreen, &dstrect);
+            SDL_BlitSurface(m_imgBack, NULL, Screen(), &dstrect);
             h -= m_imgBack->h;
          }
          w -= m_imgBack->w;
       }
    } else {
-      UTIL_FillRect(gpScreen, 0, 0, layout::kScreenW, layout::kScreenH, layout::kTableR, layout::kTableG, layout::kTableB);
+      UTIL_FillRect(Screen(), 0, 0, layout::kScreenW, layout::kScreenH, layout::kTableR, layout::kTableG, layout::kTableB);
    }
 
-   UTIL_RectShade(gpScreen, 0, 0, layout::kScreenW, layout::kScreenH, 196, 196,
+   UTIL_RectShade(Screen(), 0, 0, layout::kScreenW, layout::kScreenH, 196, 196,
       0, 0, 196, 196, 196, 0, 196);
 }
 
 void CGeneral::ClearPromptArea()
 {
-   if (gpScreen != nullptr) {
-      UTIL_FillRect(gpScreen, 20, 260, 595, 65, 30, 130, 100);
+   if (Screen() != nullptr) {
+      UTIL_FillRect(Screen(), 20, 260, 595, 65, 30, 130, 100);
       UpdateScreen(20, 260, 595, 65);
    }
 }
@@ -159,7 +159,7 @@ void CGeneral::ClearPromptArea()
 void CGeneral::DrawTextBrush(const char *t, int x, int y, int r, int g, int b, int size)
 {
    SDL_Surface *s = m_fntBrush.Render(t, r, g, b, size, ((size < 32) ? false : true));
-   if (s == nullptr || gpScreen == nullptr) return;
+   if (s == nullptr || Screen() == nullptr) return;
 
    SDL_Rect dstrect;
    dstrect.x = x;
@@ -167,7 +167,7 @@ void CGeneral::DrawTextBrush(const char *t, int x, int y, int r, int g, int b, i
    dstrect.w = s->w;
    dstrect.h = s->h;
 
-   SDL_BlitSurface(s, NULL, gpScreen, &dstrect);
+   SDL_BlitSurface(s, NULL, Screen(), &dstrect);
    SDL_DestroySurface(s);
 
    UpdateScreen(x, y, dstrect.w, dstrect.h);
@@ -176,7 +176,7 @@ void CGeneral::DrawTextBrush(const char *t, int x, int y, int r, int g, int b, i
 void CGeneral::DrawText(const char *t, int x, int y, int r, int g, int b, int size)
 {
    SDL_Surface *s = m_fnt.Render(t, r, g, b, size);
-   if (s == nullptr || gpScreen == nullptr) return;
+   if (s == nullptr || Screen() == nullptr) return;
 
    SDL_Rect dstrect;
    dstrect.x = x;
@@ -184,7 +184,7 @@ void CGeneral::DrawText(const char *t, int x, int y, int r, int g, int b, int si
    dstrect.w = s->w;
    dstrect.h = s->h;
 
-   SDL_BlitSurface(s, NULL, gpScreen, &dstrect);
+   SDL_BlitSurface(s, NULL, Screen(), &dstrect);
    SDL_DestroySurface(s);
 
    UpdateScreen(x, y, dstrect.w, dstrect.h);
@@ -193,7 +193,7 @@ void CGeneral::DrawText(const char *t, int x, int y, int r, int g, int b, int si
 void CGeneral::DrawTextInBox(const char *t, int box_x, int box_y, int box_w, int box_h, int r, int g, int b, int size)
 {
    SDL_Surface *s = m_fnt.Render(t, r, g, b, size);
-   if (s == nullptr || gpScreen == nullptr) return;
+   if (s == nullptr || Screen() == nullptr) return;
 
    SDL_Rect dstrect;
    dstrect.x = box_x + (box_w > s->w ? (box_w - s->w) / 2 : 5);
@@ -201,7 +201,7 @@ void CGeneral::DrawTextInBox(const char *t, int box_x, int box_y, int box_w, int
    dstrect.w = s->w;
    dstrect.h = s->h;
 
-   SDL_BlitSurface(s, NULL, gpScreen, &dstrect);
+   SDL_BlitSurface(s, NULL, Screen(), &dstrect);
    SDL_DestroySurface(s);
 
    UpdateScreen(box_x, box_y, box_w, box_h);
@@ -209,7 +209,7 @@ void CGeneral::DrawTextInBox(const char *t, int box_x, int box_y, int box_w, int
 
 void CGeneral::DrawWrappedTextInBox(const char *t, int box_x, int box_y, int box_w, int box_h, int r, int g, int b, int size)
 {
-   if (t == nullptr || gpScreen == nullptr) return;
+   if (t == nullptr || Screen() == nullptr) return;
 
    SDL_Surface *s = m_fnt.RenderWrapped(t, r, g, b, size, box_w - 20);
    if (s != nullptr) {
@@ -219,7 +219,7 @@ void CGeneral::DrawWrappedTextInBox(const char *t, int box_x, int box_y, int box
       dstrect.w = s->w;
       dstrect.h = s->h;
 
-      SDL_BlitSurface(s, NULL, gpScreen, &dstrect);
+      SDL_BlitSurface(s, NULL, Screen(), &dstrect);
       SDL_DestroySurface(s);
       UpdateScreen(box_x, box_y, box_w, box_h);
    }
@@ -285,7 +285,7 @@ SDL_Surface *CGeneral::RenderCard(const CCard &c, int w, int h)
 void CGeneral::DrawCard(const CCard &c, int x, int y, int w, int h, bool update)
 {
    SDL_Surface *p = RenderCard(c, w, h);
-   if (p == nullptr || gpScreen == nullptr) return;
+   if (p == nullptr || Screen() == nullptr) return;
 
    SDL_Rect dstrect;
    dstrect.x = x;
@@ -293,7 +293,7 @@ void CGeneral::DrawCard(const CCard &c, int x, int y, int w, int h, bool update)
    dstrect.w = w;
    dstrect.h = h;
 
-   SDL_BlitSurface(p, NULL, gpScreen, &dstrect);
+   SDL_BlitSurface(p, NULL, Screen(), &dstrect);
    SDL_DestroySurface(p);
 
    if (update) {
@@ -322,7 +322,7 @@ void CGeneral::FreeImages()
 
 void CGeneral::LoadSound()
 {
-   if (g_fNoSound) {
+   if (NoSound()) {
       memset(m_snd, 0, sizeof(m_snd));
       return;
    }
@@ -344,7 +344,7 @@ void CGeneral::LoadSound()
 
 void CGeneral::FreeSound()
 {
-   if (g_fNoSound) {
+   if (NoSound()) {
       return;
    }
 
@@ -359,7 +359,7 @@ void CGeneral::FreeSound()
 
 void CGeneral::PlaySound(int num)
 {
-   if (g_fNoSound) return;
+   if (NoSound()) return;
    if (num < 0 || num >= NUM_SOUND) return;
 
    if (m_snd[num] != NULL) {
@@ -381,7 +381,7 @@ SDL_Surface *CGeneral::LoadBitmapFile(const char *filename)
 
 SoundSample *CGeneral::LoadSoundFile(const char *filename)
 {
-   if (g_fNoSound) {
+   if (NoSound()) {
       return NULL;
    }
 
@@ -479,23 +479,23 @@ CBox::CBox(int x, int y, int w, int h, int r, int g, int b, int a, bool keep)
    m_SavedRect.w = w;
    m_SavedRect.h = h;
 
-   if (!keep && gpScreen != nullptr) {
-      m_pSavedArea.reset(SDL_CreateSurface(w, h, gpScreen->format));
+   if (!keep && Screen() != nullptr) {
+      m_pSavedArea.reset(SDL_CreateSurface(w, h, Screen()->format));
       if (m_pSavedArea) {
          SDL_Rect srcrect = {x, y, w, h};
-         SDL_BlitSurface(gpScreen, &srcrect, m_pSavedArea.get(), NULL);
+         SDL_BlitSurface(Screen(), &srcrect, m_pSavedArea.get(), NULL);
       }
    } else {
       m_pSavedArea.reset();
    }
 
-   if (gpScreen != nullptr) {
-      UTIL_FillRectAlpha(gpScreen, x, y, w, h, r, g, b, a);
-      UTIL_RectShade(gpScreen, x, y, w, h, 255, 255, 255, 0, 0, 0, 128, 128, 128);
+   if (Screen() != nullptr) {
+      UTIL_FillRectAlpha(Screen(), x, y, w, h, r, g, b, a);
+      UTIL_RectShade(Screen(), x, y, w, h, 255, 255, 255, 0, 0, 0, 128, 128, 128);
    }
 
-   if (gpGeneral) {
-      gpGeneral->UpdateScreen(x, y, w, h);
+   if (General()) {
+      General()->UpdateScreen(x, y, w, h);
    }
 }
 
@@ -505,12 +505,12 @@ CBox::~CBox()
       return;
    }
 
-   if (m_pSavedArea && gpScreen != nullptr) {
-      SDL_BlitSurface(m_pSavedArea.get(), NULL, gpScreen, &m_SavedRect);
+   if (m_pSavedArea && Screen() != nullptr) {
+      SDL_BlitSurface(m_pSavedArea.get(), NULL, Screen(), &m_SavedRect);
    }
 
-   if (gpGeneral) {
-      gpGeneral->UpdateScreen(m_SavedRect.x, m_SavedRect.y, m_SavedRect.w, m_SavedRect.h);
+   if (General()) {
+      General()->UpdateScreen(m_SavedRect.x, m_SavedRect.y, m_SavedRect.w, m_SavedRect.h);
    }
 }
 

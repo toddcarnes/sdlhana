@@ -30,7 +30,7 @@ void CBot::LoadConfig()
 {
    if (s_botConfigLoaded) return;
    auto getInt = [&](const char *key, int def) {
-      return atoi(cfg.Get("BOT", key, std::to_string(def).c_str()));
+      return atoi(::Config().Get("BOT", key, std::to_string(def).c_str()));
    };
    s_botConfig.lightWeight        = getInt("LightWeight", 34);
    s_botConfig.rainPenalty        = getInt("RainPenalty", 17);
@@ -112,13 +112,13 @@ int CBot::SelectCard()
          if (j == goal || goal == -1) {
             score += s_botConfig.goalBonus;
          }
-         score += gpGame->GetDeskCard(m_PossibleMoves[i].deskindex).GetType() * s_botConfig.deskTypeWeight;
+         score += Game()->GetDeskCard(m_PossibleMoves[i].deskindex).GetType() * s_botConfig.deskTypeWeight;
          score += m_HandCards[m_PossibleMoves[i].handindex].GetType() * s_botConfig.handTypeWeight;
          score += m_PossibleMoves[i].hand[j] - m_rgHandPercent[j];
          if (m_rgOpnHandPercent[HAND_MAX] >= s_botConfig.opponentThreatThreshold || m_rgOpnHandPercent[HAND_SAKECUP] > 0) {
             // Opponent is about to win. Try to stop him.
             score += (m_rgOpnHandPercent[HAND_MAX] - m_PossibleMoves[i].opnhand[HAND_MAX]) * 2;
-            score += CardIsDangerous(gpGame->GetDeskCard(m_PossibleMoves[i].deskindex)) * m_rgOpnHandPercent[HAND_MAX] / 2;
+            score += CardIsDangerous(Game()->GetDeskCard(m_PossibleMoves[i].deskindex)) * m_rgOpnHandPercent[HAND_MAX] / 2;
          }
          for (int k = HAND_MAXNUM + 1; k < HAND_COUNT; k++) {
             score += (m_PossibleMoves[i].hand[k] - m_rgHandPercent[k]) / 5;
@@ -161,7 +161,7 @@ int CBot::DiscardCard()
 bool CBot::WantToContinue()
 {
    // FIXME: This is still stupid
-   if (gpGame->GetGameMode() == GAMEMODE_BET) {
+   if (Game()->GetGameMode() == GAMEMODE_BET) {
       return false;
    }
 
@@ -184,14 +184,14 @@ bool CBot::WantToContinue()
       }
    }
 
-   if (gpGame->GetGameMode() != GAMEMODE_KOREAN) {
+   if (Game()->GetGameMode() != GAMEMODE_KOREAN) {
       int hand[HAND_COUNT], opnhand[HAND_COUNT];
       j = m_iNumCapturedCard;
       for (i = 0; i < m_iNumHandCard; i++) {
          AddCapturedCard(m_HandCards[i]);
       }
-      for (i = 0; i < gpGame->GetNumDeskCard(); i++) {
-         AddCapturedCard(gpGame->GetDeskCard(i));
+      for (i = 0; i < Game()->GetNumDeskCard(); i++) {
+         AddCapturedCard(Game()->GetDeskCard(i));
       }
       AnalyzeHand(hand, opnhand);
       m_iNumCapturedCard = j;
@@ -208,14 +208,14 @@ bool CBot::WantToContinue()
       }
    }
 
-   for (i = 0; i < gpGame->GetNumDeskCard(); i++) {
-      if (!gpGame->GetDeskCard(i).IsValid()) {
+   for (i = 0; i < Game()->GetNumDeskCard(); i++) {
+      if (!Game()->GetDeskCard(i).IsValid()) {
          continue;
       }
-      if (CardIsSafe(gpGame->GetDeskCard(i))) {
+      if (CardIsSafe(Game()->GetDeskCard(i))) {
          score += 5;
       } else {
-         score -= (CardIsDangerous(gpGame->GetDeskCard(i)) - 1) * 8;
+         score -= (CardIsDangerous(Game()->GetDeskCard(i)) - 1) * 8;
       }
    }
 
@@ -231,8 +231,8 @@ int CBot::SelectCardOnDesk(int month, const CCard &drawn)
    AnalyzeHand();
 
    int i, index[2] = {-1, -1}, count = 0, hand[2][HAND_COUNT], opnhand[2][HAND_COUNT];
-   for (i = 0; i < gpGame->GetNumDeskCard(); i++) {
-      if (gpGame->GetDeskCard(i).GetMonth() == month) {
+   for (i = 0; i < Game()->GetNumDeskCard(); i++) {
+      if (Game()->GetDeskCard(i).GetMonth() == month) {
          if (count >= 2) {
             TerminateOnError("CBot::SelectCardOnDesk(): count >= 2");
          }
@@ -242,9 +242,9 @@ int CBot::SelectCardOnDesk(int month, const CCard &drawn)
 
    assert(count == 2);
    m_CapturedCard[m_iNumCapturedCard++] = drawn;
-   m_CapturedCard[m_iNumCapturedCard++] = gpGame->GetDeskCard(index[0]);
+   m_CapturedCard[m_iNumCapturedCard++] = Game()->GetDeskCard(index[0]);
    AnalyzeHand(hand[0], opnhand[0]);
-   m_CapturedCard[m_iNumCapturedCard - 1] = gpGame->GetDeskCard(index[1]);
+   m_CapturedCard[m_iNumCapturedCard - 1] = Game()->GetDeskCard(index[1]);
    AnalyzeHand(hand[1], opnhand[1]);
    m_iNumCapturedCard -= 2;
 
@@ -255,7 +255,7 @@ int CBot::SelectCardOnDesk(int month, const CCard &drawn)
          if (j == goal || goal == -1) {
             score += s_botConfig.goalBonus;
          }
-         score += gpGame->GetDeskCard(index[i]).GetType() * s_botConfig.deskTypeWeight;
+         score += Game()->GetDeskCard(index[i]).GetType() * s_botConfig.deskTypeWeight;
          score += hand[i][j] - m_rgHandPercent[j];
          if (hand[i][j] - m_rgHandPercent[j] > 0 && hand[i][j] >= s_botConfig.winThreshold) {
             score += s_botConfig.immediateWinBonus; // picking this card will result in immediate winning hand
@@ -263,7 +263,7 @@ int CBot::SelectCardOnDesk(int month, const CCard &drawn)
          if (m_rgOpnHandPercent[HAND_MAX] >= s_botConfig.opponentThreatThreshold || m_rgOpnHandPercent[HAND_SAKECUP] > 0) {
             // Opponent is about to win. Try to stop him.
             score += (m_rgOpnHandPercent[HAND_MAX] - opnhand[i][HAND_MAX]) * 2;
-            score += CardIsDangerous(gpGame->GetDeskCard(index[i])) * m_rgOpnHandPercent[HAND_MAX] / 2;
+            score += CardIsDangerous(Game()->GetDeskCard(index[i])) * m_rgOpnHandPercent[HAND_MAX] / 2;
          }
          for (int k = HAND_MAXNUM + 1; k < HAND_COUNT; k++) {
             score += (hand[i][k] - m_rgHandPercent[k]) / 5;
@@ -283,16 +283,16 @@ void CBot::AnalyzeMoves()
 {
    int i, j;
    m_iNumPossibleMove = 0;
-   for (i = 0; i < gpGame->GetNumDeskCard(); i++) {
+   for (i = 0; i < Game()->GetNumDeskCard(); i++) {
       for (j = 0; j < m_iNumHandCard; j++) {
-         if (gpGame->GetDeskCard(i) == m_HandCards[j]) {
+         if (Game()->GetDeskCard(i) == m_HandCards[j]) {
             m_PossibleMoves[m_iNumPossibleMove].deskindex = i;
             m_PossibleMoves[m_iNumPossibleMove].handindex = j;
             m_PossibleMoves[m_iNumPossibleMove].month = m_HandCards[j].GetMonth();
 
             // now try what can be archived after this move
             m_CapturedCard[m_iNumCapturedCard++] = m_HandCards[j];
-            m_CapturedCard[m_iNumCapturedCard++] = gpGame->GetDeskCard(i);
+            m_CapturedCard[m_iNumCapturedCard++] = Game()->GetDeskCard(i);
             AnalyzeHand(m_PossibleMoves[m_iNumPossibleMove].hand,
                m_PossibleMoves[m_iNumPossibleMove].opnhand);
             m_iNumCapturedCard -= 2;
@@ -356,7 +356,7 @@ void CBot::AnalyzeHand(int *hand, int *opnhand)
          // This is an animal card
          num_animals++;
          if (c.IsSakeCup()) {
-            num_cards += ((gpGame->GetGameMode() == GAMEMODE_KOREAN) ? 2 : 1);
+            num_cards += ((Game()->GetGameMode() == GAMEMODE_KOREAN) ? 2 : 1);
             has_sakecup = true;
          } else if (c.IsDeer() || c.IsBoar() || c.IsButterfly()) {
             num_boar++;
@@ -366,7 +366,7 @@ void CBot::AnalyzeHand(int *hand, int *opnhand)
       } else {
          // This is a normal card
          num_cards++;
-         if (gpGame->GetGameMode() == GAMEMODE_KOREAN) {
+         if (Game()->GetGameMode() == GAMEMODE_KOREAN) {
             if (c.GetValue() == 43 || c.GetValue() == 45) {
                num_cards++; // these 2 cards counts as 2 normal cards each
             }
@@ -380,14 +380,14 @@ void CBot::AnalyzeHand(int *hand, int *opnhand)
    hand[HAND_LIGHTS] = num_lights * s_botConfig.lightWeight - (has_rain ? s_botConfig.rainPenalty : 0);
    hand[HAND_RED_RIBBONS] = num_red * s_botConfig.lightWeight;
    hand[HAND_BLUE_RIBBONS] = num_blue * s_botConfig.lightWeight;
-   if (gpGame->GetGameMode() == GAMEMODE_KOREAN) {
+   if (Game()->GetGameMode() == GAMEMODE_KOREAN) {
       hand[HAND_NORMAL_RIBBONS] = num_grass * s_botConfig.lightWeight;
       hand[HAND_BIRD] = num_birds * s_botConfig.lightWeight;
       hand[HAND_BOAR] = -1;
       hand[HAND_SAKECUP] = -1;
    } else {
       hand[HAND_BOAR] = num_boar * s_botConfig.lightWeight;
-      if (gpGame->GetGameMode() != GAMEMODE_BET) {
+      if (Game()->GetGameMode() != GAMEMODE_BET) {
          hand[HAND_SAKECUP] = (has_sakecup ? s_botConfig.sakecupBase : 0) +
             (has_moon ? s_botConfig.sakecupMoonBonus : 0) + (has_flower ? s_botConfig.sakecupFlowerBonus : 0);
       } else {
@@ -437,7 +437,7 @@ void CBot::AnalyzeHand(int *hand, int *opnhand)
          // This is an animal card
          num_animals++;
          if (c.IsSakeCup()) {
-            num_cards += ((gpGame->GetGameMode() == GAMEMODE_KOREAN) ? 2 : 1);
+            num_cards += ((Game()->GetGameMode() == GAMEMODE_KOREAN) ? 2 : 1);
             has_sakecup = true;
          } else if (c.IsDeer() || c.IsBoar() || c.IsButterfly()) {
             num_boar++;
@@ -447,7 +447,7 @@ void CBot::AnalyzeHand(int *hand, int *opnhand)
       } else {
          // This is a normal card
          num_cards++;
-         if (gpGame->GetGameMode() == GAMEMODE_KOREAN) {
+         if (Game()->GetGameMode() == GAMEMODE_KOREAN) {
             if (c.GetValue() == 43 || c.GetValue() == 45) {
                num_cards++; // these 2 cards counts as 2 normal cards each
             }
@@ -461,14 +461,14 @@ void CBot::AnalyzeHand(int *hand, int *opnhand)
    opnhand[HAND_LIGHTS] = num_lights * s_botConfig.lightWeight - (has_rain ? s_botConfig.rainPenalty : 0);
    opnhand[HAND_RED_RIBBONS] = num_red * s_botConfig.lightWeight;
    opnhand[HAND_BLUE_RIBBONS] = num_blue * s_botConfig.lightWeight;
-   if (gpGame->GetGameMode() == GAMEMODE_KOREAN) {
+   if (Game()->GetGameMode() == GAMEMODE_KOREAN) {
       opnhand[HAND_NORMAL_RIBBONS] = num_grass * s_botConfig.lightWeight;
       opnhand[HAND_BIRD] = num_birds * s_botConfig.lightWeight;
       opnhand[HAND_BOAR] = -1;
       opnhand[HAND_SAKECUP] = -1;
    } else {
       opnhand[HAND_BOAR] = num_boar * s_botConfig.lightWeight;
-      if (gpGame->GetGameMode() != GAMEMODE_BET) {
+      if (Game()->GetGameMode() != GAMEMODE_BET) {
          opnhand[HAND_SAKECUP] = (has_sakecup ? s_botConfig.sakecupBase : 0) +
             (has_moon ? s_botConfig.sakecupMoonBonus : 0) + (has_flower ? s_botConfig.sakecupFlowerBonus : 0);
       } else {
@@ -632,8 +632,8 @@ int CBot::AnalyzeGoal()
       }
    }
 
-   for (i = 0; i < gpGame->GetNumDeskCard(); i++) {
-      CCard c = gpGame->GetDeskCard(i);
+   for (i = 0; i < Game()->GetNumDeskCard(); i++) {
+      CCard c = Game()->GetDeskCard(i);
       if (c.GetType() == CARD_LIGHT) {
          if (m_rgHandPercent[HAND_LIGHTS] >= 0) {
             if (goalvalue[HAND_LIGHTS] > 0) {
@@ -720,8 +720,8 @@ int CBot::NumMonthInHand(int month)
 int CBot::NumMonthExposed(int month)
 {
    int i, count = NumMonthCaptured(month);
-   for (i = 0; i < gpGame->GetNumDeskCard(); i++) {
-      if (gpGame->GetDeskCard(i).GetMonth() == month) {
+   for (i = 0; i < Game()->GetNumDeskCard(); i++) {
+      if (Game()->GetDeskCard(i).GetMonth() == month) {
          count++;
       }
    }
