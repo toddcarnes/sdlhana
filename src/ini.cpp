@@ -20,6 +20,19 @@
 //
 
 #include "ini.h"
+#include <string>
+#include <fstream>
+#include <algorithm>
+#include <cctype>
+#include <print>
+
+static inline std::string trim_copy(std::string s)
+{
+   auto notSpace = [](unsigned char c) { return !std::isspace(c); };
+   s.erase(s.begin(), std::find_if(s.begin(), s.end(), notSpace));
+   s.erase(std::find_if(s.rbegin(), s.rend(), notSpace).base(), s.end());
+   return s;
+}
 
 void CIniFile::trim(char *str)
 {
@@ -103,71 +116,49 @@ void CIniFile::FreeAllTheStuff()
 
 int CIniFile::Load(const char *filename)
 {
-   FILE *fp = fopen(filename, "r");
-
-   if (fp == NULL) {
-      printf("cannot load ini file %s\n", filename);
+   std::ifstream file(filename);
+   if (!file) {
+      std::println(stderr, "cannot load ini file {}", filename);
       return 1;
    }
 
-   // if we already have a file loaded, free it first
    if (Valid()) {
       FreeAllTheStuff();
    }
 
-   char str[256], section[256];
-
-   section[0] = '\0';
-
-   while (fgets(str, 256, fp)) {
-      trim(str); // trim all the blanks or linefeeds
-
-      // skip all comment lines or empty lines
-      if (!str[0] || str[0] == ';' || str[0] == '/' || str[0] == '#')
+   std::string line, section;
+   while (std::getline(file, line)) {
+      line = trim_copy(line);
+      if (line.empty() || line[0] == ';' || line[0] == '/' || line[0] == '#')
          continue;
-
-      int length = strlen(str);
-      char *p;
-
-      // check if this is a session line (e.g., [SECTION])
-      if (str[0] == '[' && str[length - 1] == ']') {
-         strcpy(section, &str[1]);
-         section[length - 2] = 0; // remove the ]
-
-         trim(section); // trim section name after removing []
-      } else if ((p = strchr(str, '=')) != NULL) {
-         *(p++) = '\0';
-         trim(str);
-         trim(p);
-         Set(section, str, p);
+      if (line.front() == '[' && line.back() == ']') {
+         section = trim_copy(line.substr(1, line.size() - 2));
+      } else {
+         auto pos = line.find('=');
+         if (pos != std::string::npos) {
+            std::string key = trim_copy(line.substr(0, pos));
+            std::string val = trim_copy(line.substr(pos + 1));
+            Set(section.c_str(), key.c_str(), val.c_str());
+         }
       }
    }
-
-   fclose(fp); // load completed; close the file
    return 0;
 }
 
 int CIniFile::Save(const char *filename)
 {
-   FILE *fp = fopen(filename, "w");
-
-   if (fp == NULL) {
-      printf("cannot save to INI file: %s\n", filename);
+   std::ofstream file(filename);
+   if (!file) {
+      std::println(stderr, "cannot save to INI file: {}", filename);
       return 1;
    }
-
    for (int i = 0; i < key_count; i++) {
-      fprintf(fp, "[%s]\n", ini[i].key_name); // write the key name
-
-      // write all the values...
+      file << '[' << ini[i].key_name << "]\n";
       for (int j = 0; j < ini[i].value_count; j++) {
-         fprintf(fp, "%s=%s\n", ini[i].values[j].value_name, ini[i].values[j].value);
+         file << ini[i].values[j].value_name << '=' << ini[i].values[j].value << '\n';
       }
-
-      fprintf(fp, "\n"); // add a line feed
+      file << '\n';
    }
-
-   fclose(fp); // save completed; close the file
    return 0;
 }
 

@@ -24,6 +24,8 @@
 // Portions of this file are based on SGU Library by Stephane Magnenat
 
 #include "main.h"
+#include <algorithm>
+#include <cctype>
 
 void trim(char *str)
 {
@@ -44,6 +46,14 @@ void trim(char *str)
    // remove trailing blanks
    while (dest >= str && *dest <= ' ' && *dest > 0)
       *(dest--) = '\0';
+}
+
+inline std::string trim_str(std::string s)
+{
+   auto notSpace = [](unsigned char c) { return !std::isspace(c); };
+   s.erase(s.begin(), std::find_if(s.begin(), s.end(), notSpace));
+   s.erase(std::find_if(s.rbegin(), s.rend(), notSpace).base(), s.end());
+   return s;
 }
 
 // Does a varargs printf into a thread-local buffer, so we don't need to have
@@ -137,7 +147,7 @@ void TerminateOnError(const char *fmt, ...)
 char *UTIL_StrGetLine(const char *buf, int width, int &length)
 {
    int w = 0, i, index = 0;
-   static char str[256];
+   static thread_local char str[256];
 
    str[0] = '\0';
    length = 0;
