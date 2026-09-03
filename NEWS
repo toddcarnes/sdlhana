@@ -1,4 +1,4 @@
-1.0.3 Released on September 2nd, 2026.
+1.0.3 Released on September 3rd, 2026.
  - Feat: JSON i18n with autodiscovery — nlohmann/json via FetchContent, data/i18n/*.json (converted from titles*.txt %→{}), DiscoverLanguages() via filesystem, std::vformat migration, Settings autodiscovery, packaging and docs.
 
 1.0.2 Released on September 2nd, 2026.
