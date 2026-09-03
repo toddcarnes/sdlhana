@@ -356,16 +356,7 @@ void CGame::Settings()
    int curgm = atoi(cfg.Get("GAME", "GameMode", "0"));
    int curas = 3;
 
-   std::string allLangsStr = cfg.Get("OPTIONS", "AllLanguage", "eng");
-   std::vector<std::string> langs;
-   {
-      std::stringstream ss(allLangsStr);
-      std::string tok;
-      while (std::getline(ss, tok, ',')) {
-         if (!tok.empty()) langs.push_back(tok);
-      }
-      if (langs.empty()) langs.push_back("eng");
-   }
+   std::vector<std::string> langs = DiscoverLanguages();
    size_t langIdx = 0;
    {
       std::string curLang = cfg.Get("OPTIONS", "Language", "eng");
