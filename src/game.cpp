@@ -708,363 +708,16 @@ void CGame::PlayRound()
 
 void CGame::CardDiscarded(const CCard &c, CBasePlayer *current, int sx, int sy)
 {
-   // draw one card from the desk
    CCard drawn = CCard::GetRandomCard();
-
-   SDL_Surface *save1 = NULL, *save2 = NULL;
-   int x1 = 0, y1 = 0, x2 = 0, y2 = 0, getfour_month = -1;
-   bool leavethree = false;
-
-   int index[3] = {-1, -1, -1}, slot = -1;
-   int i;
-   int count = FindMatchingCards(c, index);
-   if (count >= 4) TerminateOnError("CGame::CardDiscarded(): count >= 3");
-
-   if (count <= 0) {
-      // No card matches the discarded one. Just throw the
-      // discarded one to the desk.
-      slot = FindFreeDeskCardSlot();
-      int dx = 140 + 48 * (slot / 2);
-      int dy = 100 + 78 * (slot & 1);
-
-      AnimCardMove(sx, sy, dx, dy);
-      gpGeneral->PlaySound(SOUND_MOVECARD);
-
-      m_DeskCards[slot] = c;
-      if (slot >= m_iNumDeskCard) {
-         m_iNumDeskCard = slot + 1;
-      }
-
-      UTIL_Delay(200);
-      slot = 999;
-
-      if (GetGameMode() == GAMEMODE_KOREAN) {
-         getfour_month = c.GetMonth();
-      }
-   } else if (count == 1) {
-      // Only one card matches the discarded one
-      slot = index[0];
-
-      x1 = 140 + 48 * (slot / 2) + 10;
-      y1 = 100 + 78 * (slot & 1) + 10;
-
-      save1 = AnimCardMove(sx, sy, x1, y1, 48, 78, NULL, true);
-      gpGeneral->PlaySound(SOUND_PICKCARD);
-      UTIL_Delay(200);
-
-      if (GetGameMode() == GAMEMODE_KOREAN && c == drawn &&
-         current->GetNumHandCard() > 1)
-      {
-         SDL_DestroySurface(save1);
-         save1 = NULL;
-         int slot1 = FindFreeDeskCardSlot();
-         m_DeskCards[slot1] = c;
-         if (slot1 >= m_iNumDeskCard) {
-            m_iNumDeskCard = slot1 + 1;
-         }
-         leavethree = true;
-         slot = 999;
-       } else {
-         CapturePair(current, c, slot);
-      }
-   } else if (GetGameMode() == GAMEMODE_KOREAN && count >= 3) {
-      // Three cards match the discarded one. Pick all these three cards
-      x1 = 140 + 48 * (index[0] / 2) + 10;
-      y1 = 100 + 78 * (index[0] & 1) + 10;
-
-      save1 = AnimCardMove(sx, sy, x1, y1, 48, 78, NULL, true);
-      gpGeneral->PlaySound(SOUND_PICKCARD);
-      UTIL_Delay(200);
-
-      AnimCardMove(x1, y1, 575, current->IsBot() ? 10 : 400, 48, 78, save1);
-      UTIL_Delay(50);
-
-      for (int k = 0; k < 3; k++) {
-         x1 = 140 + 48 * (index[k] / 2);
-         y1 = 100 + 78 * (index[k] & 1);
-
-         gpGeneral->PlaySound(SOUND_MOVECARD);
-         AnimCardMove(x1, y1, 575, current->IsBot() ? 10 : 400);
-         UTIL_Delay(50);
-      }
-
-      CaptureTriple(current, c, index[0], index[1], index[2]);
-
-      save1 = NULL;
-      slot = 999;
-
-      if (current->GetNumHandCard() > 1 && current->GetOpponent()->GetNumHandCard() > 0) {
-         GetOneCardFromOpponent(current);
-      }
-   } else if (count == 2) {
-      slot = ChooseSlotForPair(index[0], index[1], c, current);
-
-      x1 = 140 + 48 * (slot / 2) + 10;
-      y1 = 100 + 78 * (slot & 1) + 10;
-
-      save1 = AnimCardMove(sx, sy, x1, y1, 48, 78, NULL, true);
-      gpGeneral->PlaySound(SOUND_PICKCARD);
-      UTIL_Delay(200);
-
-      CapturePair(current, c, slot);
-
-      if (GetGameMode() == GAMEMODE_KOREAN) {
-         getfour_month = c.GetMonth();
-      }
-   }
-
-   // Draw the drawn card
-   save2 = SDL_CreateSurface(48, 78, SDL_PIXELFORMAT_RGBA8888);
-
-   SDL_Rect dstrect;
-   dstrect.x = 60;
-   dstrect.y = 105;
-   dstrect.w = 48;
-   dstrect.h = 78;
-
+   PhaseState st;
+   HandleDiscardPhase(c, drawn, current, sx, sy, st);
+   st.save2 = SDL_CreateSurface(48, 78, SDL_PIXELFORMAT_RGBA8888);
+   SDL_Rect dstrect{60, 105, 48, 78};
    UTIL_Delay(200);
    gpGeneral->DrawCard(drawn, 60, 105, 48, 78, true);
    UTIL_Delay(200);
-
-   count = FindMatchingCards(drawn, index);
-   if (count >= 4) TerminateOnError("CGame::CardDiscarded(): count >= 3");
-
-   if (count <= 0 || leavethree) {
-      // No card matches the discarded one. Just throw the
-      // discarded one to the desk.
-      int oldslot = slot;
-      slot = FindFreeDeskCardSlot(oldslot);
-      int dx = 140 + 48 * (slot / 2);
-      int dy = 100 + 78 * (slot & 1);
-
-      SDL_Surface *card2 = AnimCardMove(60, 105, dx, dy, 48, 78, save2, true, true);
-      gpGeneral->PlaySound(SOUND_MOVECARD);
-
-      m_DeskCards[slot] = drawn;
-      if (slot >= m_iNumDeskCard) {
-         m_iNumDeskCard = slot + 1;
-      }
-
-      if (slot == oldslot + 1 && !(oldslot & 1)) {
-         assert(save1 != NULL);
-         SDL_Rect dstrect2;
-
-         dstrect.x = 10;
-         dstrect.y = 0;
-         dstrect.w = 38;
-         dstrect.h = 10;
-
-         dstrect2.x = 0;
-         dstrect2.y = 68;
-         dstrect2.w = 38;
-         dstrect2.h = 10;
-
-         if (card2 != NULL && save1 != NULL) {
-            SDL_BlitSurface(card2, &dstrect, save1, &dstrect2);
-         }
-
-         dstrect2.x = dx + 10;
-         dstrect2.y = dy;
-
-         gpGeneral->UpdateScreen(dstrect2.x, dstrect2.y, dstrect2.w, dstrect2.h);
-      } else if (slot == oldslot + 2) {
-         SDL_Rect dstrect2;
-
-         dstrect.x = 0;
-         dstrect.y = 10;
-         dstrect.w = 10;
-         dstrect.h = 68;
-
-         dstrect2.x = 38;
-         dstrect2.y = 0;
-         dstrect2.w = 10;
-         dstrect2.h = 68;
-
-         if (card2 != NULL && save1 != NULL) {
-            SDL_BlitSurface(card2, &dstrect, save1, &dstrect2);
-         }
-
-         dstrect2.x = dx;
-         dstrect2.y = dy + 10;
-
-         gpGeneral->UpdateScreen(dstrect2.x, dstrect2.y, dstrect2.w, dstrect2.h);
-      } else if (slot == oldslot + 3 && !(oldslot & 1)) {
-         SDL_Rect dstrect2;
-
-         dstrect.x = 38;
-         dstrect.y = 68;
-         dstrect.w = 10;
-         dstrect.h = 10;
-
-         dstrect2.x = 0;
-         dstrect2.y = 0;
-         dstrect2.w = 10;
-         dstrect2.h = 10;
-
-         if (card2 != NULL && save1 != NULL) {
-            SDL_BlitSurface(card2, &dstrect2, save1, &dstrect);
-         }
-
-         dstrect.x = dx;
-         dstrect.y = dy;
-
-         gpGeneral->UpdateScreen(dstrect.x, dstrect.y, dstrect.w, dstrect.h);
-      }
-
-      if (save2 != NULL) {
-         SDL_DestroySurface(save2);
-         save2 = NULL;
-      }
-      if (card2 != NULL) {
-         SDL_DestroySurface(card2);
-         card2 = NULL;
-      }
-
-      UTIL_Delay(200);
-
-      if (GetGameMode() == GAMEMODE_KOREAN && leavethree) {
-         current->m_iNumLeaveThree++;
-         if (current->GetNumHandCard() >= 8) {
-            // This happens in first round. Get 3 points from opponent
-            gpGeneral->ClearPromptArea();
-            CBox box(20, 260, 595, 50, 40, 55, 85);
-            gpGeneral->PlaySound(SOUND_HINT);
-            if (current->IsBot()) {
-               gpGeneral->DrawTextInBox(msg("comget3pts"), 20, 260, 595, 50, 255, 255, 255, 18);
-               m_iScore -= 3;
-            } else {
-               gpGeneral->DrawTextInBox(msg("youget3pts"), 20, 260, 595, 50, 255, 255, 255, 18);
-               m_iScore += 3;
-            }
-            UTIL_Delay(3500);
-            DrawScore();
-         }
-      }
-   } else if (count == 1) {
-      // Only one card matches the discarded one
-      x2 = 140 + 48 * (index[0] / 2) + 10;
-      y2 = 100 + 78 * (index[0] & 1) + 10;
-
-      save2 = AnimCardMove(60, 105, x2, y2, 48, 78, save2, true);
-      gpGeneral->PlaySound(SOUND_PICKCARD);
-      UTIL_Delay(200);
-
-      if (drawn.GetMonth() == getfour_month) {
-         if (current->GetNumHandCard() > 1 && current->GetOpponent()->GetNumHandCard() > 0) {
-            GetOneCardFromOpponent(current);
-         }
-      }
-
-      CapturePair(current, drawn, index[0]);
-   } else if (GetGameMode() == GAMEMODE_KOREAN && count >= 3) {
-      // Three cards match the discarded one. Pick all these three cards
-      x2 = 140 + 48 * (index[0] / 2) + 10;
-      y2 = 100 + 78 * (index[0] & 1) + 10;
-
-      save2 = AnimCardMove(60, 105, x2, y2, 48, 78, save2, true);
-      gpGeneral->PlaySound(SOUND_PICKCARD);
-      UTIL_Delay(200);
-
-      if (save1 != NULL && save2 != NULL && (x1 < x2 || y1 < y2)) {
-         SDL_Surface *savet = save1;
-         save1 = save2;
-         save2 = savet;
-         i = x1;
-         x1 = x2;
-         x2 = i;
-         i = y1;
-         y1 = y2;
-         y2 = i;
-      }
-
-      gpGeneral->PlaySound(SOUND_MOVECARD);
-      AnimCardMove(x2, y2, 575, current->IsBot() ? 10 : 400, 48, 78, save2);
-      UTIL_Delay(50);
-      gpGeneral->PlaySound(SOUND_MOVECARD);
-      AnimCardMove(x2 - 10, y2 - 10, 575, current->IsBot() ? 10 : 400);
-      UTIL_Delay(50);
-      save2 = NULL;
-
-      if (save1 != NULL) {
-         gpGeneral->PlaySound(SOUND_MOVECARD);
-         AnimCardMove(x1, y1, 575, current->IsBot() ? 10 : 400, 48, 78, save1);
-         UTIL_Delay(50);
-         gpGeneral->PlaySound(SOUND_MOVECARD);
-         AnimCardMove(x1 - 10, y1 - 10, 575, current->IsBot() ? 10 : 400);
-         UTIL_Delay(50);
-         save1 = NULL;
-      }
-
-      for (int k = 1; k < 3; k++) {
-         x2 = 140 + 48 * (index[k] / 2);
-         y2 = 100 + 78 * (index[k] & 1);
-
-         gpGeneral->PlaySound(SOUND_MOVECARD);
-         AnimCardMove(x2, y2, 575, current->IsBot() ? 10 : 400);
-         UTIL_Delay(50);
-      }
-
-      CaptureTriple(current, drawn, index[0], index[1], index[2]);
-
-      if (current->GetNumHandCard() > 1 && current->GetOpponent()->GetNumHandCard() > 0) {
-         GetOneCardFromOpponent(current);
-      }
-   } else if (count == 2) {
-      slot = ChooseSlotForPair(index[0], index[1], drawn, current);
-      x2 = 140 + 48 * (slot / 2) + 10;
-      y2 = 100 + 78 * (slot & 1) + 10;
-
-      save2 = AnimCardMove(60, 105, x2, y2, 48, 78, save2, true);
-      gpGeneral->PlaySound(SOUND_PICKCARD);
-      UTIL_Delay(200);
-
-      CapturePair(current, drawn, slot);
-   }
-
-   UTIL_Delay(200);
-
-   if (save1 != NULL && save2 != NULL && (x1 < x2 || y1 < y2)) {
-      SDL_Surface *savet = save1;
-      save1 = save2;
-      save2 = savet;
-      i = x1;
-      x1 = x2;
-      x2 = i;
-      i = y1;
-      y1 = y2;
-      y2 = i;
-   }
-
-   if (save2 != NULL) {
-      gpGeneral->PlaySound(SOUND_MOVECARD);
-      AnimCardMove(x2, y2, 575, current->IsBot() ? 10 : 400, 48, 78, save2);
-      UTIL_Delay(50);
-      gpGeneral->PlaySound(SOUND_MOVECARD);
-      AnimCardMove(x2 - 10, y2 - 10, 575, current->IsBot() ? 10 : 400);
-      UTIL_Delay(50);
-   }
-
-   if (save1 != NULL) {
-      gpGeneral->PlaySound(SOUND_MOVECARD);
-      AnimCardMove(x1, y1, 575, current->IsBot() ? 10 : 400, 48, 78, save1);
-      UTIL_Delay(50);
-      gpGeneral->PlaySound(SOUND_MOVECARD);
-      AnimCardMove(x1 - 10, y1 - 10, 575, current->IsBot() ? 10 : 400);
-      UTIL_Delay(50);
-   }
-
-   if (GetGameMode() == GAMEMODE_KOREAN) {
-      for (i = 0; i < gpGame->GetNumDeskCard(); i++) {
-         if (gpGame->GetDeskCard(i).IsValid()) {
-            break;
-         }
-      }
-      if (i >= gpGame->GetNumDeskCard()) {
-         if (current->GetNumHandCard() > 1 && current->GetOpponent()->GetNumHandCard() > 0) {
-            GetOneCardFromOpponent(current);
-         }
-      }
-   }
+   HandleDrawnPhase(drawn, current, st);
+   AnimatePendingCaptures(st, current);
 }
 
 void CGame::GetOneCardFromOpponent(CBasePlayer *current)
@@ -1670,4 +1323,211 @@ void CGame::ValidateInitialDesk()
       }
    }
 }
+
+void CGame::HandleDiscardPhase(const CCard& c, const CCard& drawn, CBasePlayer* cur, int sx, int sy, PhaseState& st)
+{
+   int index[3] = {-1,-1,-1};
+   int count = FindMatchingCards(c, index);
+   if (count >= 4) TerminateOnError("CGame::CardDiscarded(): count >= 3");
+   if (count <= 0) {
+      st.slot = FindFreeDeskCardSlot();
+      int dx = 140 + 48 * (st.slot / 2);
+      int dy = 100 + 78 * (st.slot & 1);
+      AnimCardMove(sx, sy, dx, dy);
+      gpGeneral->PlaySound(SOUND_MOVECARD);
+      m_DeskCards[st.slot] = c;
+      if (st.slot >= m_iNumDeskCard) m_iNumDeskCard = st.slot + 1;
+      UTIL_Delay(200);
+      st.slot = 999;
+      if (GetGameMode() == GAMEMODE_KOREAN) st.getfourMonth = c.GetMonth();
+   } else if (count == 1) {
+      st.slot = index[0];
+      st.x1 = 140 + 48 * (st.slot / 2) + 10;
+      st.y1 = 100 + 78 * (st.slot & 1) + 10;
+      st.save1 = AnimCardMove(sx, sy, st.x1, st.y1, 48, 78, NULL, true);
+      gpGeneral->PlaySound(SOUND_PICKCARD);
+      UTIL_Delay(200);
+      if (GetGameMode() == GAMEMODE_KOREAN && c == drawn && cur->GetNumHandCard() > 1) {
+         SDL_DestroySurface(st.save1);
+         st.save1 = NULL;
+         int slot1 = FindFreeDeskCardSlot();
+         m_DeskCards[slot1] = c;
+         if (slot1 >= m_iNumDeskCard) m_iNumDeskCard = slot1 + 1;
+         st.leavethree = true;
+         st.slot = 999;
+      } else {
+         CapturePair(cur, c, st.slot);
+      }
+   } else if (GetGameMode() == GAMEMODE_KOREAN && count >= 3) {
+      st.x1 = 140 + 48 * (index[0] / 2) + 10;
+      st.y1 = 100 + 78 * (index[0] & 1) + 10;
+      st.save1 = AnimCardMove(sx, sy, st.x1, st.y1, 48, 78, NULL, true);
+      gpGeneral->PlaySound(SOUND_PICKCARD);
+      UTIL_Delay(200);
+      AnimCardMove(st.x1, st.y1, 575, cur->IsBot() ? 10 : 400, 48, 78, st.save1);
+      UTIL_Delay(50);
+      for (int k = 0; k < 3; k++) {
+         int tx = 140 + 48 * (index[k] / 2);
+         int ty = 100 + 78 * (index[k] & 1);
+         gpGeneral->PlaySound(SOUND_MOVECARD);
+         AnimCardMove(tx, ty, 575, cur->IsBot() ? 10 : 400);
+         UTIL_Delay(50);
+      }
+      CaptureTriple(cur, c, index[0], index[1], index[2]);
+      st.save1 = NULL;
+      st.slot = 999;
+      if (cur->GetNumHandCard() > 1 && cur->GetOpponent()->GetNumHandCard() > 0) GetOneCardFromOpponent(cur);
+   } else if (count == 2) {
+      st.slot = ChooseSlotForPair(index[0], index[1], c, cur);
+      st.x1 = 140 + 48 * (st.slot / 2) + 10;
+      st.y1 = 100 + 78 * (st.slot & 1) + 10;
+      st.save1 = AnimCardMove(sx, sy, st.x1, st.y1, 48, 78, NULL, true);
+      gpGeneral->PlaySound(SOUND_PICKCARD);
+      UTIL_Delay(200);
+      CapturePair(cur, c, st.slot);
+      if (GetGameMode() == GAMEMODE_KOREAN) st.getfourMonth = c.GetMonth();
+   }
+}
+
+void CGame::FixupOverlappedSlot(SDL_Surface* save1, SDL_Surface* card2, int oldSlot, int newSlot, int dx, int dy)
+{
+   if (save1 == NULL || card2 == NULL) return;
+   if (newSlot == oldSlot + 1 && !(oldSlot & 1)) {
+      SDL_Rect src{10,0,38,10}, dst{0,68,38,10};
+      SDL_BlitSurface(card2, &src, save1, &dst);
+      SDL_Rect upd{dx+10, dy, 38, 10};
+      gpGeneral->UpdateScreen(upd.x, upd.y, upd.w, upd.h);
+   } else if (newSlot == oldSlot + 2) {
+      SDL_Rect src{0,10,10,68}, dst{38,0,10,68};
+      SDL_BlitSurface(card2, &src, save1, &dst);
+      SDL_Rect upd{dx, dy+10, 10, 68};
+      gpGeneral->UpdateScreen(upd.x, upd.y, upd.w, upd.h);
+   } else if (newSlot == oldSlot + 3 && !(oldSlot & 1)) {
+      SDL_Rect src{0,0,10,10}, dst{38,68,10,10};
+      SDL_BlitSurface(card2, &src, save1, &dst);
+      SDL_Rect upd{dx, dy, 10, 10};
+      gpGeneral->UpdateScreen(upd.x, upd.y, upd.w, upd.h);
+   }
+}
+
+void CGame::HandleDrawnPhase(const CCard& drawn, CBasePlayer* cur, PhaseState& st)
+{
+   int index[3] = {-1,-1,-1};
+   int count = FindMatchingCards(drawn, index);
+   if (count >= 4) TerminateOnError("CGame::CardDiscarded(): count >= 3");
+   if (count <= 0 || st.leavethree) {
+      int oldSlot = st.slot;
+      st.slot = FindFreeDeskCardSlot(oldSlot);
+      int dx = 140 + 48 * (st.slot / 2);
+      int dy = 100 + 78 * (st.slot & 1);
+      SDL_Surface* card2 = AnimCardMove(60, 105, dx, dy, 48, 78, st.save2, true, true);
+      gpGeneral->PlaySound(SOUND_MOVECARD);
+      m_DeskCards[st.slot] = drawn;
+      if (st.slot >= m_iNumDeskCard) m_iNumDeskCard = st.slot + 1;
+      FixupOverlappedSlot(st.save1, card2, oldSlot, st.slot, dx, dy);
+      if (st.save2) { SDL_DestroySurface(st.save2); st.save2 = NULL; }
+      if (card2) { SDL_DestroySurface(card2); card2 = NULL; }
+      UTIL_Delay(200);
+      if (GetGameMode() == GAMEMODE_KOREAN && st.leavethree) {
+         cur->m_iNumLeaveThree++;
+         if (cur->GetNumHandCard() >= 8) {
+            gpGeneral->ClearPromptArea();
+            CBox box(20, 260, 595, 50, 40, 55, 85);
+            gpGeneral->PlaySound(SOUND_HINT);
+            if (cur->IsBot()) { gpGeneral->DrawTextInBox(msg("comget3pts"), 20, 260, 595, 50, 255, 255, 255, 18); m_iScore -= 3; }
+            else { gpGeneral->DrawTextInBox(msg("youget3pts"), 20, 260, 595, 50, 255, 255, 255, 18); m_iScore += 3; }
+            UTIL_Delay(3500);
+            DrawScore();
+         }
+      }
+   } else if (count == 1) {
+      st.x2 = 140 + 48 * (index[0] / 2) + 10;
+      st.y2 = 100 + 78 * (index[0] & 1) + 10;
+      st.save2 = AnimCardMove(60, 105, st.x2, st.y2, 48, 78, st.save2, true);
+      gpGeneral->PlaySound(SOUND_PICKCARD);
+      UTIL_Delay(200);
+      if (drawn.GetMonth() == st.getfourMonth) {
+         if (cur->GetNumHandCard() > 1 && cur->GetOpponent()->GetNumHandCard() > 0) GetOneCardFromOpponent(cur);
+      }
+      CapturePair(cur, drawn, index[0]);
+   } else if (GetGameMode() == GAMEMODE_KOREAN && count >= 3) {
+      st.x2 = 140 + 48 * (index[0] / 2) + 10;
+      st.y2 = 100 + 78 * (index[0] & 1) + 10;
+      st.save2 = AnimCardMove(60, 105, st.x2, st.y2, 48, 78, st.save2, true);
+      gpGeneral->PlaySound(SOUND_PICKCARD);
+      UTIL_Delay(200);
+      if (st.save1 && st.save2 && (st.x1 < st.x2 || st.y1 < st.y2)) {
+         std::swap(st.save1, st.save2);
+         std::swap(st.x1, st.x2);
+         std::swap(st.y1, st.y2);
+      }
+      gpGeneral->PlaySound(SOUND_MOVECARD);
+      AnimCardMove(st.x2, st.y2, 575, cur->IsBot() ? 10 : 400, 48, 78, st.save2);
+      UTIL_Delay(50);
+      gpGeneral->PlaySound(SOUND_MOVECARD);
+      AnimCardMove(st.x2 - 10, st.y2 - 10, 575, cur->IsBot() ? 10 : 400);
+      UTIL_Delay(50);
+      st.save2 = NULL;
+      if (st.save1) {
+         gpGeneral->PlaySound(SOUND_MOVECARD);
+         AnimCardMove(st.x1, st.y1, 575, cur->IsBot() ? 10 : 400, 48, 78, st.save1);
+         UTIL_Delay(50);
+         gpGeneral->PlaySound(SOUND_MOVECARD);
+         AnimCardMove(st.x1 - 10, st.y1 - 10, 575, cur->IsBot() ? 10 : 400);
+         UTIL_Delay(50);
+         st.save1 = NULL;
+      }
+      for (int k = 1; k < 3; k++) {
+         int tx = 140 + 48 * (index[k] / 2);
+         int ty = 100 + 78 * (index[k] & 1);
+         gpGeneral->PlaySound(SOUND_MOVECARD);
+         AnimCardMove(tx, ty, 575, cur->IsBot() ? 10 : 400);
+         UTIL_Delay(50);
+      }
+      CaptureTriple(cur, drawn, index[0], index[1], index[2]);
+      if (cur->GetNumHandCard() > 1 && cur->GetOpponent()->GetNumHandCard() > 0) GetOneCardFromOpponent(cur);
+   } else if (count == 2) {
+      st.slot = ChooseSlotForPair(index[0], index[1], drawn, cur);
+      st.x2 = 140 + 48 * (st.slot / 2) + 10;
+      st.y2 = 100 + 78 * (st.slot & 1) + 10;
+      st.save2 = AnimCardMove(60, 105, st.x2, st.y2, 48, 78, st.save2, true);
+      gpGeneral->PlaySound(SOUND_PICKCARD);
+      UTIL_Delay(200);
+      CapturePair(cur, drawn, st.slot);
+   }
+}
+
+void CGame::AnimatePendingCaptures(PhaseState& st, CBasePlayer* cur)
+{
+   UTIL_Delay(200);
+   if (st.save1 && st.save2 && (st.x1 < st.x2 || st.y1 < st.y2)) {
+      std::swap(st.save1, st.save2);
+      std::swap(st.x1, st.x2);
+      std::swap(st.y1, st.y2);
+   }
+   if (st.save2) {
+      gpGeneral->PlaySound(SOUND_MOVECARD);
+      AnimCardMove(st.x2, st.y2, 575, cur->IsBot() ? 10 : 400, 48, 78, st.save2);
+      UTIL_Delay(50);
+      gpGeneral->PlaySound(SOUND_MOVECARD);
+      AnimCardMove(st.x2 - 10, st.y2 - 10, 575, cur->IsBot() ? 10 : 400);
+      UTIL_Delay(50);
+   }
+   if (st.save1) {
+      gpGeneral->PlaySound(SOUND_MOVECARD);
+      AnimCardMove(st.x1, st.y1, 575, cur->IsBot() ? 10 : 400, 48, 78, st.save1);
+      UTIL_Delay(50);
+      gpGeneral->PlaySound(SOUND_MOVECARD);
+      AnimCardMove(st.x1 - 10, st.y1 - 10, 575, cur->IsBot() ? 10 : 400);
+      UTIL_Delay(50);
+   }
+   if (GetGameMode() == GAMEMODE_KOREAN) {
+      int i;
+      for (i = 0; i < GetNumDeskCard(); i++) if (GetDeskCard(i).IsValid()) break;
+      if (i >= GetNumDeskCard()) {
+         if (cur->GetNumHandCard() > 1 && cur->GetOpponent()->GetNumHandCard() > 0) GetOneCardFromOpponent(cur);
+      }
+   }
+}
+
 

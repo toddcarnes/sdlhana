@@ -88,6 +88,20 @@ private:
    void            CapturePair(CBasePlayer *player, const CCard &played, int deskIdx);
    void            CaptureTriple(CBasePlayer *player, const CCard &played, int idx0, int idx1, int idx2);
    void            ValidateInitialDesk();
+
+   // Phase helpers to reduce CardDiscarded below 150 lines (review #1 follow-up)
+   struct PhaseState {
+      SDL_Surface* save1 = nullptr;
+      SDL_Surface* save2 = nullptr;
+      int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+      int slot = -1;
+      int getfourMonth = -1;
+      bool leavethree = false;
+   };
+   void HandleDiscardPhase(const CCard& c, const CCard& drawn, CBasePlayer* cur, int sx, int sy, PhaseState& st);
+   void HandleDrawnPhase(const CCard& drawn, CBasePlayer* cur, PhaseState& st);
+   void FixupOverlappedSlot(SDL_Surface* save1, SDL_Surface* card2, int oldSlot, int newSlot, int dx, int dy);
+   void AnimatePendingCaptures(PhaseState& st, CBasePlayer* cur);
 };
 
 #include <memory>
