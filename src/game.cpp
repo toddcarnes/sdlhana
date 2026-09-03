@@ -106,7 +106,7 @@ void CGame::RulesMenu()
 {
    int scroll_y = 0;
    int canvas_w = 540;
-   int canvas_h = 4200;
+   int canvas_h = 4500;
 
    SurfacePtr canvas(SDL_CreateSurface(canvas_w, canvas_h, SDL_PIXELFORMAT_RGBA8888), SDL_DestroySurface);
    if (!canvas) return;
@@ -191,27 +191,44 @@ void CGame::RulesMenu()
    DrawCanvasCard(28, 100, card_y);// Moon
    DrawCanvasCard(40, 145, card_y);// Rain Man
    DrawCanvasCard(44, 190, card_y);// Phoenix
-   int desc_y = DrawCanvasText("Five Lights (10 pts), Four Lights (8 pts), Rain Four Lights (7 pts), Three Lights (5 pts).", 240, card_y, 285, 255, 255, 255, 13);
+    int desc_y = DrawCanvasText("Five Lights (15 pts), Four Lights (10 pts), Rain Four Lights (8 pts), Three Lights (6 pts) — KR: 15/4/4/3 pts (+ Rain Three 2 pts).", 240, card_y, 285, 255, 255, 255, 13);
    cy = (card_y + 66 > desc_y ? card_y + 66 : desc_y) + 18;
 
-   cy = DrawCanvasText("Ribbons (Akatan & Aotan):", 10, cy, 520, 0, 255, 255, 15);
-   card_y = cy;
-   DrawCanvasCard(1, 10, card_y);
-   DrawCanvasCard(5, 55, card_y);
-   DrawCanvasCard(9, 100, card_y);
-   DrawCanvasCard(21, 145, card_y);
-   DrawCanvasCard(33, 190, card_y);
-   DrawCanvasCard(37, 235, card_y);
-   desc_y = DrawCanvasText("Red Poetry Ribbons Akatan (5 pts), Blue Ribbons Aotan (5 pts), 5 Plain Ribbons (1 pt + 1 pt per extra).", 285, card_y, 240, 255, 255, 255, 13);
-   cy = (card_y + 66 > desc_y ? card_y + 66 : desc_y) + 18;
+    cy = DrawCanvasText("Ribbons (Akatan, Aotan & Tanzaku):", 10, cy, 520, 0, 255, 255, 15);
+    card_y = cy;
+    DrawCanvasCard(1, 10, card_y);
+    DrawCanvasCard(5, 55, card_y);
+    DrawCanvasCard(9, 100, card_y);
+    DrawCanvasCard(21, 145, card_y);
+    DrawCanvasCard(33, 190, card_y);
+    DrawCanvasCard(37, 235, card_y);
+    desc_y = DrawCanvasText("Red Poetry Akatan (6 pts JP / 3 pts KR), Blue Aotan (6 pts JP / 3 pts KR).", 285, card_y, 240, 255, 255, 255, 13);
+    cy = (card_y + 66 > desc_y ? card_y + 66 : desc_y) + 8;
+    // Second row: plain/grass Tanzaku (Apr/May/Jul/Nov) — part of 5-Ribbon yaku
+    card_y = cy;
+    DrawCanvasCard(13, 10, card_y);
+    DrawCanvasCard(17, 55, card_y);
+    DrawCanvasCard(25, 100, card_y);
+    DrawCanvasCard(42, 145, card_y);
+    desc_y = DrawCanvasText("Plain/Grass Tanzaku (Apr/May/Jul/Nov) — 5 Ribbons (1 pt + 1 pt per extra; Chodan 3 pts in KR).", 190, card_y, 335, 255, 255, 255, 13);
+    cy = (card_y + 66 > desc_y ? card_y + 66 : desc_y) + 18;
 
-   cy = DrawCanvasText("Ino-Shika-Chou (Boar, Deer, Butterflies):", 10, cy, 520, 0, 255, 255, 15);
-   card_y = cy;
-   DrawCanvasCard(24, 10, card_y);
-   DrawCanvasCard(36, 55, card_y);
-   DrawCanvasCard(20, 100, card_y);
-   desc_y = DrawCanvasText("Ino-Shika-Chou (5 pts + 1 pt per extra animal), 5 Animals (1 pt + 1 pt per extra animal).", 150, card_y, 375, 255, 255, 255, 13);
-   cy = (card_y + 66 > desc_y ? card_y + 66 : desc_y) + 18;
+    cy = DrawCanvasText("Ino-Shika-Chou (Boar, Deer, Butterflies):", 10, cy, 520, 0, 255, 255, 15);
+    card_y = cy;
+    DrawCanvasCard(24, 10, card_y);
+    DrawCanvasCard(36, 55, card_y);
+    DrawCanvasCard(20, 100, card_y);
+    desc_y = DrawCanvasText("Ino-Shika-Chou (5 pts + 1 pt per extra animal), 5 Animals (1 pt + 1 pt per extra animal).", 150, card_y, 375, 255, 255, 255, 13);
+    cy = (card_y + 66 > desc_y ? card_y + 66 : desc_y) + 8;
+    card_y = cy;
+    DrawCanvasCard(8, 10, card_y);   // Curtain / Flower (Mar Light)
+    DrawCanvasCard(32, 55, card_y);  // Sake Cup (Sep)
+    DrawCanvasCard(28, 100, card_y); // Moon (Aug Light)
+    DrawCanvasCard(32, 145, card_y); // Sake Cup again
+    DrawCanvasCard(2, 190, card_y);  // Plain example (Jan)
+    DrawCanvasCard(6, 235, card_y);  // Plain example (Feb)
+    desc_y = DrawCanvasText("Hanami Flower+Sake (3 pts), Tsukimi Moon+Sake (3 pts) — JP only; 10 Plain Kasu (1 pt + 1 pt per extra) — all modes.", 285, card_y, 240, 255, 255, 255, 13);
+    cy = (card_y + 66 > desc_y ? card_y + 66 : desc_y) + 18;
 
    // SECTION 4: KOREAN GO-STOP RULES & PENALTIES
    cy += 10;

@@ -146,10 +146,10 @@ In **Koi-Koi**, points are awarded based on traditional combination sets (*Yaku*
   <img src="assets/cards_trad/44_Hanafuda%20December%20Hikari%20Alt.svg.png" width="80" alt="Phoenix">
 </p>
 
-- **Five Lights (五光)** — 10 Points: All 5 Light cards (Crane, Curtain, Moon, Rain Man, Phoenix).
-- **Four Lights (四光)** — 8 Points: Any 4 Light cards excluding Rain Man.
-- **Rain Four Lights (雨四光)** — 7 Points: Any 4 Light cards including Rain Man.
-- **Three Lights (三光)** — 5 Points: Any 3 Light cards excluding Rain Man.
+- **Five Lights (五光)** — 15 Points: All 5 Light cards (Crane, Curtain, Moon, Rain Man, Phoenix). *Korean: 15 pts.*
+- **Four Lights (四光)** — 10 Points: Any 4 Light cards excluding Rain Man. *Korean: 4 pts.*
+- **Rain Four Lights (雨四光)** — 8 Points: Any 4 Light cards including Rain Man. *Korean: 4 pts.*
+- **Three Lights (三光)** — 6 Points: Any 3 Light cards excluding Rain Man. *Korean: 3 pts (+ Rain Three 2 pts).*
 
 ### Ribbons (*Tanzaku*)
 <p align="center">
@@ -160,10 +160,17 @@ In **Koi-Koi**, points are awarded based on traditional combination sets (*Yaku*
   <img src="assets/cards_trad/33_Hanafuda%20September%20Tanzaku%20Alt.svg.png" width="80" alt="Sep Blue">
   <img src="assets/cards_trad/37_Hanafuda%20October%20Tanzaku%20Alt.svg.png" width="80" alt="Oct Blue">
 </p>
+<p align="center">
+  <img src="assets/cards_trad/13_Hanafuda%20April%20Tanzaku%20Alt.svg.png" width="80" alt="Apr Grass">
+  <img src="assets/cards_trad/17_Hanafuda%20May%20Tanzaku%20Alt.svg.png" width="80" alt="May Grass">
+  <img src="assets/cards_trad/25_Hanafuda%20July%20Tanzaku%20Alt.svg.png" width="80" alt="Jul Grass">
+  <img src="assets/cards_trad/42_Hanafuda%20November%20Tanzaku%20Alt.svg.png" width="80" alt="Nov Grass">
+</p>
 
-- **Red Poetry Ribbons (赤短 - Akatan)** — 5 Points: All 3 red poetry ribbons (Jan, Feb, Mar) + 1 pt per extra ribbon.
-- **Blue Ribbons (青短 - Aotan)** — 5 Points: All 3 blue ribbons (Jun, Sep, Oct) + 1 pt per extra ribbon.
-- **Plain Ribbons (短冊 - Tanzaku)** — 1 Point: Any 5 ribbons + 1 pt per extra ribbon.
+- **Red Poetry Ribbons (赤短 - Akatan)** — 6 Points JP / 3 Points KR: All 3 red poetry ribbons (Jan, Feb, Mar) + 1 pt per extra ribbon.
+- **Blue Ribbons (青短 - Aotan)** — 6 Points JP / 3 Points KR: All 3 blue ribbons (Jun, Sep, Oct) + 1 pt per extra ribbon.
+- **Plain / Grass Ribbons (草短 - Kusatan)** — Part of 5-Ribbon yaku: Any 5 ribbons (1 pt + 1 pt per extra). *Korean Chodan (초단): 3 grass ribbons = 3 pts.*
+- **Ribbons (短冊 - Tanzaku)** — 1 Point: Any 5 ribbons + 1 pt per extra ribbon.
 
 ### Animals (*Tane*)
 <p align="center">
@@ -174,6 +181,19 @@ In **Koi-Koi**, points are awarded based on traditional combination sets (*Yaku*
 
 - **Ino-Shika-Chou (猪鹿蝶)** — 5 Points: Boar (Jul), Deer (Oct), and Butterflies (Jun) + 1 pt per extra animal.
 - **Animals (タネ - Tane)** — 1 Point: Any 5 animal cards + 1 pt per extra animal.
+
+### Sake Cup & Plain Cards (*Kasu*)
+<p align="center">
+  <img src="assets/cards_trad/08_Hanafuda%20March%20Hikari%20Alt.svg.png" width="80" alt="Mar Curtain Flower">
+  <img src="assets/cards_trad/32_Hanafuda%20September%20Tane%20Alt.svg.png" width="80" alt="Sep Sake Cup">
+  <img src="assets/cards_trad/28_Hanafuda%20August%20Hikari%20Alt.svg.png" width="80" alt="Aug Moon">
+  <img src="assets/cards_trad/02_Hanafuda%20January%20Kasu%201%20Alt.svg.png" width="80" alt="Jan Plain">
+  <img src="assets/cards_trad/06_Hanafuda%20February%20Kasu%201%20Alt.svg.png" width="80" alt="Feb Plain">
+</p>
+
+- **Hanami (花見で一杯)** — 3 Points JP only: Curtain (Mar Light, card 8) + Sake Cup (Sep, card 32).
+- **Tsukimi (月見で一杯)** — 3 Points JP only: Moon (Aug Light, card 28) + Sake Cup (Sep, card 32).
+- **Plain Cards (カス - Kasu)** — 1 Point: Any 10 plain cards + 1 pt per extra plain. *Sake Cup counts as 1 plain JP / 2 plain KR; Nov/Dec Ssangpi (43,45) count as 2 plain KR.*
 
 ---
 
