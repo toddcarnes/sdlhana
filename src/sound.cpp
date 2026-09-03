@@ -44,13 +44,6 @@ int SOUND_GetVolume()
    return g_volume;
 }
 
-void SOUND_FillAudio(void *udata, unsigned char *stream, int len)
-{
-   (void)udata;
-   (void)stream;
-   (void)len;
-}
-
 int SOUND_OpenAudio(int freq, int format, int channels, int samples)
 {
    (void)freq;

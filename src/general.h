@@ -52,7 +52,6 @@ public:
    CGeneral();
    ~CGeneral();
 
-   void          ScreenFade(int duration = 500, SDL_Surface *s = NULL);
    int           ReadKey();
    void          UpdateScreen(int x = 0, int y = 0, int w = 0, int h = 0);
 

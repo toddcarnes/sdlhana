@@ -49,15 +49,6 @@ CGeneral::~CGeneral()
    FreeSound();
 }
 
-void CGeneral::ScreenFade(int duration, SDL_Surface *s)
-{
-   (void)duration;
-   (void)s;
-   if (Renderer() != nullptr) {
-      SDL_RenderPresent(Renderer());
-   }
-}
-
 int CGeneral::ReadKey()
 {
    SDL_Event event;
