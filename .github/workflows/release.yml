@@ -94,11 +94,9 @@ jobs:
         mkdir -p build/sdlhana.app/Contents/Resources
         mkdir -p build/sdlhana.app/Contents/MacOS
         cp -r src/data build/sdlhana.app/Contents/Resources/
-        cp -r src/fonts build/sdlhana.app/Contents/Resources/
         cp -r src/images build/sdlhana.app/Contents/Resources/
         cp -r src/sound build/sdlhana.app/Contents/Resources/
         cp -r src/data build/sdlhana.app/Contents/MacOS/
-        cp -r src/fonts build/sdlhana.app/Contents/MacOS/
         cp -r src/images build/sdlhana.app/Contents/MacOS/
         cp -r src/sound build/sdlhana.app/Contents/MacOS/
         find build -name "*.dylib" -exec cp {} build/sdlhana.app/Contents/MacOS/ \; 2>/dev/null || true
@@ -136,7 +134,6 @@ jobs:
         mkdir -p dist
         find build -type f -name "sdlhana" -exec cp {} dist/ \;
         cp -r src/data dist/
-        cp -r src/fonts dist/
         cp -r src/images dist/
         cp -r src/sound dist/
         find build -name "*.so*" -exec cp {} dist/ \; 2>/dev/null || true
