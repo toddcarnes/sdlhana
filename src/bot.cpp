@@ -55,6 +55,8 @@ void CBot::LoadConfig()
    s_botConfig.koikoiRandomMax    = getInt("KoikoiRandomMax", 300);
    s_botConfig.opponentThreatThreshold = getInt("OpponentThreatThreshold", 60);
    s_botConfig.sakecupThreatThreshold  = getInt("SakecupThreatThreshold", 30);
+   s_botConfig.goalHandBonus = getInt("GoalHandBonus", 10);
+   s_botConfig.goalDeskBonus = getInt("GoalDeskBonus", 5);
    s_botConfigLoaded = true;
 }
 
@@ -582,7 +584,7 @@ int CBot::AnalyzeGoal()
          }
       } else if (c.GetType() == CARD_ANIMAL) {
          if (goalvalue[HAND_ANIMALS] > 0) {
-            goalvalue[HAND_ANIMALS] += 10;
+            goalvalue[HAND_ANIMALS] += s_botConfig.goalHandBonus;
          }
          if (c.IsBird() && m_rgHandPercent[HAND_BIRD] >= 0) {
             if (goalvalue[HAND_BIRD] > 0) {
@@ -603,7 +605,7 @@ int CBot::AnalyzeGoal()
             }
          }
          if (goalvalue[HAND_RIBBONS] > 0) {
-            goalvalue[HAND_RIBBONS] += 10;
+            goalvalue[HAND_RIBBONS] += s_botConfig.goalHandBonus;
          }
       } else if (c.GetType() == CARD_RIBBON_BLUE) {
          if (m_rgHandPercent[HAND_BLUE_RIBBONS] >= 0) {
@@ -612,7 +614,7 @@ int CBot::AnalyzeGoal()
             }
          }
          if (goalvalue[HAND_RIBBONS] > 0) {
-            goalvalue[HAND_RIBBONS] += 10;
+            goalvalue[HAND_RIBBONS] += s_botConfig.goalHandBonus;
          }
       } else if (c.GetType() == CARD_RIBBON) {
          if (c.GetMonth() != 11 && m_rgHandPercent[HAND_NORMAL_RIBBONS] >= 0) {
@@ -621,7 +623,7 @@ int CBot::AnalyzeGoal()
             }
          }
          if (goalvalue[HAND_RIBBONS] > 0) {
-            goalvalue[HAND_RIBBONS] += 10;
+            goalvalue[HAND_RIBBONS] += s_botConfig.goalHandBonus;
          }
       } else {
          if (goalvalue[HAND_CARDS] > 0) {
@@ -645,7 +647,7 @@ int CBot::AnalyzeGoal()
          }
       } else if (c.GetType() == CARD_ANIMAL) {
          if (goalvalue[HAND_ANIMALS] > 0) {
-            goalvalue[HAND_ANIMALS] += 5;
+            goalvalue[HAND_ANIMALS] += s_botConfig.goalDeskBonus;
          }
          if (c.IsBird() && m_rgHandPercent[HAND_BIRD] >= 0) {
             if (goalvalue[HAND_BIRD] > 0) {
@@ -666,7 +668,7 @@ int CBot::AnalyzeGoal()
             }
          }
          if (goalvalue[HAND_RIBBONS] > 0) {
-            goalvalue[HAND_RIBBONS] += 5;
+            goalvalue[HAND_RIBBONS] += s_botConfig.goalDeskBonus;
          }
       } else if (c.GetType() == CARD_RIBBON_BLUE) {
          if (m_rgHandPercent[HAND_BLUE_RIBBONS] >= 0) {
@@ -675,7 +677,7 @@ int CBot::AnalyzeGoal()
             }
          }
          if (goalvalue[HAND_RIBBONS] > 0) {
-            goalvalue[HAND_RIBBONS] += 5;
+            goalvalue[HAND_RIBBONS] += s_botConfig.goalDeskBonus;
          }
       } else if (c.GetType() == CARD_RIBBON) {
          if (c.GetMonth() != 11 && m_rgHandPercent[HAND_NORMAL_RIBBONS] >= 0) {
@@ -684,7 +686,7 @@ int CBot::AnalyzeGoal()
             }
          }
          if (goalvalue[HAND_RIBBONS] > 0) {
-            goalvalue[HAND_RIBBONS] += 5;
+            goalvalue[HAND_RIBBONS] += s_botConfig.goalDeskBonus;
          }
       } else {
          if (goalvalue[HAND_CARDS] > 0) {

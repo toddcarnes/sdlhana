@@ -141,10 +141,10 @@ void CGeneral::ClearScreen(bool fadein, bool fadeout, bool bg)
          w -= m_imgBack->w;
       }
    } else {
-      UTIL_FillRect(gpScreen, 0, 0, 640, 480, 30, 130, 100);
+      UTIL_FillRect(gpScreen, 0, 0, layout::kScreenW, layout::kScreenH, layout::kTableR, layout::kTableG, layout::kTableB);
    }
 
-   UTIL_RectShade(gpScreen, 0, 0, 640, 480, 196, 196,
+   UTIL_RectShade(gpScreen, 0, 0, layout::kScreenW, layout::kScreenH, 196, 196,
       0, 0, 196, 196, 196, 0, 196);
 }
 

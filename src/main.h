@@ -92,6 +92,16 @@ namespace std {
 #define FONTS_DIR DATA_ROOT "fonts/"
 #endif
 
+namespace layout {
+   constexpr int kScreenW = 640;
+   constexpr int kScreenH = 480;
+   constexpr int kCardW = 48;
+   constexpr int kCardH = 78;
+   constexpr int kDeskX = 140;
+   constexpr int kDeskY = 100;
+   constexpr int kTableR = 30, kTableG = 130, kTableB = 100;
+}
+
 #include <filesystem>
 #include "ini.h"
 

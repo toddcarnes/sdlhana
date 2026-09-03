@@ -160,9 +160,9 @@ int main(int argc, char *argv[])
       exit(1);
    }
 
-   SDL_SetRenderLogicalPresentation(gpRenderer, 640, 480, SDL_LOGICAL_PRESENTATION_STRETCH);
+   SDL_SetRenderLogicalPresentation(gpRenderer, layout::kScreenW, layout::kScreenH, SDL_LOGICAL_PRESENTATION_STRETCH);
 
-   gpScreen = SDL_CreateSurface(640, 480, SDL_PIXELFORMAT_XRGB8888);
+   gpScreen = SDL_CreateSurface(layout::kScreenW, layout::kScreenH, SDL_PIXELFORMAT_XRGB8888);
    if (gpScreen == nullptr) {
       std::println(stderr, "FATAL ERROR: Could not create main screen surface: {}", SDL_GetError());
       exit(1);

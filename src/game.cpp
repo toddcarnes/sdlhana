@@ -404,7 +404,7 @@ void CGame::Settings()
       gpGeneral->DrawText(msg(cfg.Get("OPTIONS", "Language", "eng")), 280, 110, 255, 255, 255, 24);
       gpGeneral->DrawText(stras[curas], 280, 140, 255, 255, 255, 24);
 
-      gpGeneral->UpdateScreen(0, 0, 640, 480);
+      gpGeneral->UpdateScreen(0, 0, layout::kScreenW, layout::kScreenH);
 
       int k = gpGeneral->ReadKey();
       if (k > 1000) {
