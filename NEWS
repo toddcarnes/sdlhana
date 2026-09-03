@@ -1,4 +1,4 @@
-1.0.2 Released on September 3rd, 2026.
+1.0.2 Released on September 2nd, 2026.
  - Refactor: split CardDiscarded into PhaseState helpers (<150 L) with FixupOverlappedSlot and AnimatePendingCaptures.
  - Fix: victory OK flush and Mekuri month 13→12 off-by-one.
  - Modernize: va()→va_str/std::format, SurfacePtr RAII for CBox/RulesMenu, dealer globals into CGame, INI Load/Save to std::string/getline, layout constants, noreturn/docs.

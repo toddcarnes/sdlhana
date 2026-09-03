@@ -1,4 +1,4 @@
-9/03/2026 Todd Carnes <toddcarnes@gmail.com> (SDLHana 1.0.2 released):
+9/02/2026 Todd Carnes <toddcarnes@gmail.com> (SDLHana 1.0.2 released):
  * Post-1.0.1 Review Fixes (8 items, feature/post-1.0.1-fixes → main, plus 2 bugfixes):
    - Game: split CardDiscarded into HandleDiscardPhase/HandleDrawnPhase/FixupOverlappedSlot/AnimatePendingCaptures (<150 L orchestrator) (src/game.cpp/h).
    - Fix: victory OK FlushEvents and Mekuri month off-by-one 13→12 (src/game.cpp:525).
