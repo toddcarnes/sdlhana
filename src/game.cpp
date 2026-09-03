@@ -1089,15 +1089,20 @@ void CGame::ShowMatchResults()
    }
 
    CButton okbtn(1, 240, 300, 160, 40, 58, 110, 165);
-   gpGeneral->DrawText("OK", 305, 308, 255, 255, 255, 24);
+   gpGeneral->DrawTextInBox("OK", 240, 300, 160, 40, 255, 255, 255, 24);
    gpGeneral->UpdateScreen();
-
+   // Flush any pending events before waiting for OK to avoid stray auto-advance
+   SDL_FlushEvents(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_EVENT_MOUSE_BUTTON_UP);
+   SDL_FlushEvent(SDL_EVENT_KEY_DOWN);
    while (1) {
       int k = gpGeneral->ReadKey();
-      if (k > 0) {
+      if (k == 1001 || k == SDLK_RETURN || k == SDLK_ESCAPE || k == SDLK_SPACE) {
          break;
       }
    }
+   // Flush again before returning to main menu so next ReadKey starts clean
+   SDL_FlushEvents(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_EVENT_MOUSE_BUTTON_UP);
+   SDL_FlushEvent(SDL_EVENT_KEY_DOWN);
 }
 
 void CGame::DrawDeskCard()
