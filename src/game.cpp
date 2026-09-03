@@ -346,15 +346,26 @@ void CGame::RulesMenu()
 
 void CGame::Settings()
 {
-   CButton fs(1, 280, 20, 150, 24, 0, 0, 0);
-   CButton snd(2, 280, 50, 150, 24, 0, 0, 0);
-   CButton gm(3, 280, 80, 150, 24, 0, 0, 0);
-   CButton l(4, 280, 110, 150, 24, 0, 0, 0);
-   CButton as(5, 280, 140, 150, 24, 0, 0, 0);
-   CButton ok(6, 20, 180, 150, 34, 58, 110, 165);
+   constexpr int kBtnX = 280;
+   constexpr int kBtnW = 150;
+   constexpr int kBtnH = 24;
+   constexpr int kSliderX = 280;
+   constexpr int kSliderY = 80;
+   constexpr int kSliderW = 150;
+   constexpr int kSliderH = 24;
+
+   CButton fs(1, kBtnX, 20, kBtnW, kBtnH, 0, 0, 0);
+   CButton snd(2, kBtnX, 50, kBtnW, kBtnH, 0, 0, 0);
+   CButton gm(3, kBtnX, 110, kBtnW, kBtnH, 0, 0, 0);
+   CButton l(4, kBtnX, 140, kBtnW, kBtnH, 0, 0, 0);
+   CButton as(5, kBtnX, 170, kBtnW, kBtnH, 0, 0, 0);
+   CButton ok(6, 20, 210, 150, 34, 58, 110, 165);
 
    int curgm = atoi(Config().Get("GAME", "GameMode", "0"));
    int curas = 3;
+   int volume = atoi(Config().Get("OPTIONS", "Volume", "100"));
+   if (volume < 0) volume = 0;
+   if (volume > 100) volume = 100;
 
    std::vector<std::string> langs = DiscoverLanguages();
    size_t langIdx = 0;
@@ -366,115 +377,235 @@ void CGame::Settings()
    }
    int valueas[5] = {800, 500, 300, 180, 50};
 
-   while (1) {
+   bool isDragging = false;
+
+   auto DrawSlider = [&](int vol, bool enabled) {
+      int trackH = 6;
+      int trackY = kSliderY + (kSliderH - trackH) / 2;
+      int bgR = enabled ? 60 : 80;
+      int bgG = enabled ? 60 : 80;
+      int bgB = enabled ? 60 : 80;
+      int fillR = enabled ? 0 : 120;
+      int fillG = enabled ? 120 : 120;
+      int fillB = enabled ? 255 : 120;
+      int thumbR = enabled ? 255 : 180;
+      int thumbG = enabled ? 255 : 180;
+      int thumbB = enabled ? 255 : 180;
+      if (Screen()) {
+         UTIL_FillRect(Screen(), kSliderX, trackY, kSliderW, trackH, bgR, bgG, bgB);
+         int fillW = kSliderW * vol / 100;
+         if (fillW > 0) {
+            UTIL_FillRect(Screen(), kSliderX, trackY, fillW, trackH, fillR, fillG, fillB);
+         }
+         int thumbX = kSliderX + fillW - 4;
+         if (thumbX < kSliderX) thumbX = kSliderX;
+         if (thumbX > kSliderX + kSliderW - 8) thumbX = kSliderX + kSliderW - 8;
+         UTIL_FillRect(Screen(), thumbX, kSliderY + 4, 8, kSliderH - 8, thumbR, thumbG, thumbB);
+         UTIL_Rect(Screen(), thumbX, kSliderY + 4, 8, kSliderH - 8, 0, 0, 0);
+         UTIL_Rect(Screen(), kSliderX, trackY, kSliderW, trackH, 0, 0, 0);
+      }
+   };
+
+   while (true) {
+      bool soundEnabled = !atoi(Config().Get("OPTIONS", "NoSound", "0"));
+
       General()->ClearScreen();
 
+      // Labels — volume label grayed when disabled
       General()->DrawText(msg("fullscreen"), 20, 20, 255, 255, 0, 24);
       General()->DrawText(msg("enablesound"), 20, 50, 255, 255, 0, 24);
-      General()->DrawText(msg("gamemode"), 20, 80, 255, 255, 0, 24);
-      General()->DrawText(msg("language"), 20, 110, 255, 255, 0, 24);
-      General()->DrawText(msg("animspeed"), 20, 140, 255, 255, 0, 24);
-      General()->DrawTextInBox("OK", 20, 180, 150, 34, 255, 255, 255, 20);
+      if (soundEnabled) {
+         General()->DrawText(msg("volume"), 20, kSliderY + 2, 255, 255, 0, 24);
+      } else {
+         General()->DrawText(msg("volume"), 20, kSliderY + 2, 130, 130, 130, 24);
+      }
+      General()->DrawText(msg("gamemode"), 20, 110, 255, 255, 0, 24);
+      General()->DrawText(msg("language"), 20, 140, 255, 255, 0, 24);
+      General()->DrawText(msg("animspeed"), 20, 170, 255, 255, 0, 24);
+      General()->DrawTextInBox("OK", 20, 210, 150, 34, 255, 255, 255, 20);
 
       const char *strgm[3] = {msg("gamemode0"), msg("gamemode1"), msg("gamemode2")};
       const char *stras[5] = {msg("veryslow"), msg("slow"), msg("middle"), msg("fast"), msg("veryfast")};
 
       if (atoi(Config().Get("OPTIONS", "FullScreen", "0"))) {
-         General()->DrawText(msg("Enabled"), 280, 20, 255, 255, 255, 24);
+         General()->DrawText(msg("Enabled"), kBtnX, 20, 255, 255, 255, 24);
       } else {
-         General()->DrawText(msg("Disabled"), 280, 20, 255, 255, 255, 24);
+         General()->DrawText(msg("Disabled"), kBtnX, 20, 255, 255, 255, 24);
       }
 
-      if (!atoi(Config().Get("OPTIONS", "NoSound", "0"))) {
-         General()->DrawText(msg("Enabled"), 280, 50, 255, 255, 255, 24);
+      if (soundEnabled) {
+         General()->DrawText(msg("Enabled"), kBtnX, 50, 255, 255, 255, 24);
       } else {
-         General()->DrawText(msg("Disabled"), 280, 50, 255, 255, 255, 24);
+         General()->DrawText(msg("Disabled"), kBtnX, 50, 255, 255, 255, 24);
       }
 
-      General()->DrawText(strgm[curgm], 280, 80, 255, 255, 255, 24);
-      General()->DrawText(msg(Config().Get("OPTIONS", "Language", "eng")), 280, 110, 255, 255, 255, 24);
-      General()->DrawText(stras[curas], 280, 140, 255, 255, 255, 24);
+      DrawSlider(volume, soundEnabled);
+      {
+         std::string volStr = std::format("{}%", volume);
+         int tr = soundEnabled ? 255 : 130;
+         int tg = soundEnabled ? 255 : 130;
+         int tb = soundEnabled ? 255 : 130;
+         General()->DrawText(volStr.c_str(), kSliderX + kSliderW + 10, kSliderY + 2, tr, tg, tb, 16);
+      }
+
+      General()->DrawText(strgm[curgm], kBtnX, 110, 255, 255, 255, 24);
+      General()->DrawText(msg(Config().Get("OPTIONS", "Language", "eng")), kBtnX, 140, 255, 255, 255, 24);
+      General()->DrawText(stras[curas], kBtnX, 170, 255, 255, 255, 24);
 
       General()->UpdateScreen(0, 0, layout::kScreenW, layout::kScreenH);
 
-      int k = General()->ReadKey();
-      if (k > 1000) {
-         switch (k - 1000) {
-            case 1:
-               if (atoi(Config().Get("OPTIONS", "FullScreen", "0"))) {
-                  Config().Set("OPTIONS", "FullScreen", "0");
-               } else {
-                  Config().Set("OPTIONS", "FullScreen", "1");
-               }
-               break;
+      SDL_Event event;
+      if (!SDL_WaitEvent(&event)) continue;
+      if (Renderer()) SDL_ConvertEventToRenderCoordinates(Renderer(), &event);
 
-            case 2:
-               if (atoi(Config().Get("OPTIONS", "NoSound", "0"))) {
-                  Config().Set("OPTIONS", "NoSound", "0");
-               } else {
-                  Config().Set("OPTIONS", "NoSound", "1");
-               }
-               break;
-
-            case 3:
-               if (++curgm >= 3) {
-                  curgm = 0;
-               }
-               Config().Set("GAME", "GameMode", std::to_string(curgm).c_str());
-               m_iGameMode = curgm;
-               if (m_iGameMode == GAMEMODE_BET) {
-                  SetMaxHandCards(6);
-               } else {
-                  SetMaxHandCards(8);
-               }
-               break;
-
-            case 4:
-               langIdx = (langIdx + 1) % langs.size();
-               Config().Set("OPTIONS", "Language", langs[langIdx].c_str());
-               InitTextMessage();
-               General()->LoadFonts();
-               break;
-
-            case 5:
-               if (++curas >= 5) {
-                  curas = 0;
-               }
-               Config().Set("OPTIONS", "AnimSpeed", std::to_string(valueas[curas]).c_str());
-               m_flAnimDuration = (float)valueas[curas];
-               break;
-
-            case 6:
-               InitTextMessage();
-               General()->LoadFonts();
-
-               if (atoi(Config().Get("OPTIONS", "NoSound", "0"))) {
-                  NoSound() = true;
-               } else {
-                  NoSound() = false;
-                  if (!g_fAudioOpened.load()) {
-                     if (SOUND_OpenAudio(22050, SDL_AUDIO_S16, 1, 1024)) {
-                        std::println(stderr, "WARNING: Couldn't open audio: {}", SDL_GetError());
-                        NoSound() = true;
-                     } else {
-                        g_fAudioOpened.store(true);
-                        General()->LoadSound();
-                     }
+      if (event.type == SDL_EVENT_QUIT) {
+         return;
+      } else if (event.type == SDL_EVENT_KEY_DOWN) {
+         if (event.key.key == SDLK_ESCAPE) {
+            // Treat ESC as OK
+            InitTextMessage();
+            General()->LoadFonts();
+            if (atoi(Config().Get("OPTIONS", "NoSound", "0"))) {
+               NoSound() = true;
+            } else {
+               NoSound() = false;
+               if (!g_fAudioOpened.load()) {
+                  if (SOUND_OpenAudio(22050, SDL_AUDIO_S16, 1, 1024)) {
+                     std::println(stderr, "WARNING: Couldn't open audio: {}", SDL_GetError());
+                     NoSound() = true;
                   } else {
+                     g_fAudioOpened.store(true);
                      General()->LoadSound();
                   }
+               } else {
+                  SOUND_SetVolume(volume);
+                  General()->LoadSound();
                }
-
-               bool fs_setting = (atoi(Config().Get("OPTIONS", "FullScreen", "0")) > 0);
-               bool fs_active = false;
-               if (Window() != nullptr) {
-                  fs_active = (SDL_GetWindowFlags(Window()) & SDL_WINDOW_FULLSCREEN) != 0;
-               }
-               if (fs_setting != fs_active) {
-                  UTIL_ToggleFullScreen();
-               }
-               return; // exit settings
+            }
+            bool fs_setting = (atoi(Config().Get("OPTIONS", "FullScreen", "0")) > 0);
+            bool fs_active = false;
+            if (Window() != nullptr) {
+               fs_active = (SDL_GetWindowFlags(Window()) & SDL_WINDOW_FULLSCREEN) != 0;
+            }
+            if (fs_setting != fs_active) {
+               UTIL_ToggleFullScreen();
+            }
+            return;
+         } else if (event.key.key == SDLK_LEFT && soundEnabled) {
+            volume -= 5;
+            if (volume < 0) volume = 0;
+            Config().Set("OPTIONS", "Volume", std::to_string(volume).c_str());
+            SOUND_SetVolume(volume);
+            continue;
+         } else if (event.key.key == SDLK_RIGHT && soundEnabled) {
+            volume += 5;
+            if (volume > 100) volume = 100;
+            Config().Set("OPTIONS", "Volume", std::to_string(volume).c_str());
+            SOUND_SetVolume(volume);
+            continue;
          }
+      } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+         if (event.button.button == SDL_BUTTON_LEFT) {
+            float mx = event.button.x;
+            float my = event.button.y;
+            // Slider drag start
+            if (soundEnabled && mx >= kSliderX && mx < kSliderX + kSliderW && my >= kSliderY && my < kSliderY + kSliderH) {
+               isDragging = true;
+               int newVol = (int)((mx - kSliderX) * 100 / kSliderW);
+               if (newVol < 0) newVol = 0;
+               if (newVol > 100) newVol = 100;
+               if (newVol != volume) {
+                  volume = newVol;
+                  Config().Set("OPTIONS", "Volume", std::to_string(volume).c_str());
+                  SOUND_SetVolume(volume);
+               }
+               continue;
+            }
+            int id = CButton::GetButtonId((int)mx, (int)my);
+            if (id > 0) {
+               switch (id) {
+                  case 1:
+                     if (atoi(Config().Get("OPTIONS", "FullScreen", "0"))) {
+                        Config().Set("OPTIONS", "FullScreen", "0");
+                     } else {
+                        Config().Set("OPTIONS", "FullScreen", "1");
+                     }
+                     break;
+                  case 2:
+                     if (atoi(Config().Get("OPTIONS", "NoSound", "0"))) {
+                        Config().Set("OPTIONS", "NoSound", "0");
+                     } else {
+                        Config().Set("OPTIONS", "NoSound", "1");
+                     }
+                     break;
+                  case 3:
+                     if (++curgm >= 3) curgm = 0;
+                     Config().Set("GAME", "GameMode", std::to_string(curgm).c_str());
+                     m_iGameMode = curgm;
+                     if (m_iGameMode == GAMEMODE_BET) SetMaxHandCards(6);
+                     else SetMaxHandCards(8);
+                     break;
+                  case 4:
+                     langIdx = (langIdx + 1) % langs.size();
+                     Config().Set("OPTIONS", "Language", langs[langIdx].c_str());
+                     InitTextMessage();
+                     General()->LoadFonts();
+                     break;
+                  case 5:
+                     if (++curas >= 5) curas = 0;
+                     Config().Set("OPTIONS", "AnimSpeed", std::to_string(valueas[curas]).c_str());
+                     m_flAnimDuration = (float)valueas[curas];
+                     break;
+                  case 6: {
+                     InitTextMessage();
+                     General()->LoadFonts();
+                     if (atoi(Config().Get("OPTIONS", "NoSound", "0"))) {
+                        NoSound() = true;
+                     } else {
+                        NoSound() = false;
+                        if (!g_fAudioOpened.load()) {
+                           if (SOUND_OpenAudio(22050, SDL_AUDIO_S16, 1, 1024)) {
+                              std::println(stderr, "WARNING: Couldn't open audio: {}", SDL_GetError());
+                              NoSound() = true;
+                           } else {
+                              g_fAudioOpened.store(true);
+                              General()->LoadSound();
+                           }
+                        } else {
+                           SOUND_SetVolume(volume);
+                           General()->LoadSound();
+                        }
+                     }
+                     bool fs_setting = (atoi(Config().Get("OPTIONS", "FullScreen", "0")) > 0);
+                     bool fs_active = false;
+                     if (Window() != nullptr) {
+                        fs_active = (SDL_GetWindowFlags(Window()) & SDL_WINDOW_FULLSCREEN) != 0;
+                     }
+                     if (fs_setting != fs_active) {
+                        UTIL_ToggleFullScreen();
+                     }
+                     return;
+                  }
+               }
+            }
+         }
+      } else if (event.type == SDL_EVENT_MOUSE_MOTION) {
+         if (isDragging && soundEnabled) {
+            float mx = event.motion.x;
+            int newVol = (int)((mx - kSliderX) * 100 / kSliderW);
+            if (newVol < 0) newVol = 0;
+            if (newVol > 100) newVol = 100;
+            if (newVol != volume) {
+               volume = newVol;
+               Config().Set("OPTIONS", "Volume", std::to_string(volume).c_str());
+               SOUND_SetVolume(volume);
+            }
+            continue;
+         }
+      } else if (event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+         isDragging = false;
+      } else if (event.type == SDL_EVENT_WINDOW_RESIZED || event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+         continue;
       }
    }
 }

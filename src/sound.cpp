@@ -26,6 +26,23 @@
 // Main-thread only: created/destroyed in SOUND_OpenAudio/Free, accessed only via SOUND_* main-thread APIs, never from audio callback
 static MIX_Mixer *g_pMixer = nullptr;
 std::atomic<bool> g_fAudioOpened{false};
+static int g_volume = 100; // 0-100
+
+void SOUND_SetVolume(int volume)
+{
+   if (volume < 0) volume = 0;
+   if (volume > 100) volume = 100;
+   g_volume = volume;
+   if (g_pMixer) {
+      float gain = g_volume / 100.0f;
+      MIX_SetMixerGain(g_pMixer, gain);
+   }
+}
+
+int SOUND_GetVolume()
+{
+   return g_volume;
+}
 
 void SOUND_FillAudio(void *udata, unsigned char *stream, int len)
 {
@@ -67,7 +84,19 @@ int SOUND_OpenAudio(int freq, int format, int channels, int samples)
       return -1;
    }
 
-   g_fAudioOpened = true;
+    g_fAudioOpened = true;
+   // Apply saved volume (default 100)
+   {
+      int vol = 100;
+      // Config may not be loaded yet if called before LoadCfg, so guard
+      if (Config().Valid()) {
+         vol = atoi(Config().Get("OPTIONS", "Volume", "100"));
+      }
+      if (vol < 0) vol = 0;
+      if (vol > 100) vol = 100;
+      g_volume = vol;
+      MIX_SetMixerGain(g_pMixer, g_volume / 100.0f);
+   }
    return 0;
 }
 

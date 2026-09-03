@@ -191,6 +191,8 @@ void SOUND_FillAudio(void *udata, unsigned char *stream, int len);
 void SOUND_PlayWAV(SoundSample *audio);
 void SOUND_FreeWAV(SoundSample *audio);
 SoundSample *SOUND_LoadWAV(const char *filename);
+void SOUND_SetVolume(int volume); // 0-100
+int SOUND_GetVolume();
 
 #include "font.h"
 #include "general.h"
