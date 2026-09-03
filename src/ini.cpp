@@ -61,7 +61,7 @@ ini(NULL), key_count(0), current_size(0)
 #ifdef WITH_HASH
    m_Hash = (ini_key_t **)calloc(INI_HASH_KEY_SIZE, sizeof(ini_key_t *));
    if (m_Hash == NULL) {
-      printf("Memory allocation error !\n");
+      std::println(stderr, "Memory allocation error!");
       exit(1);
    }
 #endif
@@ -73,7 +73,7 @@ ini(NULL), key_count(0), current_size(0)
 #ifdef WITH_HASH
    m_Hash = (ini_key_t **)calloc(INI_HASH_KEY_SIZE, sizeof(ini_key_t *));
    if (m_Hash == NULL) {
-      printf("Memory allocation error !\n");
+      std::println(stderr, "Memory allocation error!");
       exit(1);
    }
 #endif
@@ -202,7 +202,7 @@ void CIniFile::Set(const char *key, const char *value, const char *set)
          }
 
          if (!ini) {
-            printf("Memory allocation error !");
+            std::println(stderr, "Memory allocation error!");
             exit(1);
          }
       }
@@ -245,7 +245,7 @@ void CIniFile::Set(const char *key, const char *value, const char *set)
       pValue->value = strdup(set);
 
       if (pValue->value == NULL) {
-         printf("Memory allocation error !");
+         std::println(stderr, "Memory allocation error!");
          exit(1);
       }
    } else {
@@ -262,7 +262,7 @@ void CIniFile::Set(const char *key, const char *value, const char *set)
          }
 
          if (pKey->values == NULL) {
-            printf("Memory allocation error !");
+            std::println(stderr, "Memory allocation error!");
             exit(1);
          }
       }
@@ -272,7 +272,7 @@ void CIniFile::Set(const char *key, const char *value, const char *set)
 
       if (pKey->values[pKey->value_count - 1].value == NULL ||
          pKey->values[pKey->value_count - 1].value_name == NULL) {
-         printf("Memory allocation error !");
+         std::println(stderr, "Memory allocation error!");
          exit(1);
       }
 

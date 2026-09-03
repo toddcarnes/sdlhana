@@ -86,6 +86,7 @@ std::string va_str(const char *format, ...)
    return s;
 }
 
+// Single-threaded game: not thread-safe, no mutex needed (all RandomLong/Float calls from main thread)
 static std::mt19937 g_rng{std::random_device{}()};
 
 // This function returns a random integer number between (and including) the starting and
@@ -124,7 +125,7 @@ int log2(int val)
 // This function terminates the game because of an error and
 // prints the message string pointed to by fmt both in the
 // console and in a messagebox.
-void TerminateOnError(const char *fmt, ...)
+[[noreturn]] void TerminateOnError(const char *fmt, ...)
 {
    va_list argptr;
    char string[1024];

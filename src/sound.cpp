@@ -23,6 +23,7 @@
 #include <SDL3_mixer/SDL_mixer.h>
 #include <atomic>
 
+// Main-thread only: created/destroyed in SOUND_OpenAudio/Free, accessed only via SOUND_* main-thread APIs, never from audio callback
 static MIX_Mixer *g_pMixer = nullptr;
 std::atomic<bool> g_fAudioOpened{false};
 
