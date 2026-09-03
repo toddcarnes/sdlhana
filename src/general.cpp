@@ -86,8 +86,8 @@ int CGeneral::ReadKey()
                return 1000 + id;
             }
          } else if (event.type == SDL_EVENT_WINDOW_RESIZED || event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
-            // Handled automatically by SDL_SetRenderLogicalPresentation
-         }
+            UpdateScreen();
+          }
       }
    }
 }
