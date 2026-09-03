@@ -304,11 +304,8 @@ void CGeneral::DrawCard(const CCard &c, int x, int y, int w, int h, bool update)
 void CGeneral::LoadFonts()
 {
    TTF_Init();
-   m_fntBrush.Load(FONTS_DIR "brush.fnt");
-   {
-      std::string langFont = std::format("{}{}.fnt", FONTS_DIR, cfg.Get("OPTIONS", "Language", "eng"));
-      m_fnt.Load(langFont.c_str());
-   }
+   m_fntBrush.Load();
+   m_fnt.Load();
 }
 
 void CGeneral::LoadImages()

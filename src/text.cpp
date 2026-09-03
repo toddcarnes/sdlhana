@@ -40,16 +40,6 @@ std::vector<std::string> DiscoverLanguages()
          }
       }
    }
-   // Fallback: scan legacy titles*.txt in DATA_DIR
-   if (std::filesystem::exists(DATA_DIR)) {
-      for (auto &entry : std::filesystem::directory_iterator(DATA_DIR)) {
-         std::string name = entry.path().filename().string();
-         if (name.rfind("titles", 0) == 0 && name.size() > 10 && name.substr(name.size()-4) == ".txt") {
-            std::string code = name.substr(6, name.size()-10);
-            if (std::find(langs.begin(), langs.end(), code) == langs.end()) langs.push_back(code);
-         }
-      }
-   }
    if (langs.empty()) langs.push_back("eng");
    std::sort(langs.begin(), langs.end());
    langs.erase(std::unique(langs.begin(), langs.end()), langs.end());
@@ -84,9 +74,8 @@ void FreeTextMessage()
 void InitTextMessage()
 {
    FreeTextMessage();
-   std::string lang = cfg.Get("OPTIONS", "Language", "eng");
+   std::string lang = Config().Get("OPTIONS", "Language", "eng");
 
-   // Try JSON first: data/i18n/<lang>.json
    std::string jsonFile = std::format("{}i18n/{}.json", DATA_DIR, lang);
    std::ifstream jf(jsonFile);
    if (jf.is_open()) {
@@ -96,7 +85,6 @@ void InitTextMessage()
          for (auto &[k, v] : j.items()) {
             if (v.is_string()) gMessageTable[k] = printfToFormat(v.get<std::string>());
          }
-         // Populate available langs for autodiscovery (cached)
          g_availableLangs = DiscoverLanguages();
          return;
       } catch (const std::exception &e) {
@@ -104,61 +92,7 @@ void InitTextMessage()
       }
    }
 
-   // Fallback to legacy titles*.txt
-   std::string filename = std::format("{}titles{}.txt", DATA_DIR, lang);
-   std::ifstream file(filename);
-   if (!file.is_open()) {
-      std::println(stderr, "WARNING: cannot load titles{}.txt nor {}.json!", lang, lang);
-      return;
-   }
-
-   std::string line;
-   std::string current_name;
-   std::string current_msg;
-   enum { NAME, TEXT } state = NAME;
-   int linenumber = 0;
-
-   while (std::getline(file, line)) {
-      linenumber++;
-      std::string raw_line = line + "\n";
-      std::string trimmed = line;
-      trim(trimmed.data());
-      size_t first = trimmed.find_first_not_of(" \t\r\n");
-      if (first == std::string::npos) {
-         trimmed.clear();
-      } else {
-         size_t last = trimmed.find_last_not_of(" \t\r\n");
-         trimmed = trimmed.substr(first, (last - first + 1));
-      }
-      if (trimmed.empty() || trimmed[0] == '#' || trimmed[0] == '/') {
-         continue;
-      }
-      switch (state) {
-         case NAME:
-            if (trimmed == "}") {
-               TerminateOnError("Unexpected \"}\" found in titles.txt, line %d", linenumber);
-            } else if (trimmed == "{") {
-               state = TEXT;
-               current_msg.clear();
-            } else {
-               current_name = trimmed;
-            }
-            break;
-         case TEXT:
-            if (trimmed == "{") {
-               TerminateOnError("Unexpected \"{\" found in titles.txt, line %d", linenumber);
-            } else if (trimmed == "}") {
-               while (!current_msg.empty() && (current_msg.back() == '\n' || current_msg.back() == '\r')) {
-                  current_msg.pop_back();
-               }
-               gMessageTable[current_name] = printfToFormat(current_msg);
-               state = NAME;
-            } else {
-               current_msg += raw_line;
-            }
-            break;
-      }
-   }
+   std::println(stderr, "WARNING: cannot load {}.json!", lang);
    g_availableLangs = DiscoverLanguages();
 }
 

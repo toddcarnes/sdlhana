@@ -88,10 +88,6 @@ namespace std {
 #define IMAGES_DIR DATA_ROOT "images/"
 #endif
 
-#ifndef FONTS_DIR
-#define FONTS_DIR DATA_ROOT "fonts/"
-#endif
-
 namespace layout {
    constexpr int kScreenW = 640;
    constexpr int kScreenH = 480;
@@ -192,10 +188,6 @@ void InitTextMessage();
 void FreeTextMessage();
 const char *msg(const char *name);
 std::vector<std::string> DiscoverLanguages();
-
-// compress.cpp functions...
-int Decode(const char *filename, int headersize, unsigned char *buffer, int bufsize);
-int Encode(const char *filename, unsigned char *header, int headersize, unsigned char *buffer, int bufsize);
 
 // config.cpp functions...
 void LoadCfg();
