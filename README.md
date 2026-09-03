@@ -86,7 +86,7 @@ The compiled binary (`sdlhana` or `sdlhana.exe`) will be generated inside the `b
 
 ### Assets
 
-Card artwork references are preserved in `tools/cards_trad/` for documentation purposes.
+Card artwork references are preserved in `assets/cards_trad/` for documentation purposes.
 
 ---
 
