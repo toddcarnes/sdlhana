@@ -191,6 +191,7 @@ void UTIL_ToggleFullScreen();
 void InitTextMessage();
 void FreeTextMessage();
 const char *msg(const char *name);
+std::vector<std::string> DiscoverLanguages();
 
 // compress.cpp functions...
 int Decode(const char *filename, int headersize, unsigned char *buffer, int bufsize);

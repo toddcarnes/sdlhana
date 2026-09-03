@@ -54,7 +54,14 @@ FetchContent_Declare(
     GIT_SHALLOW    TRUE
 )
 
-FetchContent_MakeAvailable(SDL3 SDL3_mixer SDL3_ttf)
+FetchContent_Declare(
+    nlohmann_json
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG        v3.11.3
+    GIT_SHALLOW    TRUE
+)
+
+FetchContent_MakeAvailable(SDL3 SDL3_mixer SDL3_ttf nlohmann_json)
 
 message(STATUS "SDL3_mixer SOURCE_DIR: ${sdl3_mixer_SOURCE_DIR}")
 message(STATUS "SDL3_ttf SOURCE_DIR: ${sdl3_ttf_SOURCE_DIR}")
@@ -102,6 +109,8 @@ target_include_directories(sdlhana PRIVATE
     ${sdl3_ttf_SOURCE_DIR}/include
     ${CMAKE_CURRENT_BINARY_DIR}/_deps/sdl3_mixer-src/include
     ${CMAKE_CURRENT_BINARY_DIR}/_deps/sdl3_ttf-src/include
+    ${nlohmann_json_SOURCE_DIR}/include
+    ${nlohmann_json_SOURCE_DIR}/single_include
 )
 
 # Compiler definitions for legacy path resolutions and compatibility
@@ -128,10 +137,14 @@ else()
 endif()
 
 # Copy asset directories and SDL3.dll into executable build directory post-build
+# src/data copy includes data/i18n/*.json (autodiscovered languages)
 add_custom_command(TARGET sdlhana POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_CURRENT_SOURCE_DIR}/src/data
             $<TARGET_FILE_DIR:sdlhana>/data
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/data/i18n
+            $<TARGET_FILE_DIR:sdlhana>/data/i18n
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_CURRENT_SOURCE_DIR}/src/images
             $<TARGET_FILE_DIR:sdlhana>/images

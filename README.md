@@ -27,6 +27,8 @@ The game interface supports full real-time language switching in the Settings me
 - **Simplified Chinese** (`chs` / 简体中文)
 - **French** (`fra` / Français)
 
+Add a new language without recompiling by dropping `data/i18n/<code>.json` (copy `en.json`, translate values with `{}` placeholders) — it appears automatically in Settings via filesystem autodiscovery (legacy `titles*.txt` still supported as fallback).
+
 ---
 
 ## Acknowledgments & Project History
