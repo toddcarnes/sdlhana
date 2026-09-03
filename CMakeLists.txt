@@ -137,10 +137,14 @@ else()
 endif()
 
 # Copy asset directories and SDL3.dll into executable build directory post-build
+# src/data copy includes data/i18n/*.json (autodiscovered languages)
 add_custom_command(TARGET sdlhana POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_CURRENT_SOURCE_DIR}/src/data
             $<TARGET_FILE_DIR:sdlhana>/data
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/data/i18n
+            $<TARGET_FILE_DIR:sdlhana>/data/i18n
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_CURRENT_SOURCE_DIR}/src/images
             $<TARGET_FILE_DIR:sdlhana>/images
