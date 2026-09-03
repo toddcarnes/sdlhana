@@ -147,7 +147,7 @@ void CGeneral::ClearPromptArea()
    }
 }
 
-void CGeneral::DrawTextBrush(const char *t, int x, int y, int r, int g, int b, int size)
+void CGeneral::DrawTextBrush(const char *t, int x, int y, int r, int g, int b, int size, bool update)
 {
    SDL_Surface *s = m_fntBrush.Render(t, r, g, b, size, ((size < 32) ? false : true));
    if (s == nullptr || Screen() == nullptr) return;
@@ -161,10 +161,10 @@ void CGeneral::DrawTextBrush(const char *t, int x, int y, int r, int g, int b, i
    SDL_BlitSurface(s, NULL, Screen(), &dstrect);
    SDL_DestroySurface(s);
 
-   UpdateScreen(x, y, dstrect.w, dstrect.h);
+   if (update) UpdateScreen(x, y, dstrect.w, dstrect.h);
 }
 
-void CGeneral::DrawText(const char *t, int x, int y, int r, int g, int b, int size)
+void CGeneral::DrawText(const char *t, int x, int y, int r, int g, int b, int size, bool update)
 {
    SDL_Surface *s = m_fnt.Render(t, r, g, b, size);
    if (s == nullptr || Screen() == nullptr) return;
@@ -178,10 +178,10 @@ void CGeneral::DrawText(const char *t, int x, int y, int r, int g, int b, int si
    SDL_BlitSurface(s, NULL, Screen(), &dstrect);
    SDL_DestroySurface(s);
 
-   UpdateScreen(x, y, dstrect.w, dstrect.h);
+   if (update) UpdateScreen(x, y, dstrect.w, dstrect.h);
 }
 
-void CGeneral::DrawTextInBox(const char *t, int box_x, int box_y, int box_w, int box_h, int r, int g, int b, int size)
+void CGeneral::DrawTextInBox(const char *t, int box_x, int box_y, int box_w, int box_h, int r, int g, int b, int size, bool update)
 {
    SDL_Surface *s = m_fnt.Render(t, r, g, b, size);
    if (s == nullptr || Screen() == nullptr) return;
@@ -195,10 +195,10 @@ void CGeneral::DrawTextInBox(const char *t, int box_x, int box_y, int box_w, int
    SDL_BlitSurface(s, NULL, Screen(), &dstrect);
    SDL_DestroySurface(s);
 
-   UpdateScreen(box_x, box_y, box_w, box_h);
+   if (update) UpdateScreen(box_x, box_y, box_w, box_h);
 }
 
-void CGeneral::DrawWrappedTextInBox(const char *t, int box_x, int box_y, int box_w, int box_h, int r, int g, int b, int size)
+void CGeneral::DrawWrappedTextInBox(const char *t, int box_x, int box_y, int box_w, int box_h, int r, int g, int b, int size, bool update)
 {
    if (t == nullptr || Screen() == nullptr) return;
 
@@ -212,7 +212,7 @@ void CGeneral::DrawWrappedTextInBox(const char *t, int box_x, int box_y, int box
 
       SDL_BlitSurface(s, NULL, Screen(), &dstrect);
       SDL_DestroySurface(s);
-      UpdateScreen(box_x, box_y, box_w, box_h);
+      if (update) UpdateScreen(box_x, box_y, box_w, box_h);
    }
 }
 

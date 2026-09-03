@@ -410,33 +410,38 @@ void CGame::Settings()
       bool soundEnabled = !atoi(Config().Get("OPTIONS", "NoSound", "0"));
 
       General()->ClearScreen();
+      // Draw OK button background each frame (batched, single present)
+      if (Screen()) {
+         UTIL_FillRectAlpha(Screen(), 20, 210, 150, 34, 58, 110, 165, 160);
+         UTIL_RectShade(Screen(), 20, 210, 150, 34, 255, 255, 255, 0, 0, 0, 128, 128, 128);
+      }
 
       // Labels — volume label grayed when disabled
-      General()->DrawText(msg("fullscreen"), 20, 20, 255, 255, 0, 24);
-      General()->DrawText(msg("enablesound"), 20, 50, 255, 255, 0, 24);
+      General()->DrawText(msg("fullscreen"), 20, 20, 255, 255, 0, 24, false);
+      General()->DrawText(msg("enablesound"), 20, 50, 255, 255, 0, 24, false);
       if (soundEnabled) {
-         General()->DrawText(msg("volume"), 20, kSliderY + 2, 255, 255, 0, 24);
+         General()->DrawText(msg("volume"), 20, kSliderY + 2, 255, 255, 0, 24, false);
       } else {
-         General()->DrawText(msg("volume"), 20, kSliderY + 2, 130, 130, 130, 24);
+         General()->DrawText(msg("volume"), 20, kSliderY + 2, 130, 130, 130, 24, false);
       }
-      General()->DrawText(msg("gamemode"), 20, 110, 255, 255, 0, 24);
-      General()->DrawText(msg("language"), 20, 140, 255, 255, 0, 24);
-      General()->DrawText(msg("animspeed"), 20, 170, 255, 255, 0, 24);
-      General()->DrawTextInBox("OK", 20, 210, 150, 34, 255, 255, 255, 20);
+      General()->DrawText(msg("gamemode"), 20, 110, 255, 255, 0, 24, false);
+      General()->DrawText(msg("language"), 20, 140, 255, 255, 0, 24, false);
+      General()->DrawText(msg("animspeed"), 20, 170, 255, 255, 0, 24, false);
+      General()->DrawTextInBox("OK", 20, 210, 150, 34, 255, 255, 255, 20, false);
 
       const char *strgm[3] = {msg("gamemode0"), msg("gamemode1"), msg("gamemode2")};
       const char *stras[5] = {msg("veryslow"), msg("slow"), msg("middle"), msg("fast"), msg("veryfast")};
 
       if (atoi(Config().Get("OPTIONS", "FullScreen", "0"))) {
-         General()->DrawText(msg("Enabled"), kBtnX, 20, 255, 255, 255, 24);
+         General()->DrawText(msg("Enabled"), kBtnX, 20, 255, 255, 255, 24, false);
       } else {
-         General()->DrawText(msg("Disabled"), kBtnX, 20, 255, 255, 255, 24);
+         General()->DrawText(msg("Disabled"), kBtnX, 20, 255, 255, 255, 24, false);
       }
 
       if (soundEnabled) {
-         General()->DrawText(msg("Enabled"), kBtnX, 50, 255, 255, 255, 24);
+         General()->DrawText(msg("Enabled"), kBtnX, 50, 255, 255, 255, 24, false);
       } else {
-         General()->DrawText(msg("Disabled"), kBtnX, 50, 255, 255, 255, 24);
+         General()->DrawText(msg("Disabled"), kBtnX, 50, 255, 255, 255, 24, false);
       }
 
       DrawSlider(volume, soundEnabled);
@@ -445,12 +450,12 @@ void CGame::Settings()
          int tr = soundEnabled ? 255 : 130;
          int tg = soundEnabled ? 255 : 130;
          int tb = soundEnabled ? 255 : 130;
-         General()->DrawText(volStr.c_str(), kSliderX + kSliderW + 10, kSliderY + 2, tr, tg, tb, 16);
+         General()->DrawText(volStr.c_str(), kSliderX + kSliderW + 10, kSliderY + 2, tr, tg, tb, 16, false);
       }
 
-      General()->DrawText(strgm[curgm], kBtnX, 110, 255, 255, 255, 24);
-      General()->DrawText(msg(Config().Get("OPTIONS", "Language", "eng")), kBtnX, 140, 255, 255, 255, 24);
-      General()->DrawText(stras[curas], kBtnX, 170, 255, 255, 255, 24);
+      General()->DrawText(strgm[curgm], kBtnX, 110, 255, 255, 255, 24, false);
+      General()->DrawText(msg(Config().Get("OPTIONS", "Language", "eng")), kBtnX, 140, 255, 255, 255, 24, false);
+      General()->DrawText(stras[curas], kBtnX, 170, 255, 255, 255, 24, false);
 
       General()->UpdateScreen(0, 0, layout::kScreenW, layout::kScreenH);
 
