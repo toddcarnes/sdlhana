@@ -1,3 +1,6 @@
+1.0.3 Released on September 2nd, 2026.
+ - Feat: JSON i18n with autodiscovery — nlohmann/json via FetchContent, data/i18n/*.json (converted from titles*.txt %→{}), DiscoverLanguages() via filesystem, std::vformat migration, Settings autodiscovery, packaging and docs.
+
 1.0.2 Released on September 2nd, 2026.
  - Refactor: split CardDiscarded into PhaseState helpers (<150 L) with FixupOverlappedSlot and AnimatePendingCaptures.
  - Fix: victory OK flush and Mekuri month 13→12 off-by-one.
