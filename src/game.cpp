@@ -522,8 +522,8 @@ void CGame::DetermineFirstDealer()
       c2 = CCard::GetRandomCard();
    }
 
-   int m1 = c1.GetMonth() + 1;
-   int m2 = c2.GetMonth() + 1;
+   int m1 = c1.GetMonth();
+   int m2 = c2.GetMonth();
 
    bool player_first = false;
    if (m1 < m2) {
