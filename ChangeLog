@@ -1,3 +1,15 @@
+9/03/2026 Todd Carnes <toddcarnes@gmail.com> (SDLHana 1.1.0 released):
+ * Modernization (feature/modernization → main):
+   - Font: remove bitmap .fnt/LZSS (compress.cpp, titles*.txt, brush.fnt) and make TTF-only via SDL3_ttf with system auto-detect (src/font.h/cpp, CMakeLists.txt, src/data).
+   - Core: eliminate deprecated macros g_App/gpWindow/cfg etc. → inline App()/Window()/Config()/Game() accessors (src/main.h, src/main.cpp, src/game.cpp, src/general.cpp, src/player.cpp, src/bot.cpp, src/text.cpp).
+   - Audio: add 0-100% volume slider in Settings (grayed when NoSound) via MIX_SetMixerGain, persisted as Volume in [OPTIONS] (src/sound.cpp/h, src/main.h, src/game.cpp, src/data/sdlhana.ini, src/data/i18n/*.json).
+   - INI: remove WITH_HASH dead code, simplify to linear search (src/ini.h/cpp).
+   - Cleanup: remove dead util general sound code (va, RevertSurface, ScaleBlit/Scale2X, ScreenFade, FillAudio) and simplify string handling (src/util.cpp, src/general.h/cpp, src/main.h, src/sound.cpp).
+   - Window: restore UpdateScreen on resize for resizable 1024x768 STRETCH on mixed-DPI Nvidia (src/general.cpp, src/main.cpp, src/game.cpp) and fix flicker batching in Settings (src/general.h/cpp, src/game.cpp).
+   - Docs/Assets: move card art tools/cards_trad → assets/cards_trad, update README/RULES packaging, correct ribbon scoring (5 Lights 15, Akatan/Aotan 6, Hanami/Tsukimi/Kasu, Korean 9 ribbons) and fix Hongdan label (src/game.cpp, RULES.md, README.md, .github/workflows/release.yml, assets/cards_trad).
+   - Build: fix Linux std::strlen with <cstring> (src/font.cpp).
+ * Version bump to 1.1.0 across CMakeLists.txt, NEWS, and macOS bundle metadata.
+
 9/03/2026 Todd Carnes <toddcarnes@gmail.com> (SDLHana 1.0.3 released):
  * JSON i18n with Autodiscovery (feature/json-i18n → main):
    - Feat: nlohmann/json v3.11.3 via FetchContent, convert titles*.txt (89 keys) to data/i18n/*.json (%→{}) (src/data/i18n, CMakeLists.txt).
