@@ -1,5 +1,7 @@
+1.1.0 Released on September 3rd, 2026.
+ - Modernization: TTF-only rendering, macro globals -> accessors, volume slider (0-100% MIX_SetMixerGain), INI/dead-code cleanup, flicker batching, assets move, ribbon scoring accuracy, and window-resize fix for resizable 1024x768 STRETCH on mixed-DPI.
 1.0.3 Released on September 3rd, 2026.
- - Feat: JSON i18n with autodiscovery — nlohmann/json via FetchContent, data/i18n/*.json (converted from titles*.txt %→{}), DiscoverLanguages() via filesystem, std::vformat migration, Settings autodiscovery, packaging and docs.
+ - Feat: JSON i18n with autodiscovery -- nlohmann/json via FetchContent, data/i18n/*.json (converted from titles*.txt %->{}) DiscoverLanguages() via filesystem, std::vformat migration, Settings autodiscovery, packaging and docs.
 
 1.0.2 Released on September 2nd, 2026.
  - Refactor: split CardDiscarded into PhaseState helpers (<150 L) with FixupOverlappedSlot and AnimatePendingCaptures.
