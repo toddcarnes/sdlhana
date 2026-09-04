@@ -5,6 +5,7 @@
 //
 
 #include "main.h"
+#include <cstring>
 
 CFont::CFont() = default;
 
