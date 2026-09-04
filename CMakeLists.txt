@@ -71,7 +71,6 @@ set(SDLHANA_SOURCES
     src/main.cpp
     src/bot.cpp
     src/card.cpp
-    src/compress.cpp
     src/font.cpp
     src/game.cpp
     src/general.cpp
@@ -136,24 +135,18 @@ else()
     target_link_libraries(sdlhana PRIVATE SDL3::SDL3 SDL3_mixer::SDL3_mixer-shared SDL3_ttf::SDL3_ttf-shared)
 endif()
 
-# Copy asset directories and SDL3.dll into executable build directory post-build
-# src/data copy includes data/i18n/*.json (autodiscovered languages)
+# Copy asset directories and SDL3 DLLs into executable build directory post-build
+# src/data includes data/i18n/*.json (autodiscovered languages) — single copy suffices
 add_custom_command(TARGET sdlhana POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_CURRENT_SOURCE_DIR}/src/data
             $<TARGET_FILE_DIR:sdlhana>/data
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/data/i18n
-            $<TARGET_FILE_DIR:sdlhana>/data/i18n
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_CURRENT_SOURCE_DIR}/src/images
             $<TARGET_FILE_DIR:sdlhana>/images
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_CURRENT_SOURCE_DIR}/src/sound
             $<TARGET_FILE_DIR:sdlhana>/sound
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/fonts
-            $<TARGET_FILE_DIR:sdlhana>/fonts
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:SDL3::SDL3>
             $<TARGET_FILE_DIR:sdlhana>/$<TARGET_FILE_NAME:SDL3::SDL3>
@@ -165,9 +158,3 @@ add_custom_command(TARGET sdlhana POST_BUILD
             $<TARGET_FILE_DIR:sdlhana>/$<TARGET_FILE_NAME:SDL3_ttf::SDL3_ttf-shared>
     COMMENT "Copying game assets and SDL3 DLLs to target build output directory..."
 )
-
-# Optional developer tools build
-option(SDLHANA_BUILD_TOOLS "Build developer font tools (title2cl)" OFF)
-if(SDLHANA_BUILD_TOOLS)
-    add_subdirectory(tools)
-endif()

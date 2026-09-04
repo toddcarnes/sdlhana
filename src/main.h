@@ -88,10 +88,6 @@ namespace std {
 #define IMAGES_DIR DATA_ROOT "images/"
 #endif
 
-#ifndef FONTS_DIR
-#define FONTS_DIR DATA_ROOT "fonts/"
-#endif
-
 namespace layout {
    constexpr int kScreenW = 640;
    constexpr int kScreenH = 480;
@@ -134,30 +130,12 @@ inline CIniFile& Config() { return App().config; }
 inline std::unique_ptr<CGeneral>& General() { return App().general; }
 inline std::unique_ptr<CGame>& Game() { return App().game; }
 
-// Recommended for new code: pass dependencies explicitly or via AppContext:
-//   struct AppContext { SDL_Window* window; SDL_Renderer* renderer; SDL_Surface* screen; CGeneral* general; CGame* game; CIniFile* config; };
-// Keeps leaf functions testable and avoids hidden macro coupling.
-
-// Deprecated macro aliases — prefer inline accessors above for type safety
-// and testability. Kept for incremental migration.
-#define g_App (Application::GetInstance())
-#define gpWindow (Application::GetInstance().window)
-#define gpRenderer (Application::GetInstance().renderer)
-#define gpScreen (Application::GetInstance().screen)
-#define gpScreenTexture (Application::GetInstance().screenTexture)
-#define g_fNoSound (Application::GetInstance().noSound)
-#define cfg (Application::GetInstance().config)
-#define gpGeneral (Application::GetInstance().general)
-#define gpGame (Application::GetInstance().game)
-
 // main.cpp functions...
 void UserQuit();
 std::filesystem::path GetUserConfigPath();
 
 // util.cpp functions...
 void trim(char *str);
-[[deprecated("use va_str or std::format")]]
-char *va(const char *format, ...);
 std::string va_str(const char *format, ...);
 int RandomLong(int from, int to);
 float RandomFloat(float from, float to);
@@ -170,12 +148,6 @@ void UTIL_PutPixel(SDL_Surface *surface, int x, int y, unsigned int pixel);
 int UTIL_GetPixel(SDL_Surface *f, int x, int y, unsigned char *r, unsigned char *g, unsigned char *b);
 int UTIL_PutPixel(SDL_Surface *f, int x, int y, unsigned char r, unsigned char g, unsigned char b);
 int UTIL_PutPixelAlpha(SDL_Surface *f, int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
-void UTIL_RevertSurfaceX(SDL_Surface *s);
-void UTIL_RevertSurfaceY(SDL_Surface *s);
-void UTIL_RevertSurfaceXY(SDL_Surface *s);
-SDL_Surface *UTIL_ScaleSurface(SDL_Surface *s, int w, int h);
-int UTIL_ScaleBlit(SDL_Surface *src, SDL_Rect *sr, SDL_Surface *dst, SDL_Rect *dr);
-void UTIL_Scale2X(SDL_Surface *src, SDL_Surface *dst);
 void UTIL_HorzLine(SDL_Surface *surface, short x, short y, short l, unsigned char r, unsigned char g, unsigned char b);
 void UTIL_VertLine(SDL_Surface *surface, short x, short y, short l, unsigned char r, unsigned char g, unsigned char b);
 void UTIL_Rect(SDL_Surface *surface, int x1, int y1, int w, int h, int r, int g, int b);
@@ -193,10 +165,6 @@ void FreeTextMessage();
 const char *msg(const char *name);
 std::vector<std::string> DiscoverLanguages();
 
-// compress.cpp functions...
-int Decode(const char *filename, int headersize, unsigned char *buffer, int bufsize);
-int Encode(const char *filename, unsigned char *header, int headersize, unsigned char *buffer, int bufsize);
-
 // config.cpp functions...
 void LoadCfg();
 void SaveCfg();
@@ -211,10 +179,11 @@ struct SoundSample {
 // sound.cpp functions...
 extern std::atomic<bool> g_fAudioOpened; // main-thread flag, atomic for visibility
 int SOUND_OpenAudio(int freq, int format, int channels, int samples);
-void SOUND_FillAudio(void *udata, unsigned char *stream, int len);
 void SOUND_PlayWAV(SoundSample *audio);
 void SOUND_FreeWAV(SoundSample *audio);
 SoundSample *SOUND_LoadWAV(const char *filename);
+void SOUND_SetVolume(int volume); // 0-100
+int SOUND_GetVolume();
 
 #include "font.h"
 #include "general.h"

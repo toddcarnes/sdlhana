@@ -27,7 +27,7 @@ The game interface supports full real-time language switching in the Settings me
 - **Simplified Chinese** (`chs` / 简体中文)
 - **French** (`fra` / Français)
 
-Add a new language without recompiling by dropping `data/i18n/<code>.json` (copy `en.json`, translate values with `{}` placeholders) — it appears automatically in Settings via filesystem autodiscovery (legacy `titles*.txt` still supported as fallback).
+Add a new language without recompiling by dropping `data/i18n/<code>.json` (copy `eng.json`, translate values with `{}` placeholders) — it appears automatically in Settings via filesystem autodiscovery.
 
 ---
 
@@ -61,7 +61,8 @@ This project is a modern C++23 / SDL3 refactor and evolution of the original SDL
 
 - **Modern C++23 Architecture**: Built with standard library features (`<print>`, `<format>`, `<filesystem>`, `std::optional`, `std::unique_ptr`).
 - **Hardware-Accelerated SDL3**: Modern rendering engine using `SDL_Renderer` and `SDL_Texture`, paired with `SDL3_mixer` for audio and `SDL3_ttf` for font rendering.
-- **Cross-Platform Auto-Font & Scaling Engine**: High-DPI resizable window scaling paired with dynamic system CJK vector font auto-detection across Windows, macOS, and Linux.
+- **Cross-Platform Auto-Font & Scaling Engine**: TTF-only rendering via `SDL3_ttf` with dynamic system CJK vector font auto-detection across Windows, macOS, and Linux, paired with high-DPI resizable window scaling.
+- **Audio Volume Control**: Adjustable 0–100% master gain slider in Settings (grayed when sound disabled) via `MIX_SetMixerGain`, persisted in `sdlhana.ini`.
 - **CMake 3.25+ Build System**: Clean FetchContent integration that automatically resolves and builds dependencies across all operating systems.
 - **Cross-Platform Compatibility**: Tested and verified on **Windows 11 (MSVC)**, **macOS (Clang)**, and **Linux (GCC)**.
 
@@ -81,16 +82,11 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ```
 
-The compiled binary (`sdlhana` or `sdlhana.exe`) will be generated inside the `build/` directory alongside all required game assets (`data/`, `images/`, `fonts/`, `sound/`).
+The compiled binary (`sdlhana` or `sdlhana.exe`) will be generated inside the `build/` directory alongside all required game assets (`data/`, `images/`, `sound/`).
 
-### Optional Developer Tools
+### Assets
 
-To build the font generation and character list utilities (`title2cl`), pass `-DSDLHANA_BUILD_TOOLS=ON` to CMake:
-
-```bash
-cmake -B build -DSDLHANA_BUILD_TOOLS=ON
-cmake --build build --target title2cl
-```
+Card artwork references are preserved in `assets/cards_trad/` for documentation purposes.
 
 ---
 

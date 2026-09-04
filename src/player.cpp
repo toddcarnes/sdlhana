@@ -26,19 +26,19 @@ int CBasePlayer::m_iMaxHandCards = 8;
 
 bool CBasePlayer::IsDealer() const
 {
-   if (gpGame) return this == gpGame->GetDealer();
+   if (Game()) return this == Game()->GetDealer();
    return this == m_pDealer;
 }
 
 void CBasePlayer::SetAsDealer()
 {
    m_pDealer = this;
-   if (gpGame) gpGame->SetDealer(this);
+   if (Game()) Game()->SetDealer(this);
 }
 
 CBasePlayer *CBasePlayer::GetDealer()
 {
-   if (gpGame && gpGame->GetDealer()) return gpGame->GetDealer();
+   if (Game() && Game()->GetDealer()) return Game()->GetDealer();
    return m_pDealer;
 }
 
@@ -53,7 +53,7 @@ CBasePlayer::~CBasePlayer()
 void CBasePlayer::NewRound()
 {
    int i;
-   int maxHand = gpGame ? gpGame->GetMaxHandCards() : m_iMaxHandCards;
+   int maxHand = Game() ? Game()->GetMaxHandCards() : m_iMaxHandCards;
 
    for (i = 0; i < maxHand; i++) {
       m_HandCards[i] = CCard::GetRandomCard();
@@ -158,7 +158,7 @@ void CBasePlayer::CalcResult()
          // This is an animal card
          num_animals++;
          if (c.IsSakeCup()) {
-            num_cards += ((gpGame->GetGameMode() == GAMEMODE_KOREAN) ? 2 : 1);
+            num_cards += ((Game()->GetGameMode() == GAMEMODE_KOREAN) ? 2 : 1);
             has_sakecup = true;
          } else if (c.IsDeer()) {
             has_deer = true;
@@ -172,7 +172,7 @@ void CBasePlayer::CalcResult()
       } else {
          // This is a normal card
          num_cards++;
-         if (gpGame->GetGameMode() == GAMEMODE_KOREAN) {
+         if (Game()->GetGameMode() == GAMEMODE_KOREAN) {
             if (c.GetValue() == 43 || c.GetValue() == 45) {
                num_cards++; // these 2 cards counts as 2 normal cards each
             }
@@ -192,7 +192,7 @@ void CBasePlayer::CalcResult()
    } else if (num_lights >= 3) {
       if (!has_rain) {
          m_Result.three_lights = 1;
-      } else if (gpGame->GetGameMode() == GAMEMODE_KOREAN) {
+      } else if (Game()->GetGameMode() == GAMEMODE_KOREAN) {
          m_Result.rain_three_lights = 1;
       }
    }
@@ -207,14 +207,14 @@ void CBasePlayer::CalcResult()
       m_Result.blue_ribbons = 1;
    }
 
-   if (gpGame->GetGameMode() != GAMEMODE_KOREAN) {
+   if (Game()->GetGameMode() != GAMEMODE_KOREAN) {
       // check for boar, deer and butterfly
       if (has_boar && has_deer && has_butterfly) {
          m_Result.boar_deer_butterfly = 1;
       }
 
       // check for sake cup
-      if (has_sakecup && gpGame->GetGameMode() != GAMEMODE_BET) {
+      if (has_sakecup && Game()->GetGameMode() != GAMEMODE_BET) {
          if (has_moon) {
             m_Result.moon_meets_sakecup = 1;
          }
@@ -243,7 +243,7 @@ void CBasePlayer::CalcResult()
       m_Result.animals = num_animals - 4;
    }
 
-   if (gpGame->GetGameMode() == GAMEMODE_KOREAN && has_sakecup) {
+   if (Game()->GetGameMode() == GAMEMODE_KOREAN && has_sakecup) {
       // In Korean game the Sake Cup cannot be count as both an
       // animal card and a normal card
       if (m_Result.cards - 2 > m_Result.animals) {
@@ -265,7 +265,7 @@ void CBasePlayer::CalcResult()
    }
 
    // calculate score
-   if (gpGame->GetGameMode() == GAMEMODE_KOREAN) {
+   if (Game()->GetGameMode() == GAMEMODE_KOREAN) {
       // Korean mode
       m_Result.score += m_Result.five_lights * 15;
       m_Result.score += m_Result.four_lights * 4;
@@ -387,10 +387,10 @@ void CBasePlayer::DrawCurResult()
 
    auto draw_box_text = [&](const char *text) {
       CBox box(20, 260, 595, 50, 155, 40, 185);
-      gpGeneral->PlaySound(SOUND_HINT);
-      gpGeneral->DrawTextInBox(text, 20, 260, 595, 50, 255, 255, 255, 18);
+      General()->PlaySound(SOUND_HINT);
+      General()->DrawTextInBox(text, 20, 260, 595, 50, 255, 255, 255, 18);
       UTIL_Delay(3500);
-      if (gpGame) gpGame->RedrawTable();
+      if (Game()) Game()->RedrawTable();
    };
    auto clear_effect = [&]() {
       for (int i = 0; i < m_iNumCapturedCard; i++) {
@@ -432,7 +432,7 @@ void CBasePlayer::DrawCurResult()
       26, 27, 30, 31, 32, 34, 35, 38, 39, 43, 45, 46, 47, 255}; // 10 plain
    unsigned char r_fake[] = {255};
 
-   if (gpGame->GetGameMode() == GAMEMODE_KOREAN) {
+   if (Game()->GetGameMode() == GAMEMODE_KOREAN) {
       draw_result("five_lights", r_lights, 15, cur_result.five_lights, m_Result.five_lights);
       draw_result("four_lights", r_lights, 4, cur_result.four_lights, m_Result.four_lights);
       draw_result("rain_four_lights", r_lights, 4, cur_result.rain_four_lights, m_Result.rain_four_lights);
@@ -472,15 +472,15 @@ void CBasePlayer::DrawAllResult()
 
    auto draw_result_a = [&](const char *key, int s, int val) {
       if (val <= 0) return;
-      gpGeneral->DrawText(msg(key), 30, y, 255, 255, 0, 24);
+      General()->DrawText(msg(key), 30, y, 255, 255, 0, 24);
       std::string pts = std::format("{} {}", s * val, ((s * val <= 1) ? msg("point") : msg("points")));
-      gpGeneral->DrawText(pts.c_str(), 300, y, 255, 255, 255, 24);
-      gpGeneral->PlaySound(SOUND_HINT);
+      General()->DrawText(pts.c_str(), 300, y, 255, 255, 255, 24);
+      General()->PlaySound(SOUND_HINT);
       UTIL_Delay(1000);
       y += 26;
    };
 
-   if (gpGame->GetGameMode() == GAMEMODE_KOREAN) {
+   if (Game()->GetGameMode() == GAMEMODE_KOREAN) {
       draw_result_a("five_lights", 15, m_Result.five_lights);
       draw_result_a("four_lights", 4, m_Result.four_lights);
       draw_result_a("rain_four_lights", 4, m_Result.rain_four_lights);
@@ -514,11 +514,11 @@ void CBasePlayer::DrawAllResult()
    {
       std::string total = std::format("{} {} {}", msg("total"), m_Result.score,
          ((m_Result.score <= 1) ? msg("point") : msg("points")));
-      gpGeneral->DrawText(total.c_str(), 30, y, 255, 255, 255, 24);
+      General()->DrawText(total.c_str(), 30, y, 255, 255, 255, 24);
    }
 
    y += 26;
-   gpGeneral->DrawText(IsBot() ? msg("computerwin") : msg("youwin"),
+   General()->DrawText(IsBot() ? msg("computerwin") : msg("youwin"),
       30, y, 255, 255, 0, 24);
 }
 
@@ -566,17 +566,17 @@ void CBasePlayer::DrawHand()
 
    int i;
 
-   if (gpScreen != nullptr) {
-      UTIL_FillRect(gpScreen, dstrect.x, dstrect.y, dstrect.w * 8, dstrect.h, 30, 130, 100);
+   if (Screen() != nullptr) {
+      UTIL_FillRect(Screen(), dstrect.x, dstrect.y, dstrect.w * 8, dstrect.h, 30, 130, 100);
    }
 
    for (i = 0; i < m_iNumHandCard; i++) {
-      gpGeneral->DrawCard(IsBot() ? CCard(255) : m_HandCards[i],
+      General()->DrawCard(IsBot() ? CCard(255) : m_HandCards[i],
          dstrect.x, dstrect.y, dstrect.w, dstrect.h, false);
       dstrect.x += dstrect.w;
    }
 
-   gpGeneral->UpdateScreen(10, dstrect.y, dstrect.w * 8, dstrect.h);
+   General()->UpdateScreen(10, dstrect.y, dstrect.w * 8, dstrect.h);
 }
 
 void CBasePlayer::DrawCaptured()
@@ -609,8 +609,8 @@ void CBasePlayer::DrawCaptured()
    }
 
    if (IsBot()) {
-      if (gpScreen != nullptr) {
-         UTIL_FillRect(gpScreen, 10 + 48 * m_iNumHandCard, 10,
+      if (Screen() != nullptr) {
+         UTIL_FillRect(Screen(), 10 + 48 * m_iNumHandCard, 10,
             640 - (10 + 48 * m_iNumHandCard), 78, 30, 130, 100);
       }
 
@@ -621,10 +621,10 @@ void CBasePlayer::DrawCaptured()
             break;
          }
          x -= 8;
-         gpGeneral->DrawCard(norm[i], x, 10, 48, 78, false);
+         General()->DrawCard(norm[i], x, 10, 48, 78, false);
       }
       while (i < num_norm) {
-         gpGeneral->DrawCard(norm[i], 570 - 3 * (i - 9), 10, 48, 78, false);
+         General()->DrawCard(norm[i], 570 - 3 * (i - 9), 10, 48, 78, false);
          i++;
       }
 
@@ -639,16 +639,16 @@ void CBasePlayer::DrawCaptured()
          }
 
          for (i = 0; i < num_spec; i++) {
-            gpGeneral->DrawCard(spec[i], x, 10, 48, 78, false);
+            General()->DrawCard(spec[i], x, 10, 48, 78, false);
             x -= per_width;
          }
 
          x += per_width;
       }
-      gpGeneral->UpdateScreen(x, 10, 640 - x, 78);
+      General()->UpdateScreen(x, 10, 640 - x, 78);
    } else {
-      if (gpScreen != nullptr) {
-         UTIL_FillRect(gpScreen, 10 + 48 * m_iNumHandCard, 400,
+      if (Screen() != nullptr) {
+         UTIL_FillRect(Screen(), 10 + 48 * m_iNumHandCard, 400,
             640 - (10 + 48 * m_iNumHandCard), 78, 30, 130, 100);
       }
 
@@ -657,13 +657,13 @@ void CBasePlayer::DrawCaptured()
          if (i >= num_norm) {
             break;
          }
-         gpGeneral->DrawCard(norm[i], 580 - 8 * i, 400, 48, 78, false);
+         General()->DrawCard(norm[i], 580 - 8 * i, 400, 48, 78, false);
       }
       while (i < num_norm) {
-         gpGeneral->DrawCard(norm[i], 570 - 3 * (i - 9), 400, 48, 78, false);
+         General()->DrawCard(norm[i], 570 - 3 * (i - 9), 400, 48, 78, false);
          i++;
       }
-      gpGeneral->UpdateScreen(500, 400, 140, 78);
+      General()->UpdateScreen(500, 400, 140, 78);
 
       // Draw special cards
       if (num_spec > 0) {
@@ -675,12 +675,12 @@ void CBasePlayer::DrawCaptured()
          }
 
          for (i = 0; i < num_spec; i++) {
-            gpGeneral->DrawCard(spec[i], x, 320, 48, 78, false);
+            General()->DrawCard(spec[i], x, 320, 48, 78, false);
             x -= per_width;
          }
 
          x += per_width;
-         gpGeneral->UpdateScreen(x, 320, 640 - x, 78);
+         General()->UpdateScreen(x, 320, 640 - x, 78);
       }
    }
 }
@@ -698,7 +698,7 @@ CPlayer::~CPlayer()
 int CPlayer::SelectCard()
 {
    CBox hint(20, 260, 595, 50, 40, 55, 85);
-   gpGeneral->DrawTextInBox(msg("discardcardselect"), 20, 260, 595, 50, 255, 255, 255, 18);
+   General()->DrawTextInBox(msg("discardcardselect"), 20, 260, 595, 50, 255, 255, 255, 18);
 
    int i, sel = -1;
    std::unique_ptr<CButton> b[8];
@@ -708,7 +708,7 @@ int CPlayer::SelectCard()
    }
 
    while (1) {
-      int k = gpGeneral->ReadKey();
+      int k = General()->ReadKey();
       if (k > 1000) {
          sel = k - 1000 - 1;
          break;
@@ -722,18 +722,18 @@ int CPlayer::SelectCard()
 
 bool CPlayer::WantToContinue()
 {
-   if (gpGame) gpGame->RedrawTable();
+   if (Game()) Game()->RedrawTable();
    auto mainbox = std::make_unique<CBox>(20, 250, 595, 100, 40, 55, 85);
    auto yesbtn = std::make_unique<CButton>(1, 40, 300, 140, 38, 58, 110, 165);
    auto nobtn = std::make_unique<CButton>(2, 200, 300, 140, 38, 165, 58, 58);
    bool ret = true;
 
-   gpGeneral->DrawTextInBox(msg("koikoiyesorno"), 20, 255, 595, 35, 255, 255, 0, 20);
-   gpGeneral->DrawTextInBox(msg("go"), 40, 300, 140, 38, 255, 255, 255, 20);
-   gpGeneral->DrawTextInBox(msg("stop"), 200, 300, 140, 38, 255, 255, 255, 20);
+   General()->DrawTextInBox(msg("koikoiyesorno"), 20, 255, 595, 35, 255, 255, 0, 20);
+   General()->DrawTextInBox(msg("go"), 40, 300, 140, 38, 255, 255, 255, 20);
+   General()->DrawTextInBox(msg("stop"), 200, 300, 140, 38, 255, 255, 255, 20);
 
    while (1) {
-      int k = gpGeneral->ReadKey();
+      int k = General()->ReadKey();
       if (k > 1000) {
          if (k == 1000 + 2) {
             // the "stop" button is clicked
@@ -747,12 +747,12 @@ bool CPlayer::WantToContinue()
    nobtn.reset();
    mainbox.reset();
 
-   if (gpGame) gpGame->RedrawTable();
+   if (Game()) Game()->RedrawTable();
    return ret;
 }
 
 int CPlayer::SelectCardOnDesk(int month, const CCard &c)
 {
-   return gpGame->SelectCardOnDesk(month);
+   return Game()->SelectCardOnDesk(month);
 }
 

@@ -52,17 +52,16 @@ public:
    CGeneral();
    ~CGeneral();
 
-   void          ScreenFade(int duration = 500, SDL_Surface *s = NULL);
    int           ReadKey();
    void          UpdateScreen(int x = 0, int y = 0, int w = 0, int h = 0);
 
    void          ClearScreen(bool fadein = false, bool fadeout = false, bool bg = false);
    void          ClearPromptArea();
 
-   void          DrawTextBrush(const char *t, int x, int y, int r = 255, int g = 255, int b = 255, int size = 32);
-   void          DrawText(const char *t, int x, int y, int r = 255, int g = 255, int b = 255, int size = 32);
-   void          DrawTextInBox(const char *t, int box_x, int box_y, int box_w, int box_h, int r = 255, int g = 255, int b = 255, int size = 18);
-   void          DrawWrappedTextInBox(const char *t, int box_x, int box_y, int box_w, int box_h, int r = 255, int g = 255, int b = 255, int size = 16);
+   void          DrawTextBrush(const char *t, int x, int y, int r = 255, int g = 255, int b = 255, int size = 32, bool update = true);
+   void          DrawText(const char *t, int x, int y, int r = 255, int g = 255, int b = 255, int size = 32, bool update = true);
+   void          DrawTextInBox(const char *t, int box_x, int box_y, int box_w, int box_h, int r = 255, int g = 255, int b = 255, int size = 18, bool update = true);
+   void          DrawWrappedTextInBox(const char *t, int box_x, int box_y, int box_w, int box_h, int r = 255, int g = 255, int b = 255, int size = 16, bool update = true);
    SDL_Surface  *RenderTextWrapped(const char *t, int r = 255, int g = 255, int b = 255, int size = 16, int wrap_width = 500);
    SDL_Surface  *RenderCard(const CCard &c, int w = 64, int h = 104);
    void          DrawCard(const CCard &c, int x, int y, int w = 64, int h = 104, bool update = true);
